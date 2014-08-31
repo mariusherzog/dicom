@@ -91,7 +91,7 @@ struct a_associate_ac: property
                ACCEPTANCE = 0x00, USER_REJEC = 0x01,
                PROV_REJEC_NO_REASON = 0x02,
                ABSTR_CONT_NOT_SUPP = 0x03,
-               TRANFS_SYNT_NOT_SUPP = 0x04
+               TRANSF_SYNT_NOT_SUPP = 0x04
             };
 
             presentation_context() = default;
