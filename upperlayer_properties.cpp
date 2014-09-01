@@ -50,7 +50,7 @@ std::vector<uchar> ui_to_32b_be(unsigned val)
 
 
 
-TYPE get_type(std::vector<unsigned char> pdu)
+TYPE get_type(const std::vector<unsigned char>& pdu)
 {
    return static_cast<TYPE>(pdu[0]);
 }
@@ -413,7 +413,7 @@ TYPE a_associate_rj::type()
 }
 
 
-void a_release_rq::from_pdu(std::vector<unsigned char> pdu)
+void a_release_rq::from_pdu(std::vector<unsigned char>)
 {
 }
 
@@ -431,7 +431,7 @@ TYPE a_release_rq::type()
 }
 
 
-void a_release_rp::from_pdu(std::vector<unsigned char> pdu)
+void a_release_rp::from_pdu(std::vector<unsigned char>)
 {
 }
 
@@ -486,4 +486,48 @@ std::ostream& operator<<(std::ostream& os, a_associate_rq t)
       }
    }
    return os;
+}
+
+
+std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
+{
+   auto ptype = get_type(pdu);
+   switch (ptype) {
+      case TYPE::A_ABORT: {
+         a_abort* a = new a_abort();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_abort>(a);
+      }
+      case TYPE::A_RELEASE_RQ: {
+         a_release_rq* a = new a_release_rq();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_release_rq>(a);
+      }
+      case TYPE::A_RELEASE_RP: {
+         a_release_rp* a = new a_release_rp();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_release_rp>(a);
+      }
+      case TYPE::A_ASSOCIATE_RQ: {
+         a_associate_rq* a = new a_associate_rq();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_associate_rq>(a);
+      }
+      case TYPE::A_ASSOCIATE_AC: {
+         a_associate_ac* a = new a_associate_ac();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_associate_ac>(a);
+      }
+      case TYPE::A_ASSOCIATE_RJ: {
+         a_associate_rj* a = new a_associate_rj();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_associate_rj>(a);
+      }
+      case TYPE::P_DATA_TF: {
+         p_data_tf* p = new p_data_tf();
+         p->from_pdu(pdu);
+         return std::unique_ptr<p_data_tf>(p);
+      }
+   }
+   return nullptr;
 }

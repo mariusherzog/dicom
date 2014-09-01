@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 
 enum class TYPE : unsigned char
@@ -16,9 +17,14 @@ enum class TYPE : unsigned char
    A_ABORT = 0x07
 };
 
-TYPE get_type(std::vector<unsigned char> pdu);
+TYPE get_type(const std::vector<unsigned char>& pdu);
 
 
+/**
+ * @brief The property struct or rather its subclasses represent the serial pdu data
+ *        in a structured form, so information contained in these pdus can be accessed
+ *        easily.
+ */
 struct property
 {
       virtual void from_pdu(std::vector<unsigned char> pdu) = 0;
@@ -26,6 +32,14 @@ struct property
       virtual TYPE type() = 0;
       virtual ~property() = 0;
 };
+
+/**
+ * @brief make_property is a factory function which creates structured data
+ *        depending on the type of pdu passed to it
+ * @param[in] pdu
+ * @return unique_ptr to the structured data
+ */
+std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu);
 
 
 
