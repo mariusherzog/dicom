@@ -78,6 +78,12 @@ void dimse_pm::receive()
    x(data->command_set, data->data_set);
 }
 
+void dimse_pm::abort()
+{
+   a_abort a;
+   ul.send(&a);
+}
+
 
 void dimse_pm::inject(unsigned char id, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn)
 {

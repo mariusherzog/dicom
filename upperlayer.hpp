@@ -16,14 +16,14 @@
  * @brief The dicom_upperlayer class implements the Upper Layer as described
  *        in the DICOM3 standard, part 8.
  * @link http://medical.nema.org/Dicom/2011/11_08pu.pdf
- * @todo -currently only as a SCP \\
- *       -extend state machine by release collision states and transitions \\
- *       -ARTIM timer \\
+ * @todo -currently only as a SCP <BR>
+ *       -extend state machine by release collision states and transitions <BR>
+ *       -ARTIM timer <BR>
  *       -
  *
  * It must be noted that the sole responsibility of the upperlayer-scp is to
  * keep the state machine valid. It is not involved in the association
- * negation. This has to be done by the user of this class (either a facade
+ * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
 class scp

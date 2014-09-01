@@ -8,7 +8,10 @@
 
 #include "upperlayer.hpp"
 
-
+/**
+ * @brief The dimse_pm class
+ * @todo - implement (de)serialization methods <BR>
+ */
 class dimse_pm
 {
    public:
@@ -22,6 +25,7 @@ class dimse_pm
       dimse_pm();
       bool associate();
       void receive();
+      void abort();
 
       void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
 
