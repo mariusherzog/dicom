@@ -8,104 +8,17 @@
 #include <cassert>
 #include <functional>
 
-#include <arpa/inet.h>
-
 #include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
+#include "upperlayer_transitions.hpp"
 
 
 namespace { using uchar = unsigned char; }
 
 namespace
 {
-/**
- * @brief contains the target state as a function of pair of the current state and a primitive received from the user
- *
- */
-std::map<std::pair<scp::CONN_STATE, TYPE>, scp::CONN_STATE> transition_table_user_primitives {
-   {{scp::CONN_STATE::STA2, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_RELEASE_RP}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_ABORT}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::P_DATA_TF}, scp::CONN_STATE::INV},
 
-   {{scp::CONN_STATE::STA3, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA3, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::STA6},
-   {{scp::CONN_STATE::STA3, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA3, TYPE::A_RELEASE_RP}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA3, TYPE::A_ABORT}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA3, TYPE::P_DATA_TF}, scp::CONN_STATE::INV},
-
-   {{scp::CONN_STATE::STA6, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA6, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA6, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA6, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::STA7},
-   {{scp::CONN_STATE::STA6, TYPE::A_RELEASE_RP}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA6, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA6, TYPE::P_DATA_TF}, scp::CONN_STATE::STA6},
-
-   {{scp::CONN_STATE::STA7, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA7, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA7, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA7, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA7, TYPE::A_RELEASE_RP}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA7, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA7, TYPE::P_DATA_TF}, scp::CONN_STATE::INV},
-
-   {{scp::CONN_STATE::STA8, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA8, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA8, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA8, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA8, TYPE::A_RELEASE_RP}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA8, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::P_DATA_TF}, scp::CONN_STATE::STA8},
-};
-
-std::map<std::pair<scp::CONN_STATE, TYPE>, scp::CONN_STATE> transition_table_received_pdus {
-   {{scp::CONN_STATE::STA2, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::STA3},
-   {{scp::CONN_STATE::STA2, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA2, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_RELEASE_RP}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::A_ABORT}, scp::CONN_STATE::INV},
-   {{scp::CONN_STATE::STA2, TYPE::P_DATA_TF}, scp::CONN_STATE::INV},
-
-   {{scp::CONN_STATE::STA3, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::A_RELEASE_RP}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA3, TYPE::P_DATA_TF}, scp::CONN_STATE::STA2},
-
-   {{scp::CONN_STATE::STA6, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA6, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA6, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA6, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::STA8},
-   {{scp::CONN_STATE::STA6, TYPE::A_RELEASE_RP}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA6, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA6, TYPE::P_DATA_TF}, scp::CONN_STATE::STA6},
-
-   {{scp::CONN_STATE::STA7, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA7, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA7, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA7, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::INV}, //release coll
-   {{scp::CONN_STATE::STA7, TYPE::A_RELEASE_RP}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA7, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA7, TYPE::P_DATA_TF}, scp::CONN_STATE::STA7},
-
-   {{scp::CONN_STATE::STA8, TYPE::A_ASSOCIATE_RQ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::A_ASSOCIATE_AC}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::A_ASSOCIATE_RJ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::A_RELEASE_RQ}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::A_RELEASE_RP}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::A_ABORT}, scp::CONN_STATE::STA2},
-   {{scp::CONN_STATE::STA8, TYPE::P_DATA_TF}, scp::CONN_STATE::STA2},
-};
 
 std::size_t be_char_to_16b(std::vector<uchar> bs)
 {
