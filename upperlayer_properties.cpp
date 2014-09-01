@@ -8,10 +8,13 @@
 
 
 
-namespace { using uchar = unsigned char; }
+namespace upperlayer
+{
 
 namespace
 {
+using uchar = unsigned char;
+
 std::size_t be_char_to_16b(std::vector<uchar> bs)
 {
    assert(bs.size() == 2);
@@ -530,4 +533,6 @@ std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
       }
    }
    return nullptr;
+}
+
 }

@@ -5,6 +5,7 @@
 
 #include "upperlayer_properties.hpp"
 
+using namespace upperlayer;
 
 const std::map<dimse_pm::service, std::string> dimse_pm::service_uid {
    {dimse_pm::service::C_ECHO, "1.2.840.10008.3.1.1.1"},

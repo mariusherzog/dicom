@@ -14,11 +14,12 @@
 #include "upperlayer_transitions.hpp"
 
 
-namespace { using uchar = unsigned char; }
+namespace upperlayer
+{
 
 namespace
 {
-
+using uchar = unsigned char;
 
 std::size_t be_char_to_16b(std::vector<uchar> bs)
 {
@@ -101,3 +102,4 @@ std::unique_ptr<property> scp::receive()
    return make_property(resp);
 }
 
+}

@@ -5,6 +5,10 @@
 #include "upperlayer_properties.hpp"
 #include "upperlayer.hpp"
 
+
+namespace upperlayer
+{
+
 /**
  * @brief contains the target state as a function of pair of the current state and a primitive received from the user
  *
@@ -93,4 +97,5 @@ std::map<std::pair<scp::CONN_STATE, TYPE>, scp::CONN_STATE> transition_table_rec
    {{scp::CONN_STATE::STA8, TYPE::P_DATA_TF}, scp::CONN_STATE::STA2},
 };
 
+}
 

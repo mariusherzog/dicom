@@ -9,7 +9,8 @@
 
 #include "upperlayer_properties.hpp"
 
-
+namespace upperlayer
+{
 
 
 /**
@@ -67,5 +68,6 @@ class scp
       boost::asio::ip::tcp::socket sock;
 };
 
+}
 
 #endif // DICOMUPPERLAYER_HPP

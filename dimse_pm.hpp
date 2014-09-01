@@ -30,8 +30,8 @@ class dimse_pm
       void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
 
    private:
-      scp ul;
-      a_associate_ac connection_properties;
+      upperlayer::scp ul;
+      upperlayer::a_associate_ac connection_properties;
 
       std::map<unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)>> procs;
 

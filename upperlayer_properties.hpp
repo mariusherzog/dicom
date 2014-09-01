@@ -6,6 +6,9 @@
 #include <memory>
 
 
+namespace upperlayer
+{
+
 enum class TYPE : unsigned char
 {
    A_ASSOCIATE_RQ = 0x01,
@@ -183,5 +186,6 @@ struct a_abort: property
 
 std::ostream& operator<<(std::ostream& os, a_associate_rq t);
 
+}
 
 #endif // DICOM_UPPERLAYER_CONNECTION_PROPERTIES_HPP
