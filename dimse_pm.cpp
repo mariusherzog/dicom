@@ -12,6 +12,7 @@ const std::map<dimse_pm::service, std::string> dimse_pm::service_uid {
 };
 
 dimse_pm::dimse_pm():
+   state(CONN_STATE::IDLE),
    ul(11112),
    transfer_syntaxes {"1.2.840.10008.1.2"},
    abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
@@ -20,8 +21,20 @@ dimse_pm::dimse_pm():
    associate();
 }
 
+dimse_pm::~dimse_pm()
+{
+   if (state == CONN_STATE::CONNECTED) {
+      abort();
+   }
+}
+
 bool dimse_pm::associate()
 {
+   if (state == CONN_STATE::CONNECTED)
+   {
+      return false;
+   }
+
    std::unique_ptr<property> p = ul.receive();
    a_associate_rq* arq = dynamic_cast<a_associate_rq*>(p.get());
 
@@ -67,22 +80,30 @@ bool dimse_pm::associate()
 
    ul.send(&ac);
    connection_properties = ac;
+   state = CONN_STATE::CONNECTED;
    return true;
 }
 
 void dimse_pm::receive()
 {
-   std::unique_ptr<property> d = ul.receive();
-   p_data_tf* data = dynamic_cast<p_data_tf*>(d.get());
+   if (state == CONN_STATE::CONNECTED) {
+      std::unique_ptr<property> d = ul.receive();
+      p_data_tf* data = dynamic_cast<p_data_tf*>(d.get());
 
-   auto x = procs[data->message_id];
-   x(data->command_set, data->data_set);
+      deserialize(data);
+
+      auto x = procs[data->message_id];
+      x(data->command_set, data->data_set);
+   }
 }
 
 void dimse_pm::abort()
 {
-   a_abort a;
-   ul.send(&a);
+   if (state == CONN_STATE::CONNECTED) {
+      a_abort a;
+      ul.send(&a);
+      state = CONN_STATE::IDLE;
+   }
 }
 
 
@@ -90,3 +111,10 @@ void dimse_pm::inject(unsigned char id, std::function<void(std::vector<unsigned 
 {
    procs[id] = fn;
 }
+
+void dimse_pm::deserialize(p_data_tf* data)
+{
+   // assuming little endian, value length 2 bytes
+}
+
+

@@ -20,9 +20,15 @@ class dimse_pm
          C_ECHO
       };
 
+      enum class CONN_STATE
+      {
+         IDLE, CONNECTED
+      };
+
       static const std::map<service, std::string> service_uid;
 
       dimse_pm();
+      ~dimse_pm();
       bool associate();
       void receive();
       void abort();
@@ -30,6 +36,10 @@ class dimse_pm
       void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
 
    private:
+      void deserialize(upperlayer::p_data_tf* data);
+
+      CONN_STATE state;
+
       upperlayer::scp ul;
       upperlayer::a_associate_ac connection_properties;
 
