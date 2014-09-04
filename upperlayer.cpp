@@ -108,4 +108,20 @@ scp::scp(short port):
    acptr.accept(sock);
 }
 
+scu::scu(std::string host, std::string port):
+   scx(),
+   resolver(io_service),
+   query(host, port)
+{
+   boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+   boost::asio::ip::tcp::resolver::iterator end;
+   boost::system::error_code error = boost::asio::error::host_not_found;
+   while(error && endpoint_iterator != end)
+   {
+     sock.close();
+     sock.connect(*endpoint_iterator++, error);
+   }
+   assert(!error);
+}
+
 }

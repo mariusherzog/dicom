@@ -77,6 +77,17 @@ class scp: public scx
       boost::asio::ip::tcp::acceptor acptr;
 };
 
+class scu: public scx
+{
+   public:
+      scu(std::string host, std::string port);
+
+   private:
+      boost::asio::ip::tcp::resolver resolver;
+      boost::asio::ip::tcp::resolver::query query;
+      boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+      boost::asio::ip::tcp::resolver::iterator end;
+};
 
 
 
