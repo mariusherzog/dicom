@@ -27,7 +27,7 @@ namespace upperlayer
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scp
+class scx
 {
    public:
       /**
@@ -52,8 +52,8 @@ class scp
       };
 
 
-      explicit scp(short port);
-      ~scp();
+      explicit scx();
+      virtual ~scx() = 0;
 
       void send(property* p);
       std::unique_ptr<property> receive();
@@ -63,10 +63,22 @@ class scp
    private:
       CONN_STATE state;
 
+   protected:
       boost::asio::io_service io_service;
-      boost::asio::ip::tcp::acceptor acptr;
       boost::asio::ip::tcp::socket sock;
 };
+
+class scp: public scx
+{
+   public:
+      scp(short port);
+
+   private:
+      boost::asio::ip::tcp::acceptor acptr;
+};
+
+
+
 
 }
 

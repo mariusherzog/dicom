@@ -43,16 +43,14 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 }
 
 
-scp::scp(short port):
+scx::scx():
    state(CONN_STATE::STA2),
    io_service(),
-   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
    sock(io_service)
 {
-   acptr.accept(sock);
 }
 
-scp::~scp()
+scx::~scx()
 {
    switch (state) {
       case CONN_STATE::STA2: break;
@@ -64,7 +62,7 @@ scp::~scp()
    }
 }
 
-void scp::send(property* p)
+void scx::send(property* p)
 {
    auto pdu = p->make_pdu();
    auto ptype = get_type(pdu);
@@ -77,7 +75,7 @@ void scp::send(property* p)
 }
 
 
-std::unique_ptr<property> scp::receive()
+std::unique_ptr<property> scx::receive()
 {
    boost::system::error_code error;
 
@@ -100,6 +98,14 @@ std::unique_ptr<property> scp::receive()
    state = transition_table_received_pdus[std::make_pair(state, ptype)];
 
    return make_property(resp);
+}
+
+
+scp::scp(short port):
+   scx(),
+   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+{
+   acptr.accept(sock);
 }
 
 }
