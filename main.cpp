@@ -4,8 +4,8 @@
 #include <vector>
 #include <boost/asio.hpp>
 
-#include "dimse_pm.hpp"
-
+//#include "dimse_pm.hpp"
+#include "upperlayer.hpp"
 
 void print(std::vector<unsigned char> c, std::vector<unsigned char> d)
 {
@@ -25,6 +25,6 @@ int main()
 //   dimse_pm dpm;
 //   dpm.inject(1, print);
 //   dpm.receive();
-   upperlayer::scp sc(11112);
+   upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, [](upperlayer::scx* s, std::unique_ptr<upperlayer::property>){ upperlayer::a_associate_rj rj; s->send(&rj); }} });
    sc.receive();
 }

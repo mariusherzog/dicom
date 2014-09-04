@@ -7,6 +7,7 @@
 #include <ostream>
 #include <cassert>
 #include <functional>
+#include <initializer_list>
 
 #include <boost/asio.hpp>
 
@@ -43,10 +44,13 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 
 
 
-scx::scx():
+scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    state {CONN_STATE::STA2},
-   handlers {{TYPE::A_ASSOCIATE_RQ, [&] (std::unique_ptr<property> a) { a_associate_rj rj; send(&rj); } }}
+   handlers {}
 {
+   for (const auto p : l) {
+      handlers[p.first] = p.second;
+   }
 }
 
 scx::~scx()
@@ -88,7 +92,7 @@ void scx::receive()
    assert(transition_table_received_pdus[std::make_pair(state, ptype)] != CONN_STATE::INV);
    state = transition_table_received_pdus[std::make_pair(state, ptype)];
 
-   handlers[ptype](make_property(resp));
+   handlers[ptype](this, make_property(resp));
 }
 
 scx::CONN_STATE scx::get_state()
@@ -97,8 +101,8 @@ scx::CONN_STATE scx::get_state()
 }
 
 
-scp::scp(short port):
-   scx(),
+scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx {l},
    io_service(),
    socket(io_service),
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
@@ -106,8 +110,8 @@ scp::scp(short port):
    acptr.accept(socket);
 }
 
-scu::scu(std::string host, std::string port):
-   scx(),
+scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx{l},
    io_service(),
    resolver(io_service),
    query(host, port),

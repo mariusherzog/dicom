@@ -13,7 +13,7 @@ const std::map<dimse_pm::service, std::string> dimse_pm::service_uid {
 
 dimse_pm::dimse_pm():
    state(CONN_STATE::IDLE),
-   ul(11112),
+   ul(11112, {}),
    transfer_syntaxes {"1.2.840.10008.1.2"},
    abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
    application_contexts {"1.2.840.10008.3.1.1.1"}

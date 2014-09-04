@@ -6,6 +6,8 @@
 #include <memory>
 #include <map>
 #include <functional>
+#include <initializer_list>
+#include <utility>
 
 #include <boost/asio.hpp>
 
@@ -62,7 +64,7 @@ class scx
       };
 
 
-      explicit scx();
+      explicit scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       virtual ~scx() = 0;
 
       /**
@@ -106,7 +108,7 @@ class scx
    private:
       CONN_STATE state;
 
-      std::map<TYPE, std::function<void(std::unique_ptr<property>)>> handlers;
+      std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 
 /**
@@ -115,7 +117,7 @@ class scx
 class scp: public scx
 {
    public:
-      scp(short port);
+      scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scp() override;
       boost::asio::ip::tcp::socket& sock() override;
 
@@ -131,7 +133,7 @@ class scp: public scx
 class scu: public scx
 {
    public:
-      scu(std::string host, std::string port);
+      scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
       boost::asio::ip::tcp::socket& sock() override;
 
