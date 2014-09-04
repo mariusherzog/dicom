@@ -43,50 +43,39 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 }
 
 
-scp::scp(short port):
-   state(CONN_STATE::STA2),
-   io_service(),
-   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-   sock(io_service)
+scx::scx():
+   state(CONN_STATE::STA2)
 {
-   acptr.accept(sock);
 }
 
-scp::~scp()
+scx::~scx()
 {
-   switch (state) {
-      case CONN_STATE::STA2: break;
-      default: {
-         a_abort ab;
-         boost::asio::write(sock, boost::asio::buffer(ab.make_pdu()));
-         state = CONN_STATE::STA2;
-      }
-   }
 }
 
-void scp::send(property* p)
+void scx::send(property* p)
 {
    auto pdu = p->make_pdu();
    auto ptype = get_type(pdu);
 
    CONN_STATE next_state = transition_table_user_primitives[std::make_pair(state, ptype)];
    if (next_state != CONN_STATE::INV) {
-      boost::asio::write(sock, boost::asio::buffer(pdu));
+      boost::asio::write(sock(), boost::asio::buffer(pdu));
       state = next_state;
    }
+   boost::asio::write(sock(), boost::asio::buffer(pdu));
 }
 
 
-std::unique_ptr<property> scp::receive()
+std::unique_ptr<property> scx::receive()
 {
    boost::system::error_code error;
 
    std::vector<uchar> size(6);
-   boost::asio::read(sock, boost::asio::buffer(size), boost::asio::transfer_exactly(6), error);
+   boost::asio::read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6), error);
    std::size_t len = be_char_to_32b({size.begin()+2, size.begin()+6});
 
    std::vector<uchar> data(len);
-   boost::asio::read(sock, boost::asio::buffer(data), boost::asio::transfer_exactly(len), error);
+   boost::asio::read(sock(), boost::asio::buffer(data), boost::asio::transfer_exactly(len), error);
 
    std::vector<uchar> resp;
    resp.reserve(size.size() + data.size());
@@ -100,6 +89,71 @@ std::unique_ptr<property> scp::receive()
    state = transition_table_received_pdus[std::make_pair(state, ptype)];
 
    return make_property(resp);
+}
+
+scx::CONN_STATE scx::get_state()
+{
+   return state;
+}
+
+
+scp::scp(short port):
+   scx(),
+   io_service(),
+   socket(io_service),
+   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+{
+   acptr.accept(socket);
+}
+
+scu::scu(std::string host, std::string port):
+   scx(),
+   io_service(),
+   resolver(io_service),
+   query(host, port),
+   endpoint_iterator(resolver.resolve(query)),
+   socket(io_service)
+{
+   boost::asio::ip::tcp::resolver::iterator end;
+   boost::system::error_code error = boost::asio::error::host_not_found;
+   while(error && endpoint_iterator != end)
+   {
+     socket.close();
+     socket.connect(*endpoint_iterator++, error);
+   }
+   assert(!error);
+}
+
+boost::asio::ip::tcp::socket&scp::sock()
+{
+   return socket;
+}
+
+scp::~scp()
+{
+   switch (get_state()) {
+      case CONN_STATE::STA2: break;
+      default: {
+         a_abort ab;
+         boost::asio::write(sock(), boost::asio::buffer(ab.make_pdu()));
+      }
+   }
+}
+
+boost::asio::ip::tcp::socket&scu::sock()
+{
+   return socket;
+}
+
+scu::~scu()
+{
+   switch (get_state()) {
+      case CONN_STATE::STA2: break;
+      default: {
+         a_abort ab;
+         boost::asio::write(sock(), boost::asio::buffer(ab.make_pdu()));
+      }
+   }
 }
 
 }

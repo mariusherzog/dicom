@@ -9,8 +9,8 @@
 namespace upperlayer
 {
 
-extern std::map<std::pair<scp::CONN_STATE, TYPE>, scp::CONN_STATE> transition_table_user_primitives;
-extern std::map<std::pair<scp::CONN_STATE, TYPE>, scp::CONN_STATE> transition_table_received_pdus;
+extern std::map<std::pair<scx::CONN_STATE, TYPE>, scx::CONN_STATE> transition_table_user_primitives;
+extern std::map<std::pair<scx::CONN_STATE, TYPE>, scx::CONN_STATE> transition_table_received_pdus;
 
 }
 
