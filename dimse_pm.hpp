@@ -48,7 +48,6 @@ class dimse_pm
 
       CONN_STATE state;
 
-      upperlayer::scp ul;
       upperlayer::a_associate_ac connection_properties;
 
       std::map<unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)>> procs;
@@ -58,6 +57,7 @@ class dimse_pm
       std::set<std::string> abstract_syntaxes;
       std::set<std::string> application_contexts;
 
+      upperlayer::scp ul;
 };
 
 #endif // DIMSE_PM_HPP

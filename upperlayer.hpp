@@ -99,8 +99,13 @@ class scx
        */
       CONN_STATE get_state();
 
-      template <typename F>
-      void inject(TYPE t, F f)
+
+      /**
+       * @brief inject sets a handler for a received property type t.
+       * @param[in] t
+       * @param[in] f
+       */
+      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f)
       {
          handlers[t] = f;
       }
