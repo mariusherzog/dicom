@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
+#include <functional>
+#include <initializer_list>
+#include <utility>
 
 #include <boost/asio.hpp>
 
@@ -60,7 +64,7 @@ class scx
       };
 
 
-      explicit scx();
+      explicit scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       virtual ~scx() = 0;
 
       /**
@@ -87,7 +91,7 @@ class scx
        *        ownership of that property instance.
        * @return unique_ptr to property
        */
-      std::unique_ptr<property> receive();
+      void receive();
 
       /**
        * @brief get_state returns the current state
@@ -96,8 +100,20 @@ class scx
       CONN_STATE get_state();
 
 
+      /**
+       * @brief inject sets a handler for a received property type t.
+       * @param[in] t
+       * @param[in] f
+       */
+      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f)
+      {
+         handlers[t] = f;
+      }
+
    private:
       CONN_STATE state;
+
+      std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 
 /**
@@ -106,7 +122,7 @@ class scx
 class scp: public scx
 {
    public:
-      scp(short port);
+      scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scp() override;
       boost::asio::ip::tcp::socket& sock() override;
 
@@ -122,7 +138,7 @@ class scp: public scx
 class scu: public scx
 {
    public:
-      scu(std::string host, std::string port);
+      scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
       boost::asio::ip::tcp::socket& sock() override;
 

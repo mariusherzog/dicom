@@ -13,10 +13,10 @@ const std::map<dimse_pm::service, std::string> dimse_pm::service_uid {
 
 dimse_pm::dimse_pm():
    state(CONN_STATE::IDLE),
-   ul(11112),
    transfer_syntaxes {"1.2.840.10008.1.2"},
    abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
-   application_contexts {"1.2.840.10008.3.1.1.1"}
+   application_contexts {"1.2.840.10008.3.1.1.1"},
+   ul(11112, { })
 {
    associate();
 }
@@ -35,7 +35,7 @@ bool dimse_pm::associate()
       return false;
    }
 
-   std::unique_ptr<property> p = ul.receive();
+   std::unique_ptr<property> p = nullptr; // ul.receive();
    a_associate_rq* arq = dynamic_cast<a_associate_rq*>(p.get());
 
 
@@ -87,7 +87,7 @@ bool dimse_pm::associate()
 void dimse_pm::receive()
 {
    if (state == CONN_STATE::CONNECTED) {
-      std::unique_ptr<property> d = ul.receive();
+      std::unique_ptr<property> d = nullptr; // ul.receive();
       p_data_tf* data = dynamic_cast<p_data_tf*>(d.get());
 
       //deserialize(data);
