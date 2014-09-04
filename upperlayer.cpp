@@ -16,7 +16,6 @@
 
 namespace upperlayer
 {
-
 namespace
 {
 using uchar = unsigned char;
@@ -43,8 +42,10 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 }
 
 
+
 scx::scx():
-   state(CONN_STATE::STA2)
+   state {CONN_STATE::STA2},
+   handlers {{TYPE::A_ASSOCIATE_RQ, [&] (std::unique_ptr<property> a) { a_associate_rj rj; send(&rj); } }}
 {
 }
 
@@ -65,7 +66,7 @@ void scx::send(property* p)
 }
 
 
-std::unique_ptr<property> scx::receive()
+void scx::receive()
 {
    boost::system::error_code error;
 
@@ -87,7 +88,7 @@ std::unique_ptr<property> scx::receive()
    assert(transition_table_received_pdus[std::make_pair(state, ptype)] != CONN_STATE::INV);
    state = transition_table_received_pdus[std::make_pair(state, ptype)];
 
-   return make_property(resp);
+   handlers[ptype](make_property(resp));
 }
 
 scx::CONN_STATE scx::get_state()

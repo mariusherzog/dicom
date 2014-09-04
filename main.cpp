@@ -20,10 +20,11 @@ void print(std::vector<unsigned char> c, std::vector<unsigned char> d)
    }
 }
 
-
 int main()
 {
-   dimse_pm dpm;
-   dpm.inject(1, print);
-   dpm.receive();
+//   dimse_pm dpm;
+//   dpm.inject(1, print);
+//   dpm.receive();
+   upperlayer::scp sc(11112);
+   sc.receive();
 }

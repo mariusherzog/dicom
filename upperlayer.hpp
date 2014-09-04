@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
+#include <functional>
 
 #include <boost/asio.hpp>
 
@@ -87,7 +89,7 @@ class scx
        *        ownership of that property instance.
        * @return unique_ptr to property
        */
-      std::unique_ptr<property> receive();
+      void receive();
 
       /**
        * @brief get_state returns the current state
@@ -95,9 +97,16 @@ class scx
        */
       CONN_STATE get_state();
 
+      template <typename F>
+      void inject(TYPE t, F f)
+      {
+         handlers[t] = f;
+      }
 
    private:
       CONN_STATE state;
+
+      std::map<TYPE, std::function<void(std::unique_ptr<property>)>> handlers;
 };
 
 /**
