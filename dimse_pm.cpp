@@ -97,6 +97,14 @@ void dimse_pm::receive()
    }
 }
 
+void dimse_pm::send(std::vector<attribute> a)
+{
+   if (state == CONN_STATE::CONNECTED) {
+      upperlayer::p_data_tf d = serialize(a);
+      ul.send(&d);
+   }
+}
+
 void dimse_pm::abort()
 {
    if (state == CONN_STATE::CONNECTED) {
@@ -112,9 +120,14 @@ void dimse_pm::inject(unsigned char id, std::function<void(std::vector<unsigned 
    procs[id] = fn;
 }
 
-void dimse_pm::deserialize(p_data_tf* data)
+std::vector<attribute> dimse_pm::deserialize(p_data_tf* data)
 {
    // assuming little endian, value length 2 bytes
+}
+
+p_data_tf dimse_pm::serialize(std::vector<attribute> a)
+{
+
 }
 
 

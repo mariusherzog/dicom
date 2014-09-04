@@ -5,8 +5,14 @@
 #include <string>
 #include <set>
 #include <functional>
+#include <vector>
 
 #include "upperlayer.hpp"
+
+
+class attribute
+{
+};
 
 /**
  * @brief The dimse_pm class
@@ -31,12 +37,14 @@ class dimse_pm
       ~dimse_pm();
       bool associate();
       void receive();
+      void send(std::vector<attribute> a);
       void abort();
 
       void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
 
    private:
-      void deserialize(upperlayer::p_data_tf* data);
+      std::vector<attribute> deserialize(upperlayer::p_data_tf* data);
+      upperlayer::p_data_tf serialize(std::vector<attribute> a);
 
       CONN_STATE state;
 
