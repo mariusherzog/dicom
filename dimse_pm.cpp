@@ -90,7 +90,7 @@ void dimse_pm::receive()
       std::unique_ptr<property> d = ul.receive();
       p_data_tf* data = dynamic_cast<p_data_tf*>(d.get());
 
-      deserialize(data);
+      //deserialize(data);
 
       auto x = procs[data->message_id];
       x(data->command_set, data->data_set);

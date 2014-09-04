@@ -62,7 +62,6 @@ void scx::send(property* p)
       boost::asio::write(sock(), boost::asio::buffer(pdu));
       state = next_state;
    }
-   boost::asio::write(sock(), boost::asio::buffer(pdu));
 }
 
 
