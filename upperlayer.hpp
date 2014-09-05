@@ -85,7 +85,7 @@ class scx
        * @brief send takes a property and uses its property::make_pdu() function
        *        for serialization. The serialized data is sent to the peer via
        *        the socket.
-       * @param p
+       * @param[in] p
        */
       void send(property* p);
 
@@ -114,9 +114,10 @@ class scx
          handlers[t] = f;
       }
 
+      void do_read();
+
    private:
       CONN_STATE state;
-
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 

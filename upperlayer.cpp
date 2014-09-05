@@ -100,6 +100,38 @@ scx::CONN_STATE scx::get_state()
    return state;
 }
 
+void scx::do_read()
+{
+   std::cout << "hey" << std::flush;
+   static std::vector<unsigned char> size(6); // watch for scope
+   boost::asio::async_read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6),
+      [=](const boost::system::error_code& error, size_t bytes)  {
+         assert(!error);
+         assert(bytes == 6);
+
+
+         std::vector<unsigned char> data(10);
+         boost::asio::async_read(sock(), boost::asio::buffer(data),
+            [=](const boost::system::error_code& error, size_t bytes) {
+
+               assert(!error);
+               std::vector<uchar> resp;
+               resp.reserve(size.size() + data.size());
+               resp.insert(resp.end(), size.begin(), size.end());
+               resp.insert(resp.end(), data.begin(), data.end());
+               auto pdutype = get_type(resp);
+               auto f = handlers[pdutype];
+               f(this, make_property(resp));
+
+               // be ready for new incoming data
+               do_read();
+            }
+
+         );
+      }
+
+   );
+}
 
 scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {l},
@@ -111,8 +143,7 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    acptr.async_accept(socket, [this](boost::system::error_code ec)
       {
          if (!ec) {
-            std::cout << "make_shared";
-            sess = std::make_shared<session>();
+            do_read();
          }
       } );
 }
