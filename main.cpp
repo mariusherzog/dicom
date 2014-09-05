@@ -92,6 +92,8 @@ int main()
 //   dpm.receive();
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
                                {upperlayer::TYPE::P_DATA_TF, printall} });
-   sc.receive(); // receive a_associate_rq
-   sc.receive(); // receive data
+//   sc.receive(); // receive a_associate_rq
+//   sc.receive(); // receive data
+   std::cout << "Whatta" << std::flush;
+   sc.run();
 }

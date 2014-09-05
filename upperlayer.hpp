@@ -14,6 +14,10 @@
 #include "upperlayer_properties.hpp"
 
 
+class session
+{
+};
+
 /**
  * The upperlayer namespace contains classes and functions which implement the upperlayer as
  * described in the DICOM standard chapter 8.
@@ -125,8 +129,11 @@ class scp: public scx
       scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scp() override;
       boost::asio::ip::tcp::socket& sock() override;
+      void run();
 
    private:
+      std::shared_ptr<session> sess;
+
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::socket socket;
       boost::asio::ip::tcp::acceptor acptr;

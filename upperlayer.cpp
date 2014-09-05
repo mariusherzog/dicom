@@ -107,7 +107,14 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    socket(io_service),
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
 {
-   acptr.accept(socket);
+   //acptr.accept(socket);
+   acptr.async_accept(socket, [this](boost::system::error_code ec)
+      {
+         if (!ec) {
+            std::cout << "make_shared";
+            sess = std::make_shared<session>();
+         }
+      } );
 }
 
 scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
@@ -131,6 +138,11 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
 boost::asio::ip::tcp::socket&scp::sock()
 {
    return socket;
+}
+
+void scp::run()
+{
+   io_service.run();
 }
 
 scp::~scp()
