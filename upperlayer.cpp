@@ -100,6 +100,11 @@ scx::CONN_STATE scx::get_state()
    return state;
 }
 
+void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
+{
+   handlers[t] = f;
+}
+
 
 scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {l},

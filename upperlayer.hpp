@@ -105,10 +105,7 @@ class scx
        * @param[in] t
        * @param[in] f
        */
-      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f)
-      {
-         handlers[t] = f;
-      }
+      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f);
 
    private:
       CONN_STATE state;
