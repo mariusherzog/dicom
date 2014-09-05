@@ -94,6 +94,5 @@ int main()
                                {upperlayer::TYPE::P_DATA_TF, printall} });
 //   sc.receive(); // receive a_associate_rq
 //   sc.receive(); // receive data
-   std::cout << "Whatta" << std::flush;
    sc.run();
 }

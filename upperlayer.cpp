@@ -100,28 +100,27 @@ scx::CONN_STATE scx::get_state()
    return state;
 }
 
+
 void scx::do_read()
 {
-   std::cout << "hey" << std::flush;
    static std::vector<unsigned char> size(6); // watch for scope
+   static std::vector<unsigned char> rem_data;
+   static std::vector<unsigned char> compl_data;
    boost::asio::async_read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6),
-      [=](const boost::system::error_code& error, size_t bytes)  {
-         assert(!error);
+      [=](const boost::system::error_code& error, std::size_t bytes)  {
          assert(bytes == 6);
 
+         std::size_t len = be_char_to_32b({size.begin()+2, size.begin()+6});
+         rem_data.resize(len);
+         boost::asio::async_read(sock(), boost::asio::buffer(rem_data), boost::asio::transfer_exactly(len),
+            [=](const boost::system::error_code& error, std::size_t bytes) {
 
-         std::vector<unsigned char> data(10);
-         boost::asio::async_read(sock(), boost::asio::buffer(data),
-            [=](const boost::system::error_code& error, size_t bytes) {
-
-               assert(!error);
-               std::vector<uchar> resp;
-               resp.reserve(size.size() + data.size());
-               resp.insert(resp.end(), size.begin(), size.end());
-               resp.insert(resp.end(), data.begin(), data.end());
-               auto pdutype = get_type(resp);
+               compl_data.reserve(size.size() + rem_data.size());
+               compl_data.insert(compl_data.end(), size.begin(), size.end());
+               compl_data.insert(compl_data.end(), rem_data.begin(), rem_data.end());
+               auto pdutype = get_type(compl_data);
                auto f = handlers[pdutype];
-               f(this, make_property(resp));
+               f(this, make_property(compl_data));
 
                // be ready for new incoming data
                do_read();
