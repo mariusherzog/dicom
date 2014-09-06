@@ -45,7 +45,7 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 
 
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   state {CONN_STATE::STA2},
+   statem {},
    handlers {}
 {
    for (const auto p : l) {
@@ -62,10 +62,8 @@ void scx::send(property* p)
    auto pdu = p->make_pdu();
    auto ptype = get_type(pdu);
 
-   CONN_STATE next_state = transition_table_user_primitives[std::make_pair(state, ptype)];
-   if (next_state != CONN_STATE::INV) {
+   if (statem.transition(ptype, false) != statemachine::CONN_STATE::INV) {
       boost::asio::write(sock(), boost::asio::buffer(pdu));
-      state = next_state;
    }
 }
 
@@ -88,16 +86,14 @@ void scx::receive()
 
    auto ptype = get_type(resp);
 
-   // failed assertion would indicate an error in the remote state machine
-   assert(transition_table_received_pdus[std::make_pair(state, ptype)] != CONN_STATE::INV);
-   state = transition_table_received_pdus[std::make_pair(state, ptype)];
+   assert(statem.transition(ptype, true) != statemachine::CONN_STATE::INV);
 
    handlers[ptype](this, make_property(resp));
 }
 
-scx::CONN_STATE scx::get_state()
+statemachine::CONN_STATE scx::get_state()
 {
-   return state;
+   return statem.get_state();
 }
 
 
@@ -136,7 +132,8 @@ boost::asio::ip::tcp::socket&scp::sock()
 scp::~scp()
 {
    switch (get_state()) {
-      case CONN_STATE::STA2: break;
+      case statemachine::CONN_STATE::STA2:
+         break;
       default: {
          a_abort ab;
          boost::asio::write(sock(), boost::asio::buffer(ab.make_pdu()));
@@ -152,7 +149,8 @@ boost::asio::ip::tcp::socket&scu::sock()
 scu::~scu()
 {
    switch (get_state()) {
-      case CONN_STATE::STA2: break;
+      case statemachine::CONN_STATE::STA2:
+         break;
       default: {
          a_abort ab;
          boost::asio::write(sock(), boost::asio::buffer(ab.make_pdu()));
