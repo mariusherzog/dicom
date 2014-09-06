@@ -12,6 +12,7 @@
 #include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
+#include "upperlayer_statemachine.hpp"
 
 
 class session
@@ -46,27 +47,6 @@ namespace upperlayer
 class scx
 {
    public:
-      /**
-       * @brief The CONN_STATE enum contains the states for the state machine
-       * @see DICOM3 standard table 9-10
-       */
-      enum class CONN_STATE
-      {
-         INV = 0x00,
-         STA1,
-         STA2,
-         STA3,
-         STA5,
-         STA6,
-         STA7,
-         STA8,
-         STA9,
-         STA10,
-         STA11,
-         STA12,
-         STA13
-      };
-
 
       explicit scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       virtual ~scx() = 0;
@@ -107,7 +87,7 @@ class scx
        * @brief get_state returns the current state
        * @return
        */
-      CONN_STATE get_state();
+      statemachine::CONN_STATE get_state();
 
 
       /**
@@ -133,7 +113,8 @@ class scx
       void do_read();
 
    private:
-      CONN_STATE state;
+      statemachine statem;
+
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 
