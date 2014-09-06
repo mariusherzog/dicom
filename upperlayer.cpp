@@ -57,6 +57,7 @@ scx::~scx()
 {
 }
 
+
 void scx::send(property* p)
 {
    auto pdu = p->make_pdu();
@@ -64,7 +65,6 @@ void scx::send(property* p)
 
    CONN_STATE next_state = transition_table_user_primitives[std::make_pair(state, ptype)];
    if (next_state != CONN_STATE::INV) {
-//      boost::asio::write(sock(), boost::asio::buffer(pdu));
       boost::asio::async_write(sock(), boost::asio::buffer(pdu),
          [=](const boost::system::error_code& error, std::size_t bytes) { }
       );
@@ -72,31 +72,6 @@ void scx::send(property* p)
    }
 }
 
-
-void scx::receive()
-{
-   boost::system::error_code error;
-
-   std::vector<uchar> size(6);
-   boost::asio::read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6), error);
-   std::size_t len = be_char_to_32b({size.begin()+2, size.begin()+6});
-
-   std::vector<uchar> data(len);
-   boost::asio::read(sock(), boost::asio::buffer(data), boost::asio::transfer_exactly(len), error);
-
-   std::vector<uchar> resp;
-   resp.reserve(size.size() + data.size());
-   resp.insert(resp.end(), size.begin(), size.end());
-   resp.insert(resp.end(), data.begin(), data.end());
-
-   auto ptype = get_type(resp);
-
-   // failed assertion would indicate an error in the remote state machine
-   assert(transition_table_received_pdus[std::make_pair(state, ptype)] != CONN_STATE::INV);
-   state = transition_table_received_pdus[std::make_pair(state, ptype)];
-
-   handlers[ptype](this, make_property(resp));
-}
 
 scx::CONN_STATE scx::get_state()
 {
@@ -125,19 +100,26 @@ void scx::do_read()
 
                state = transition_table_received_pdus[std::make_pair(state, pdutype)];
 
-               auto f = handlers[pdutype];
-               f(this, make_property(compl_data));
+               // call appropriate handler
+               handlers[pdutype](this, make_property(compl_data));
 
                size.clear(); rem_data.clear(); compl_data.clear();
                size.resize(6);
-               // be ready for new incoming data
-               do_read();
-            }
 
+               // be ready for new incoming data
+               if (get_state() != CONN_STATE::STA2) {
+                  do_read();
+               }
+            }
          );
       }
 
    );
+}
+
+void scx::run()
+{
+   io_s().run();
 }
 
 scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
@@ -178,9 +160,9 @@ boost::asio::ip::tcp::socket&scp::sock()
    return socket;
 }
 
-void scp::run()
+boost::asio::io_service&scp::io_s()
 {
-   io_service.run();
+   return io_service;
 }
 
 scp::~scp()
@@ -194,9 +176,14 @@ scp::~scp()
    }
 }
 
-boost::asio::ip::tcp::socket&scu::sock()
+boost::asio::ip::tcp::socket& scu::sock()
 {
    return socket;
+}
+
+boost::asio::io_service& scu::io_s()
+{
+   return io_service;
 }
 
 scu::~scu()

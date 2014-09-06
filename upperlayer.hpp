@@ -82,6 +82,15 @@ class scx
       virtual boost::asio::ip::tcp::socket& sock() = 0;
 
       /**
+       * @brief sock is used by the subclasses to use the ::run() member function
+       * @return ref to boost::asio::io_service
+       *
+       * for initalization reasons the socket cannot be declared in this abstract
+       * class.
+       */
+      virtual boost::asio::io_service& io_s() = 0;
+
+      /**
        * @brief send takes a property and uses its property::make_pdu() function
        *        for serialization. The serialized data is sent to the peer via
        *        the socket.
@@ -90,12 +99,9 @@ class scx
       void send(property* p);
 
       /**
-       * @brief receive waits for the peer to send data. The received, serialized data
-       *        is converted to a structured representation. The caller receives
-       *        ownership of that property instance.
-       * @return unique_ptr to property
+       * @brief run blocks until asynchronous operations are completed
        */
-      void receive();
+      void run();
 
       /**
        * @brief get_state returns the current state
@@ -114,6 +120,19 @@ class scx
          handlers[t] = f;
       }
 
+      /**
+       * @brief scx::do_read reads a pdu asynchronously from the peer
+       *
+       * The pdu is received in two steps:
+       * The first async_read is passed a handler which is called when
+       * exactly six bytes are received. These first six bytes contain
+       * the size of the pdu _len_.
+       * Then, in this first read-handler, another async_read is
+       * dispatched which calls its read-handler when exactly _len_
+       * bytes (ie the whole pdu) are received. This second read-handler
+       * contains the code which actually processes the pdu (calls the
+       * appropriate handler, manages state transitions, ...)
+       */
       void do_read();
 
    private:
@@ -130,7 +149,7 @@ class scp: public scx
       scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scp() override;
       boost::asio::ip::tcp::socket& sock() override;
-      void run();
+      boost::asio::io_service& io_s() override;
 
    private:
       std::shared_ptr<session> sess;
@@ -149,6 +168,7 @@ class scu: public scx
       scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
       boost::asio::ip::tcp::socket& sock() override;
+      boost::asio::io_service&io_s() override;
 
    private:
       boost::asio::io_service io_service;
