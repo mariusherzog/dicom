@@ -12,7 +12,7 @@
 #include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
-#include "upperlayer_transitions.hpp"
+#include "upperlayer_statemachine.hpp"
 
 
 namespace upperlayer
