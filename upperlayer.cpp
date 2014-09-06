@@ -70,13 +70,6 @@ void scx::send(property* p)
    }
 }
 
-
-scx::CONN_STATE scx::get_state()
-{
-   return state;
-}
-
-
 void scx::do_read()
 {
    static std::vector<unsigned char> size(6); // watch for scope
@@ -96,7 +89,8 @@ void scx::do_read()
                compl_data.insert(compl_data.end(), rem_data.begin(), rem_data.end());
                auto pdutype = get_type(compl_data);
 
-               state = transition_table_received_pdus[std::make_pair(state, pdutype)];
+               //state = transition_table_received_pdus[std::make_pair(state, pdutype)];
+               statem.transition(pdutype, true);
 
                // call appropriate handler
                handlers[pdutype](this, make_property(compl_data));
@@ -105,7 +99,7 @@ void scx::do_read()
                size.resize(6);
 
                // be ready for new incoming data
-               if (get_state() != CONN_STATE::STA2) {
+               if (get_state() != statemachine::CONN_STATE::STA2) {
                   do_read();
                }
             }
