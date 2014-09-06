@@ -99,17 +99,27 @@ std::vector<uchar> p_data_tf::make_pdu()
    {
       // insert command part
       // one extra byte each for message id and message header
-      std::vector<uchar> pdv_len = ui_to_32b_be(command_set.size()+2);
-      pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-      pack.push_back(message_id);
-      pack.push_back(0x01);
-      pack.insert(pack.end(), command_set.begin(), command_set.end());
+      std::vector<uchar> pdv_len;
 
-      pdv_len = ui_to_32b_be(data_set.size()+2);
-      pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-      pack.push_back(message_id);
-      pack.push_back(0x02);
-      pack.insert(pack.end(), data_set.begin(), data_set.end());
+      if (!command_set.empty()) {
+         pdv_len = ui_to_32b_be(command_set.size()+2);
+         pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
+         pack.push_back(message_id);
+         if (data_set.empty()) {
+            pack.push_back(0x03);
+         } else {
+            pack.push_back(0x01);
+         }
+         pack.insert(pack.end(), command_set.begin(), command_set.end());
+      }
+
+      if (!data_set.empty()) {
+         pdv_len = ui_to_32b_be(data_set.size()+2);
+         pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
+         pack.push_back(message_id);
+         pack.push_back(0x02);
+         pack.insert(pack.end(), data_set.begin(), data_set.end());
+      }
    }
 
    std::size_t pdu_len = pack.size()-6;
