@@ -74,14 +74,17 @@ void request_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> 
 }
 
 // example function for p_data_tf
-void printall(upperlayer::scx*, std::unique_ptr<upperlayer::property> rq)
+void printall(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 {
    using namespace upperlayer;
    p_data_tf* d = dynamic_cast<p_data_tf*>(rq.get());
 
    for (const auto& c : d->command_set) {
-      std::cout << c;
+      std::cout << c << std::flush;
    }
+
+   a_abort ab;
+   sc->send(&ab);
 }
 
 
@@ -92,6 +95,7 @@ int main()
 //   dpm.receive();
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
                                {upperlayer::TYPE::P_DATA_TF, printall} });
-   sc.receive(); // receive a_associate_rq
-   sc.receive(); // receive data
+//   sc.receive(); // receive a_associate_rq
+//   sc.receive(); // receive data
+   sc.run();
 }

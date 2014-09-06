@@ -57,6 +57,7 @@ scx::~scx()
 {
 }
 
+
 void scx::send(property* p)
 {
    auto pdu = p->make_pdu();
@@ -64,41 +65,63 @@ void scx::send(property* p)
 
    CONN_STATE next_state = transition_table_user_primitives[std::make_pair(state, ptype)];
    if (next_state != CONN_STATE::INV) {
-      boost::asio::write(sock(), boost::asio::buffer(pdu));
+      boost::asio::async_write(sock(), boost::asio::buffer(pdu),
+         [=](const boost::system::error_code& error, std::size_t bytes) { }
+      );
       state = next_state;
    }
 }
 
 
-void scx::receive()
-{
-   boost::system::error_code error;
-
-   std::vector<uchar> size(6);
-   boost::asio::read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6), error);
-   std::size_t len = be_char_to_32b({size.begin()+2, size.begin()+6});
-
-   std::vector<uchar> data(len);
-   boost::asio::read(sock(), boost::asio::buffer(data), boost::asio::transfer_exactly(len), error);
-
-   std::vector<uchar> resp;
-   resp.reserve(size.size() + data.size());
-   resp.insert(resp.end(), size.begin(), size.end());
-   resp.insert(resp.end(), data.begin(), data.end());
-
-   auto ptype = get_type(resp);
-
-   // failed assertion would indicate an error in the remote state machine
-   assert(transition_table_received_pdus[std::make_pair(state, ptype)] != CONN_STATE::INV);
-   state = transition_table_received_pdus[std::make_pair(state, ptype)];
-
-   handlers[ptype](this, make_property(resp));
-}
-
 scx::CONN_STATE scx::get_state()
 {
    return state;
 }
+
+
+void scx::do_read()
+{
+   static std::vector<unsigned char> size(6); // watch for scope
+   static std::vector<unsigned char> rem_data;
+   static std::vector<unsigned char> compl_data;
+   boost::asio::async_read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6),
+      [=](const boost::system::error_code& error, std::size_t bytes)  {
+         assert(bytes == 6);
+
+         std::size_t len = be_char_to_32b({size.begin()+2, size.begin()+6});
+         rem_data.resize(len);
+         boost::asio::async_read(sock(), boost::asio::buffer(rem_data), boost::asio::transfer_exactly(len),
+            [=](const boost::system::error_code& error, std::size_t bytes) {
+
+               compl_data.reserve(size.size() + rem_data.size());
+               compl_data.insert(compl_data.end(), size.begin(), size.end());
+               compl_data.insert(compl_data.end(), rem_data.begin(), rem_data.end());
+               auto pdutype = get_type(compl_data);
+
+               state = transition_table_received_pdus[std::make_pair(state, pdutype)];
+
+               // call appropriate handler
+               handlers[pdutype](this, make_property(compl_data));
+
+               size.clear(); rem_data.clear(); compl_data.clear();
+               size.resize(6);
+
+               // be ready for new incoming data
+               if (get_state() != CONN_STATE::STA2) {
+                  do_read();
+               }
+            }
+         );
+      }
+
+   );
+}
+
+void scx::run()
+{
+   io_s().run();
+}
+
 
 void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
 {
@@ -112,7 +135,13 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    socket(io_service),
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
 {
-   acptr.accept(socket);
+   //acptr.accept(socket);
+   acptr.async_accept(socket, [this](boost::system::error_code ec)
+      {
+         if (!ec) {
+            do_read();
+         }
+      } );
 }
 
 scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
@@ -138,6 +167,11 @@ boost::asio::ip::tcp::socket&scp::sock()
    return socket;
 }
 
+boost::asio::io_service&scp::io_s()
+{
+   return io_service;
+}
+
 scp::~scp()
 {
    switch (get_state()) {
@@ -149,9 +183,14 @@ scp::~scp()
    }
 }
 
-boost::asio::ip::tcp::socket&scu::sock()
+boost::asio::ip::tcp::socket& scu::sock()
 {
    return socket;
+}
+
+boost::asio::io_service& scu::io_s()
+{
+   return io_service;
 }
 
 scu::~scu()
