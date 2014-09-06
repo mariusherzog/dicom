@@ -63,10 +63,13 @@ void scx::send(property* p)
    auto ptype = get_type(pdu);
 
    CONN_STATE next_state = transition_table_user_primitives[std::make_pair(state, ptype)];
-   if (next_state != CONN_STATE::INV) {
-      boost::asio::write(sock(), boost::asio::buffer(pdu));
-      state = next_state;
-   }
+//   if (next_state != CONN_STATE::INV) {
+//      boost::asio::write(sock(), boost::asio::buffer(pdu));
+      boost::asio::async_write(sock(), boost::asio::buffer(pdu),
+         [=](const boost::system::error_code& error, std::size_t bytes) { }
+      );
+//      state = next_state;
+//   }
 }
 
 
@@ -122,6 +125,10 @@ void scx::do_read()
                auto f = handlers[pdutype];
                f(this, make_property(compl_data));
 
+               state = transition_table_received_pdus[std::make_pair(state, pdutype)];
+
+               size.clear(); rem_data.clear(); compl_data.clear();
+               size.resize(6);
                // be ready for new incoming data
                do_read();
             }
