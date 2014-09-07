@@ -72,31 +72,28 @@ void scx::send(property* p)
 
 void scx::do_read()
 {
-   static std::vector<unsigned char> size(6); // watch for scope
-   static std::vector<unsigned char> rem_data;
-   static std::vector<unsigned char> compl_data;
-   boost::asio::async_read(sock(), boost::asio::buffer(size), boost::asio::transfer_exactly(6),
+   auto size = std::make_shared<std::vector<unsigned char>>(6);
+   auto rem_data = std::make_shared<std::vector<unsigned char>>();
+   auto compl_data = std::make_shared<std::vector<unsigned char>>();
+   boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
       [=](const boost::system::error_code& error, std::size_t bytes)  {
          assert(bytes == 6);
 
-         std::size_t len = be_char_to_32b({size.begin()+2, size.begin()+6});
-         rem_data.resize(len);
-         boost::asio::async_read(sock(), boost::asio::buffer(rem_data), boost::asio::transfer_exactly(len),
+         std::size_t len = be_char_to_32b({size->begin()+2, size->begin()+6});
+         rem_data->resize(len);
+         boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(len),
             [=](const boost::system::error_code& error, std::size_t bytes) {
 
-               compl_data.reserve(size.size() + rem_data.size());
-               compl_data.insert(compl_data.end(), size.begin(), size.end());
-               compl_data.insert(compl_data.end(), rem_data.begin(), rem_data.end());
-               auto pdutype = get_type(compl_data);
+               compl_data->reserve(size->size() + rem_data->size());
+               compl_data->insert(compl_data->end(), size->begin(), size->end());
+               compl_data->insert(compl_data->end(), rem_data->begin(), rem_data->end());
+               auto pdutype = get_type(*compl_data);
 
                //state = transition_table_received_pdus[std::make_pair(state, pdutype)];
                statem.transition(pdutype, true);
 
                // call appropriate handler
-               handlers[pdutype](this, make_property(compl_data));
-
-               size.clear(); rem_data.clear(); compl_data.clear();
-               size.resize(6);
+               handlers[pdutype](this, make_property(*compl_data));
 
                // be ready for new incoming data
                if (get_state() != statemachine::CONN_STATE::STA2) {
