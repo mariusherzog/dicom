@@ -3,6 +3,8 @@
 
 #include <map>
 #include <functional>
+#include <queue>
+#include <memory>
 
 #include "upperlayer_properties.hpp"
 
@@ -11,6 +13,8 @@ namespace upperlayer
 
 class statemachine
 {
+      friend class scx;
+
    public:
       /**
        * @brief The CONN_STATE enum contains the states for the state machine
@@ -65,11 +69,23 @@ class statemachine
 
    private:
       CONN_STATE state;
+      EVENT event_;
 
       bool process_next;
       bool reset_artim;
+      std::queue<std::unique_ptr<property>> to_send; // for example aa1();
 
-      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(transition_functions*)>> transition_table;
+      void aa1(); void aa2(); void aa3(); void aa4();
+      void aa5(); void aa6(); void aa7(); void aa8();
+      void ae1(); void ae2(); void ae3(); void ae4();
+      void ae5(); void ae6(); void ae7(); void ae8();
+      void ar1(); void ar2(); void ar3(); void ar4();
+      void ar5(); void ar6(); void ar7(); void ar8();
+      void ar9(); void ar10();
+      void dt1();
+      void dt2();
+
+      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*)>> transition_table;
 };
 
 
