@@ -2,6 +2,7 @@
 #define UPPERLAYER_TRANSITIONS_HPP
 
 #include <map>
+#include <functional>
 
 #include "upperlayer_properties.hpp"
 
@@ -21,6 +22,7 @@ class statemachine
          STA1,
          STA2,
          STA3,
+         STA4,
          STA5,
          STA6,
          STA7,
@@ -32,16 +34,42 @@ class statemachine
          STA13
       };
 
+      enum class EVENT
+      {
+         NONE = 0x00,
+         A_ASSOCIATE_RQ,
+         TRANS_CONN_CONF,
+         RECV_A_ASSOCIATE_AC_PDU,
+         RECV_A_ASSOCIATE_RJ_PDU,
+         TRANS_CONN_INDIC,
+         RECV_A_ASSOCIATE_RQ_PDU,
+         LOCL_A_ASSOCIATE_AC_PDU,
+         LOCL_A_ASSOCIATE_RJ_PDU,
+         LOCL_P_DATA_TF_PDU,
+         RECV_P_DATA_TF_PDU,
+         LOCL_A_RELEASE_RQ_PDU,
+         RECV_A_RELEASE_RQ_PDU,
+         RECV_A_RELEASE_RP_PDU,
+         LOCL_A_RELEASE_RP_PDU,
+         LOCL_A_ABORT_PDU,
+         RECV_A_ABORT_PDU,
+         TRANS_CONN_CLOSED,
+         ARTIM_EXPIRED,
+         UNRECOG_PDU
+      };
+
       statemachine();
 
       CONN_STATE get_state();
-      CONN_STATE transition(TYPE t, bool received);
+      CONN_STATE transition(EVENT e);
 
    private:
       CONN_STATE state;
 
-      static std::map<std::pair<CONN_STATE, TYPE>, CONN_STATE> transition_table_user_primitives;
-      static std::map<std::pair<CONN_STATE, TYPE>, CONN_STATE> transition_table_received_pdus;
+      bool process_next;
+      bool reset_artim;
+
+      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(transition_functions*)>> transition_table;
 };
 
 
