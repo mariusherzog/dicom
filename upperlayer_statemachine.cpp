@@ -11,7 +11,11 @@ namespace upperlayer
 
 
 statemachine::statemachine():
-   state {CONN_STATE::STA2}
+   state {CONN_STATE::STA2},
+   event_ {EVENT::NONE},
+   process_next {true},
+   reset_artim {false}
+
 {
 }
 
@@ -22,15 +26,9 @@ statemachine::CONN_STATE statemachine::get_state()
 
 statemachine::CONN_STATE statemachine::transition(EVENT e)
 {
-   CONN_STATE next_state;
-//   if (received) {
-//      next_state = transition_table_received_pdus[{state, t}];
-//   } else {
-//      next_state = transition_table_user_primitives[{state, t}];
-//   }
-
-   if (next_state != CONN_STATE::INV) {
-      return state = next_state;
+   if (transition_table.find(std::make_pair(e, state)) != transition_table.end()) {
+      transition_table[std::make_pair(e, state)](this);
+      return state;
    } else {
       return CONN_STATE::INV;
    }
@@ -259,17 +257,17 @@ std::map<std::pair<statemachine::EVENT, statemachine::CONN_STATE>, std::function
 
    {{statemachine::EVENT::TRANS_CONN_INDIC, statemachine::CONN_STATE::STA1}, &statemachine::ae5},
 
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA2}, &statemachine::ae6},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA3}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA5}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA6}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA7}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA8}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA9}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA10}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA11}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA12}, &statemachine::aa8},
-   {{statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU, statemachine::CONN_STATE::STA13}, &statemachine::aa7},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA2}, &statemachine::ae6},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA3}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA5}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA6}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA7}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA8}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA9}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA10}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA11}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA12}, &statemachine::aa8},
+   {{statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU, statemachine::CONN_STATE::STA13}, &statemachine::aa7},
 
    {{statemachine::EVENT::LOCL_A_ASSOCIATE_AC_PDU, statemachine::CONN_STATE::STA3}, &statemachine::ae7},
 

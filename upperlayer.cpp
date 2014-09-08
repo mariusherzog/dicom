@@ -128,7 +128,7 @@ void scx::do_read()
                      e = statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU;
                      break;
                   case TYPE::A_ASSOCIATE_RQ:
-                     e = statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU;
+                     e = statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU;
                      break;
                   case TYPE::A_RELEASE_RQ:
                      e = statemachine::EVENT::RECV_A_RELEASE_RQ_PDU;
