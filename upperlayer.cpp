@@ -192,7 +192,6 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
 {
    acptr.async_accept(socket, [=](boost::system::error_code ec) {
-         // Transport connection indication
          if (!ec) {
             statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
             do_read();
@@ -208,6 +207,7 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
    endpoint_iterator(resolver.resolve(query)),
    socket(io_service)
 {
+   statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
    boost::asio::ip::tcp::resolver::iterator end;
    boost::system::error_code error = boost::asio::error::host_not_found;
    while(error && endpoint_iterator != end)
@@ -215,6 +215,7 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
      socket.close();
      socket.connect(*endpoint_iterator++, error);
    }
+   statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
    assert(!error);
 }
 

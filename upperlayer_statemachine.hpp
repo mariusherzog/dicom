@@ -69,7 +69,6 @@ class statemachine
 
    private:
       CONN_STATE state;
-      EVENT event_;
 
       bool process_next;
       bool reset_artim;

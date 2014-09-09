@@ -39,127 +39,106 @@ void statemachine::aa1()
 {
    to_send.emplace(new a_abort {});
    reset_artim = true;
-
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa2()
 {
    //close artim
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa3()
 {
    // call a_abort handler
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa4()
 {
    //stop artim timer
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa5()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa6()
 {
    process_next = false;
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa7()
 {
    to_send.emplace(new a_abort {});
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa8()
 {
    to_send.emplace(new a_abort {});
-
    // start ARTIM
    // A-P-Abort indic
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA13;
 }
 
 void statemachine::ae1()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA4;
 }
 
 void statemachine::ae2()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA5;
 }
 
 void statemachine::ae3()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA6;
 }
 
 void statemachine::ae4()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::ae5()
 {
-   event_ = EVENT::NONE;
    // start ARTIM timer
    state = CONN_STATE::STA2;
 }
 
 void statemachine::ae6()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA3;
 }
 
 void statemachine::ae7()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA6;
 }
 
 void statemachine::ae8()
 {
    // start ARTIM timer
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA13;
 }
 
 void statemachine::ar1()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA7;
 }
 
 void statemachine::ar2()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA8;
 }
 
 void statemachine::ar3()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
    // release conf handler
 }
@@ -167,57 +146,48 @@ void statemachine::ar3()
 void statemachine::ar4()
 {
    // start ARTIM timer
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA13;
 }
 
 void statemachine::ar5()
 {
    //stop artim timer
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::ar6()
 {
-   event_ = EVENT::NONE;
 }
 
 void statemachine::ar7()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA8;
 }
 
 void statemachine::ar8()
 {
    //if scu state = sta10
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA9;
    // a release indication collision
 }
 
 void statemachine::ar9()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA11;
 }
 
 void statemachine::ar10()
 {
-   event_ = EVENT::NONE;
    state = CONN_STATE::STA12;
 }
 
 void statemachine::dt1()
 {
-   event_ = EVENT::NONE;
    // keep state
 }
 
 void statemachine::dt2()
 {
-   event_ = EVENT::NONE;
    //keep state
 }
 
