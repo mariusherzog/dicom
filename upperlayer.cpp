@@ -145,7 +145,17 @@ void scx::do_read()
                statem.transition(e);
 
                // call appropriate handler
-               handlers[ptype](this, make_property(*compl_data));
+               if (statem.process_next) {
+                  handlers[ptype](this, make_property(*compl_data));
+               } else {
+                  statem.process_next = true; //reset
+               }
+
+               // ? revisit
+               if (get_state() == statemachine::CONN_STATE::STA13) {
+                  io_s().stop();
+                  return;
+               }
 
                // be ready for new incoming data
                if (get_state() != statemachine::CONN_STATE::STA2) {
@@ -181,10 +191,10 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    socket(io_service),
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
 {
-   //acptr.accept(socket);
-   acptr.async_accept(socket, [this](boost::system::error_code ec)
-      {
+   acptr.async_accept(socket, [=](boost::system::error_code ec) {
+         // Transport connection indication
          if (!ec) {
+            statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
             do_read();
          }
       } );

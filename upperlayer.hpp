@@ -112,9 +112,10 @@ class scx
        */
       void do_read();
 
-   private:
+   protected:
       statemachine statem;
 
+   private:
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 

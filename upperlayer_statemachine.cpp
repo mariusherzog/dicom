@@ -11,7 +11,7 @@ namespace upperlayer
 
 
 statemachine::statemachine():
-   state {CONN_STATE::STA2},
+   state {CONN_STATE::STA1},
    event_ {EVENT::NONE},
    process_next {true},
    reset_artim {false}
