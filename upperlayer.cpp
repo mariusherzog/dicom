@@ -63,7 +63,34 @@ void scx::send(property* p)
    auto pdu = p->make_pdu();
    auto ptype = get_type(pdu);
 
-   if (statem.transition(ptype, false) != statemachine::CONN_STATE::INV) {
+   statemachine::EVENT e;
+   switch (ptype) {
+      case TYPE::A_ABORT:
+         e = statemachine::EVENT::LOCL_A_ABORT_PDU;
+         break;
+      case TYPE::A_ASSOCIATE_AC:
+         e = statemachine::EVENT::LOCL_A_ASSOCIATE_AC_PDU;
+         break;
+      case TYPE::A_ASSOCIATE_RJ:
+         e = statemachine::EVENT::LOCL_A_ASSOCIATE_RJ_PDU;
+         break;
+      case TYPE::A_ASSOCIATE_RQ:
+         e = statemachine::EVENT::LOCL_A_ASSOCIATE_RJ_PDU;
+         break;
+      case TYPE::A_RELEASE_RQ:
+         e = statemachine::EVENT::LOCL_A_RELEASE_RQ_PDU;
+         break;
+      case TYPE::A_RELEASE_RP:
+         e = statemachine::EVENT::LOCL_A_RELEASE_RP_PDU;
+         break;
+      case TYPE::P_DATA_TF:
+         e = statemachine::EVENT::LOCL_P_DATA_TF_PDU;
+         break;
+      default:
+         e = statemachine::EVENT::UNRECOG_PDU;
+   }
+
+   if (statem.transition(e) != statemachine::CONN_STATE::INV) {
       boost::asio::async_write(sock(), boost::asio::buffer(pdu),
          [=](const boost::system::error_code& error, std::size_t bytes) { }
       );
@@ -87,13 +114,48 @@ void scx::do_read()
                compl_data->reserve(size->size() + rem_data->size());
                compl_data->insert(compl_data->end(), size->begin(), size->end());
                compl_data->insert(compl_data->end(), rem_data->begin(), rem_data->end());
-               auto pdutype = get_type(*compl_data);
+               auto ptype = get_type(*compl_data);
 
-               //state = transition_table_received_pdus[std::make_pair(state, pdutype)];
-               statem.transition(pdutype, true);
+               statemachine::EVENT e;
+               switch (ptype) {
+                  case TYPE::A_ABORT:
+                     e = statemachine::EVENT::RECV_A_ABORT_PDU;
+                     break;
+                  case TYPE::A_ASSOCIATE_AC:
+                     e = statemachine::EVENT::RECV_A_ASSOCIATE_AC_PDU;
+                     break;
+                  case TYPE::A_ASSOCIATE_RJ:
+                     e = statemachine::EVENT::RECV_A_ASSOCIATE_RJ_PDU;
+                     break;
+                  case TYPE::A_ASSOCIATE_RQ:
+                     e = statemachine::EVENT::RECV_A_ASSOCIATE_RQ_PDU;
+                     break;
+                  case TYPE::A_RELEASE_RQ:
+                     e = statemachine::EVENT::RECV_A_RELEASE_RQ_PDU;
+                     break;
+                  case TYPE::A_RELEASE_RP:
+                     e = statemachine::EVENT::RECV_A_RELEASE_RP_PDU;
+                     break;
+                  case TYPE::P_DATA_TF:
+                     e = statemachine::EVENT::RECV_P_DATA_TF_PDU;
+                     break;
+                  default:
+                     e = statemachine::EVENT::UNRECOG_PDU;
+               }
+               statem.transition(e);
 
                // call appropriate handler
-               handlers[pdutype](this, make_property(*compl_data));
+               if (statem.process_next) {
+                  handlers[ptype](this, make_property(*compl_data));
+               } else {
+                  statem.process_next = true; //reset
+               }
+
+
+               if (get_state() == statemachine::CONN_STATE::STA13) {
+                  io_s().stop();
+                  return;
+               }
 
                // be ready for new incoming data
                if (get_state() != statemachine::CONN_STATE::STA2) {
@@ -129,10 +191,9 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    socket(io_service),
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
 {
-   //acptr.accept(socket);
-   acptr.async_accept(socket, [this](boost::system::error_code ec)
-      {
+   acptr.async_accept(socket, [=](boost::system::error_code ec) {
          if (!ec) {
+            statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
             do_read();
          }
       } );
@@ -146,6 +207,7 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
    endpoint_iterator(resolver.resolve(query)),
    socket(io_service)
 {
+   statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
    boost::asio::ip::tcp::resolver::iterator end;
    boost::system::error_code error = boost::asio::error::host_not_found;
    while(error && endpoint_iterator != end)
@@ -153,6 +215,7 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
      socket.close();
      socket.connect(*endpoint_iterator++, error);
    }
+   statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
    assert(!error);
 }
 
@@ -168,6 +231,7 @@ boost::asio::io_service&scp::io_s()
 
 scp::~scp()
 {
+   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
    switch (get_state()) {
       case statemachine::CONN_STATE::STA2:
          break;
@@ -190,6 +254,7 @@ boost::asio::io_service& scu::io_s()
 
 scu::~scu()
 {
+   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
    switch (get_state()) {
       case statemachine::CONN_STATE::STA2:
          break;
