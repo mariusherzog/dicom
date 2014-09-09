@@ -87,7 +87,7 @@ void scx::send(property* p)
          e = statemachine::EVENT::LOCL_P_DATA_TF_PDU;
          break;
       default:
-         assert(false);
+         e = statemachine::EVENT::UNRECOG_PDU;
    }
 
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
@@ -140,7 +140,7 @@ void scx::do_read()
                      e = statemachine::EVENT::RECV_P_DATA_TF_PDU;
                      break;
                   default:
-                     assert(false);
+                     e = statemachine::EVENT::UNRECOG_PDU;
                }
                statem.transition(e);
 
@@ -151,7 +151,7 @@ void scx::do_read()
                   statem.process_next = true; //reset
                }
 
-               // ? revisit
+
                if (get_state() == statemachine::CONN_STATE::STA13) {
                   io_s().stop();
                   return;
@@ -231,6 +231,7 @@ boost::asio::io_service&scp::io_s()
 
 scp::~scp()
 {
+   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
    switch (get_state()) {
       case statemachine::CONN_STATE::STA2:
          break;
@@ -253,6 +254,7 @@ boost::asio::io_service& scu::io_s()
 
 scu::~scu()
 {
+   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
    switch (get_state()) {
       case statemachine::CONN_STATE::STA2:
          break;

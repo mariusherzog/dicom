@@ -40,7 +40,6 @@ class statemachine
 
       enum class EVENT
       {
-         NONE = 0x00,
          A_ASSOCIATE_RQ,
          TRANS_CONN_CONF,
          RECV_A_ASSOCIATE_AC_PDU,
