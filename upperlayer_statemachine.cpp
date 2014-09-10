@@ -43,7 +43,7 @@ void statemachine::aa1()
 
 void statemachine::aa2()
 {
-   //close artim
+   stop_artim = true;
    state = CONN_STATE::STA1;
 }
 
@@ -55,12 +55,13 @@ void statemachine::aa3()
 
 void statemachine::aa4()
 {
-   //stop artim timer
+   stop_artim = true;
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa5()
 {
+   stop_artim = true;
    state = CONN_STATE::STA1;
 }
 
@@ -79,7 +80,7 @@ void statemachine::aa7()
 void statemachine::aa8()
 {
    to_send.emplace(new a_abort {});
-   // start ARTIM
+   reset_artim = true;
    // A-P-Abort indic
    state = CONN_STATE::STA13;
 }
@@ -112,6 +113,7 @@ void statemachine::ae5()
 
 void statemachine::ae6()
 {
+   stop_artim = true;
    state = CONN_STATE::STA3;
 }
 
@@ -122,7 +124,7 @@ void statemachine::ae7()
 
 void statemachine::ae8()
 {
-   // start ARTIM timer
+   reset_artim = true;
    state = CONN_STATE::STA13;
 }
 
@@ -144,7 +146,7 @@ void statemachine::ar3()
 
 void statemachine::ar4()
 {
-   // start ARTIM timer
+   reset_artim = true;
    state = CONN_STATE::STA13;
 }
 

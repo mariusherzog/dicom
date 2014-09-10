@@ -71,6 +71,7 @@ class statemachine
 
       bool process_next;
       bool reset_artim;
+      bool stop_artim;
       std::queue<std::unique_ptr<property>> to_send; // for example aa1();
 
       void aa1(); void aa2(); void aa3(); void aa4();

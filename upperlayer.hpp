@@ -65,6 +65,8 @@ class scx
        */
       virtual boost::asio::io_service& io_s() = 0;
 
+      virtual boost::asio::steady_timer& artim_timer() = 0;
+
       /**
        * @brief send takes a property and uses its property::make_pdu() function
        *        for serialization. The serialized data is sent to the peer via
@@ -112,6 +114,14 @@ class scx
    protected:
       statemachine statem;
 
+      void artim_expired(const boost::system::error_code& error);
+
+      /**
+       * @brief process_artim sets and resets the ARTIM timer if necessary, as
+       *        indicated by the state machine
+       */
+      void process_artim();
+
    private:
       std::queue<std::unique_ptr<property>> send_queue;
 
@@ -128,6 +138,7 @@ class scp: public scx
       ~scp() override;
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
+      boost::asio::steady_timer& artim_timer() override;
 
    private:
       boost::asio::io_service io_service;
@@ -145,7 +156,8 @@ class scu: public scx
       scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
       boost::asio::ip::tcp::socket& sock() override;
-      boost::asio::io_service&io_s() override;
+      boost::asio::io_service& io_s() override;
+      boost::asio::steady_timer& artim_timer() override;
 
    private:
       boost::asio::io_service io_service;

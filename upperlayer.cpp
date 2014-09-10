@@ -96,6 +96,7 @@ void scx::send(property* p)
             if (!send_queue.empty()) {
                send(send_queue.back().get());
             }
+            process_artim();
          }
       );
    }
@@ -147,8 +148,9 @@ void scx::do_read()
                      e = statemachine::EVENT::UNRECOG_PDU;
                }
                statem.transition(e);
+               process_artim();
 
-               // call appropriate handler
+               // call handler for received pdus
                if (statem.process_next) {
                   handlers[ptype](this, make_property(*compl_data));
                } else {
@@ -188,7 +190,26 @@ void scx::run()
    io_s().run();
 }
 
+void scx::artim_expired(const boost::system::error_code& error)
+{
+   if (error != boost::asio::error::operation_aborted) {
+      statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
+      process_artim();
+   }
+}
 
+void scx::process_artim()
+{
+   if (statem.reset_artim) {
+      artim_timer().cancel();
+      artim_timer().async_wait([=](const boost::system::error_code& error) { artim_expired(error); });
+      statem.reset_artim = false;
+   }
+   if (statem.stop_artim) {
+      artim_timer().cancel();
+      statem.stop_artim = false;
+   }
+}
 
 void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
 {
@@ -211,7 +232,7 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    acptr.async_accept(socket, [=](boost::system::error_code ec) {
          if (!ec) {
             statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
-            artim.async_wait([=](boost::system::error_code ec) { });
+            process_artim();
             do_read();
          }
       } );
@@ -235,8 +256,8 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
      socket.connect(*endpoint_iterator++, error);
    }
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
+   process_artim();
 
-   artim.async_wait([=](boost::system::error_code ec) { });
    assert(!error);
 }
 
@@ -248,6 +269,11 @@ boost::asio::ip::tcp::socket& scp::sock()
 boost::asio::io_service&scp::io_s()
 {
    return io_service;
+}
+
+boost::asio::steady_timer&scp::artim_timer()
+{
+   return artim;
 }
 
 scp::~scp()
@@ -263,6 +289,11 @@ boost::asio::ip::tcp::socket& scu::sock()
 boost::asio::io_service& scu::io_s()
 {
    return io_service;
+}
+
+boost::asio::steady_timer&scu::artim_timer()
+{
+   return artim;
 }
 
 scu::~scu()
