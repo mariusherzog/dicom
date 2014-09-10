@@ -117,6 +117,4 @@ int main()
 //   sc.receive(); // receive a_associate_rq
 //   sc.receive(); // receive data
    sc.run();
-   int q = 3;
-   q*=2;
 }

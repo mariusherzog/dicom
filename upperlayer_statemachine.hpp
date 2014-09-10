@@ -13,7 +13,7 @@ namespace upperlayer
 
 class statemachine
 {
-      friend class scx;
+      friend class scx; friend class scp; friend class scu;
 
    public:
       /**

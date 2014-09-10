@@ -106,7 +106,7 @@ void statemachine::ae4()
 
 void statemachine::ae5()
 {
-   // start ARTIM timer
+   reset_artim = true;
    state = CONN_STATE::STA2;
 }
 

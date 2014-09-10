@@ -1,13 +1,12 @@
 #include "upperlayer.hpp"
 
-#include <map>
+
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include <ostream>
 #include <cassert>
-#include <functional>
 #include <initializer_list>
+#include <chrono>
 
 #include <boost/asio.hpp>
 
@@ -179,7 +178,6 @@ void scx::queue_for_write(std::unique_ptr<property> p)
    send_queue.emplace(std::move(p));
    if (send_queue.size() > 1) {
       // there are still active writes
-      std::cout << "err";
       return;
    }
    send(send_queue.back().get());
@@ -207,11 +205,13 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    scx {l},
    io_service(),
    socket(io_service),
-   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+   artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
 {
    acptr.async_accept(socket, [=](boost::system::error_code ec) {
          if (!ec) {
             statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
+            artim.async_wait([=](boost::system::error_code ec) { });
             do_read();
          }
       } );
@@ -223,7 +223,8 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
    resolver(io_service),
    query(host, port),
    endpoint_iterator(resolver.resolve(query)),
-   socket(io_service)
+   socket(io_service),
+   artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
 {
    statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
    boost::asio::ip::tcp::resolver::iterator end;
@@ -234,10 +235,12 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
      socket.connect(*endpoint_iterator++, error);
    }
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
+
+   artim.async_wait([=](boost::system::error_code ec) { });
    assert(!error);
 }
 
-boost::asio::ip::tcp::socket&scp::sock()
+boost::asio::ip::tcp::socket& scp::sock()
 {
    return socket;
 }

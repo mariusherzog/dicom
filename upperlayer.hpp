@@ -11,14 +11,12 @@
 #include <queue>
 
 #include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
 
 
-class session
-{
-};
 
 /**
  * The upperlayer namespace contains classes and functions which implement the upperlayer as
@@ -33,10 +31,6 @@ namespace upperlayer
  * @brief The scx class implements basic functionality used both by the specialed scp and scu
  *        subclasses, like reading and writing to the connected peer. It also manages the
  *        state machine
- * @todo -refactor state machine from class
- *       -extend state machine by release collision states and transitions <BR>
- *       -ARTIM timer <BR>
- *       -
  *
  * upperlayer::scx provides send() and read() functions independetly if the
  * subclass for clients (scu) or servers (scp) is used.
@@ -136,11 +130,10 @@ class scp: public scx
       boost::asio::io_service& io_s() override;
 
    private:
-      std::shared_ptr<session> sess;
-
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::socket socket;
       boost::asio::ip::tcp::acceptor acptr;
+      boost::asio::steady_timer artim;
 };
 
 /**
@@ -160,6 +153,7 @@ class scu: public scx
       boost::asio::ip::tcp::resolver::query query;
       boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
       boost::asio::ip::tcp::socket socket;
+      boost::asio::steady_timer artim;
 };
 
 
