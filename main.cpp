@@ -70,7 +70,8 @@ void request_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> 
    }
    ac.max_message_length = 0xFFFF;
 
-   sc->send(&ac);
+   //sc->send(&ac);
+   sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
 }
 
 // example function for p_data_tf
@@ -83,8 +84,25 @@ void printall(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
       std::cout << c << std::flush;
    }
 
-   a_abort ab;
-   sc->send(&ab);
+   std::vector<unsigned char> echo_rsp {
+      0x04, 0x00, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x50, 0x01, 0x03,
+      0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
+      0x12, 0x00, 0x00, 0x00, 0x31, 0x2E, 0x32, 0x2E, 0x38, 0x34, 0x30, 0x2E, 0x31, 0x30, 0x30, 0x30,
+      0x38, 0x2E, 0x31, 0x2E, 0x31, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x30, 0x80,
+      0x00, 0x00, 0x20, 0x01, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x02, 0x00,
+      0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x09, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+   };
+
+   p_data_tf data;
+   data.from_pdu(echo_rsp);
+   data.make_pdu();
+
+   sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
+}
+
+void release_rp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
+{
+   sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
 }
 
 
@@ -94,8 +112,11 @@ int main()
 //   dpm.inject(1, print);
 //   dpm.receive();
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
-                               {upperlayer::TYPE::P_DATA_TF, printall} });
+                               {upperlayer::TYPE::P_DATA_TF, printall},
+                               {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
 //   sc.receive(); // receive a_associate_rq
 //   sc.receive(); // receive data
    sc.run();
+   int q = 3;
+   q*=2;
 }
