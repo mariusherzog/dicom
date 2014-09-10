@@ -173,10 +173,6 @@ void scx::do_read()
    );
 }
 
-void scx::do_write()
-{
-
-}
 
 void scx::queue_for_write(std::unique_ptr<property> p)
 {
@@ -254,14 +250,6 @@ boost::asio::io_service&scp::io_s()
 scp::~scp()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
-   switch (get_state()) {
-      case statemachine::CONN_STATE::STA2:
-         break;
-      default: {
-         a_abort ab;
-         boost::asio::write(sock(), boost::asio::buffer(ab.make_pdu()));
-      }
-   }
 }
 
 boost::asio::ip::tcp::socket& scu::sock()
@@ -277,14 +265,6 @@ boost::asio::io_service& scu::io_s()
 scu::~scu()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
-   switch (get_state()) {
-      case statemachine::CONN_STATE::STA2:
-         break;
-      default: {
-         a_abort ab;
-         boost::asio::write(sock(), boost::asio::buffer(ab.make_pdu()));
-      }
-   }
 }
 
 }

@@ -113,8 +113,6 @@ class scx
        */
       void do_read();
 
-      void do_write();
-
       void queue_for_write(std::unique_ptr<property> p);
 
    protected:
