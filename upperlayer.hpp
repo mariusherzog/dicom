@@ -8,6 +8,7 @@
 #include <functional>
 #include <initializer_list>
 #include <utility>
+#include <queue>
 
 #include <boost/asio.hpp>
 
@@ -112,10 +113,16 @@ class scx
        */
       void do_read();
 
+      void do_write();
+
+      void queue_for_write(std::unique_ptr<property> p);
+
    protected:
       statemachine statem;
 
    private:
+      std::queue<std::unique_ptr<property>> send_queue;
+
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 

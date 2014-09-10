@@ -60,8 +60,8 @@ scx::~scx()
 
 void scx::send(property* p)
 {
-   auto pdu = p->make_pdu();
-   auto ptype = get_type(pdu);
+   auto pdu = std::make_shared<std::vector<unsigned char>>(p->make_pdu());
+   auto ptype = get_type(*pdu);
 
    statemachine::EVENT e;
    switch (ptype) {
@@ -91,8 +91,13 @@ void scx::send(property* p)
    }
 
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
-      boost::asio::async_write(sock(), boost::asio::buffer(pdu),
-         [=](const boost::system::error_code& error, std::size_t bytes) { }
+      boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
+         [=](const boost::system::error_code& error, std::size_t bytes) {
+            send_queue.pop();
+            if (!send_queue.empty()) {
+               send(send_queue.back().get());
+            }
+         }
       );
    }
 }
@@ -159,12 +164,29 @@ void scx::do_read()
 
                // be ready for new incoming data
                if (get_state() != statemachine::CONN_STATE::STA2) {
-                  do_read();
+                  //do_read();
                }
+               do_read();
             }
          );
       }
    );
+}
+
+void scx::do_write()
+{
+
+}
+
+void scx::queue_for_write(std::unique_ptr<property> p)
+{
+   send_queue.emplace(std::move(p));
+   if (send_queue.size() > 1) {
+      // there are still active writes
+      std::cout << "err";
+      return;
+   }
+   send(send_queue.back().get());
 }
 
 void scx::run()
