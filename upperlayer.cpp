@@ -187,6 +187,7 @@ void scx::queue_for_write(std::unique_ptr<property> p)
    send(send_queue.back().get());
 }
 
+
 void scx::run()
 {
    io_s().run();
@@ -218,9 +219,10 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
    artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
 {
+   artim.cancel();
+   statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
    acptr.async_accept(socket, [=](boost::system::error_code ec) {
          if (!ec) {
-            statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
             do_read();
          }
       } );
@@ -296,6 +298,7 @@ void upperlayer::scx::reset_artim()
    using namespace std::placeholders;
    artim_timer().cancel();
    artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
+      //member function artim_expired has implicit scx* as first parameter
 }
 
 void upperlayer::scx::stop_artim()
@@ -312,4 +315,11 @@ void upperlayer::scx::start_artim()
 void upperlayer::scx::ignore_next()
 {
    //todo ?readqueue?
+}
+
+
+void upperlayer::scx::close_connection()
+{
+   io_s().reset();
+   io_s().stop();
 }

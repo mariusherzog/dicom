@@ -43,12 +43,14 @@ void statemachine::aa2()
 {
    ul->stop_artim();
    state = CONN_STATE::STA1;
+   ul->close_connection();
 }
 
 void statemachine::aa3()
 {
    // call a_abort handler
    state = CONN_STATE::STA1;
+   ul->close_connection();
 }
 
 void statemachine::aa4()
@@ -101,6 +103,7 @@ void statemachine::ae3()
 void statemachine::ae4()
 {
    state = CONN_STATE::STA1;
+   ul->close_connection();
 }
 
 void statemachine::ae5()
@@ -140,6 +143,7 @@ void statemachine::ar3()
 {
    state = CONN_STATE::STA1;
    // release conf handler
+   ul->close_connection();
 }
 
 void statemachine::ar4()
