@@ -29,6 +29,18 @@ namespace upperlayer
 {
 
 
+struct Istate_trans_ops
+{
+      virtual void reset_artim() = 0;
+      virtual void stop_artim() = 0;
+      virtual void start_artim() = 0;
+      virtual void ignore_next() = 0;
+      virtual void queue_for_write(std::unique_ptr<property> p) = 0;
+      virtual ~Istate_trans_ops() = 0;
+};
+
+
+
 /**
  * @brief The scx class implements basic functionality used both by the specialed scp and scu
  *        subclasses, like reading and writing to the connected peer. It also manages the
