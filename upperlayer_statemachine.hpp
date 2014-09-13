@@ -11,6 +11,8 @@
 namespace upperlayer
 {
 
+class scx;
+
 class statemachine
 {
       friend class scx;
@@ -69,8 +71,8 @@ class statemachine
    private:
       CONN_STATE state;
 
-      bool process_next;
-      bool reset_artim;
+
+      upperlayer::scx* ul;
       std::queue<std::unique_ptr<property>> to_send; // for example aa1();
 
       void aa1(); void aa2(); void aa3(); void aa4();
@@ -83,7 +85,7 @@ class statemachine
       void dt1();
       void dt2();
 
-      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*)>> transition_table;
+      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*, upperlayer::scx*)>> transition_table;
 };
 
 

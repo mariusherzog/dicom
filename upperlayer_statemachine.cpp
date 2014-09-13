@@ -10,11 +10,9 @@ namespace upperlayer
 {
 
 
-statemachine::statemachine():
-   state {CONN_STATE::STA1},
-   process_next {true},
-   reset_artim {false}
-
+statemachine::statemachine(scx* ul):
+   ul {ul},
+   state {CONN_STATE::STA1}
 {
 }
 
