@@ -27,6 +27,18 @@ namespace upperlayer
 {
 
 
+struct Istate_trans_ops
+{
+      virtual void reset_artim() = 0;
+      virtual void stop_artim() = 0;
+      virtual void start_artim() = 0;
+      virtual void ignore_next() = 0;
+      virtual void queue_for_write(std::unique_ptr<property> p) = 0;
+      virtual ~Istate_trans_ops() = 0;
+};
+
+
+
 /**
  * @brief The scx class implements basic functionality used both by the specialed scp and scu
  *        subclasses, like reading and writing to the connected peer. It also manages the
@@ -39,7 +51,7 @@ namespace upperlayer
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx
+class scx: public Istate_trans_ops
 {
    public:
 
@@ -116,16 +128,18 @@ class scx
 
       void artim_expired(const boost::system::error_code& error);
 
-      /**
-       * @brief process_artim sets and resets the ARTIM timer if necessary, as
-       *        indicated by the state machine
-       */
-      void process_artim();
 
    private:
       std::queue<std::unique_ptr<property>> send_queue;
 
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
+
+      // Istate_trans_ops interface
+   public:
+      void reset_artim();
+      void stop_artim();
+      void start_artim();
+      void ignore_next();
 };
 
 /**
