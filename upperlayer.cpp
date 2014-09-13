@@ -1,18 +1,16 @@
 #include "upperlayer.hpp"
 
-#include <map>
+
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include <ostream>
 #include <cassert>
-#include <functional>
 #include <initializer_list>
+#include <chrono>
 
 #include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
-#include "upperlayer_statemachine.hpp"
 
 
 namespace upperlayer
@@ -42,12 +40,16 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 
 }
 
+Istate_trans_ops::~Istate_trans_ops()
+{
+}
+
 
 
 
 
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   statem {},
+   statem {this},
    handlers {}
 {
    for (const auto p : l) {
@@ -151,12 +153,13 @@ void scx::do_read()
                }
                statem.transition(e);
 
+
                // call appropriate handler
-               if (statem.process_next) {
+//               if (statem.process_next) {
                   handlers[ptype](this, make_property(*compl_data));
-               } else {
-                  statem.process_next = true; //reset
-               }
+//               } else {
+//                  statem.process_next = true; //reset
+//               }
 
 
                if (get_state() == statemachine::CONN_STATE::STA13) {
@@ -181,17 +184,23 @@ void scx::queue_for_write(std::unique_ptr<property> p)
    send_queue.emplace(std::move(p));
    if (send_queue.size() > 1) {
       // there are still active writes
-      std::cout << "err";
       return;
    }
    send(send_queue.back().get());
 }
+
 
 void scx::run()
 {
    io_s().run();
 }
 
+void scx::artim_expired(const boost::system::error_code& error)
+{
+   if (error != boost::asio::error::operation_aborted) {
+      statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
+   }
+}
 
 
 void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
@@ -209,11 +218,13 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
    scx {l},
    io_service(),
    socket(io_service),
-   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+   artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
 {
+   artim.cancel();
+   statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
    acptr.async_accept(socket, [=](boost::system::error_code ec) {
          if (!ec) {
-            statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
             do_read();
          }
       } );
@@ -225,7 +236,8 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
    resolver(io_service),
    query(host, port),
    endpoint_iterator(resolver.resolve(query)),
-   socket(io_service)
+   socket(io_service),
+   artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
 {
    statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
    boost::asio::ip::tcp::resolver::iterator end;
@@ -236,10 +248,11 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
      socket.connect(*endpoint_iterator++, error);
    }
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
+
    assert(!error);
 }
 
-boost::asio::ip::tcp::socket&scp::sock()
+boost::asio::ip::tcp::socket& scp::sock()
 {
    return socket;
 }
@@ -247,6 +260,11 @@ boost::asio::ip::tcp::socket&scp::sock()
 boost::asio::io_service&scp::io_s()
 {
    return io_service;
+}
+
+boost::asio::steady_timer&scp::artim_timer()
+{
+   return artim;
 }
 
 scp::~scp()
@@ -264,9 +282,46 @@ boost::asio::io_service& scu::io_s()
    return io_service;
 }
 
+boost::asio::steady_timer&scu::artim_timer()
+{
+   return artim;
+}
+
 scu::~scu()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
 }
 
+}
+
+
+void upperlayer::scx::reset_artim()
+{
+   using namespace std::placeholders;
+   artim_timer().cancel();
+   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
+      //member function artim_expired has implicit scx* as first parameter
+}
+
+void upperlayer::scx::stop_artim()
+{
+   artim_timer().cancel();
+}
+
+void upperlayer::scx::start_artim()
+{
+   using namespace std::placeholders;
+   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
+}
+
+void upperlayer::scx::ignore_next()
+{
+   //todo ?readqueue?
+}
+
+
+void upperlayer::scx::close_connection()
+{
+   io_s().reset();
+   io_s().stop();
 }

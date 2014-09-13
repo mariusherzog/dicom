@@ -11,14 +11,12 @@
 #include <queue>
 
 #include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
 
 
-class session
-{
-};
 
 /**
  * The upperlayer namespace contains classes and functions which implement the upperlayer as
@@ -29,14 +27,24 @@ namespace upperlayer
 {
 
 
+struct Istate_trans_ops
+{
+      virtual void reset_artim() = 0;
+      virtual void stop_artim() = 0;
+      virtual void start_artim() = 0;
+      virtual void ignore_next() = 0;
+      virtual void queue_for_write(std::unique_ptr<property> p) = 0;
+      virtual void close_connection() = 0;
+      virtual ~Istate_trans_ops() = 0;
+};
+
+
+
 /**
  * @brief The scx class implements basic functionality used both by the specialed scp and scu
  *        subclasses, like reading and writing to the connected peer. It also manages the
  *        state machine
- * @todo -refactor state machine from class
- *       -extend state machine by release collision states and transitions <BR>
- *       -ARTIM timer <BR>
- *       -
+ * @todo  write reconnect() method using unique_ptr<socket>
  *
  * upperlayer::scx provides send() and read() functions independetly if the
  * subclass for clients (scu) or servers (scp) is used.
@@ -45,7 +53,7 @@ namespace upperlayer
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx
+class scx: public Istate_trans_ops
 {
    public:
 
@@ -70,6 +78,8 @@ class scx
        * class.
        */
       virtual boost::asio::io_service& io_s() = 0;
+
+      virtual boost::asio::steady_timer& artim_timer() = 0;
 
       /**
        * @brief run blocks until asynchronous operations are completed
@@ -107,8 +117,12 @@ class scx
 
       void queue_for_write(std::unique_ptr<property> p);
 
+
    protected:
       statemachine statem;
+
+      void artim_expired(const boost::system::error_code& error);
+
 
    private:
       /**
@@ -122,6 +136,14 @@ class scx
       std::queue<std::unique_ptr<property>> send_queue;
 
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
+
+      // Istate_trans_ops interface
+   public:
+      void reset_artim();
+      void stop_artim();
+      void start_artim();
+      void ignore_next();
+      void close_connection();
 };
 
 /**
@@ -134,13 +156,13 @@ class scp: public scx
       ~scp() override;
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
+      boost::asio::steady_timer& artim_timer() override;
 
    private:
-      std::shared_ptr<session> sess;
-
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::socket socket;
       boost::asio::ip::tcp::acceptor acptr;
+      boost::asio::steady_timer artim;
 };
 
 /**
@@ -152,7 +174,8 @@ class scu: public scx
       scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
       boost::asio::ip::tcp::socket& sock() override;
-      boost::asio::io_service&io_s() override;
+      boost::asio::io_service& io_s() override;
+      boost::asio::steady_timer& artim_timer() override;
 
    private:
       boost::asio::io_service io_service;
@@ -160,6 +183,7 @@ class scu: public scx
       boost::asio::ip::tcp::resolver::query query;
       boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
       boost::asio::ip::tcp::socket socket;
+      boost::asio::steady_timer artim;
 };
 
 

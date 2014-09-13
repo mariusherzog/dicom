@@ -4,17 +4,16 @@
 #include <functional>
 
 #include "upperlayer_properties.hpp"
+#include "upperlayer.hpp"
 
 
 namespace upperlayer
 {
 
 
-statemachine::statemachine():
-   state {CONN_STATE::STA1},
-   process_next {true},
-   reset_artim {false}
-
+statemachine::statemachine(Istate_trans_ops* ul):
+   ul {ul},
+   state {CONN_STATE::STA1}
 {
 }
 
@@ -36,50 +35,52 @@ statemachine::CONN_STATE statemachine::transition(EVENT e)
 
 void statemachine::aa1()
 {
-   to_send.emplace(new a_abort {});
-   reset_artim = true;
+   ul->queue_for_write(std::unique_ptr<property>(new a_abort {}));
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa2()
 {
-   //close artim
+   ul->stop_artim();
    state = CONN_STATE::STA1;
+   ul->close_connection();
 }
 
 void statemachine::aa3()
 {
    // call a_abort handler
    state = CONN_STATE::STA1;
+   ul->close_connection();
 }
 
 void statemachine::aa4()
 {
-   //stop artim timer
+   ul->stop_artim();
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa5()
 {
+   ul->stop_artim();
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa6()
 {
-   process_next = false;
+   ul->ignore_next();
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa7()
 {
-   to_send.emplace(new a_abort {});
+   ul->queue_for_write(std::unique_ptr<property>(new a_abort {}));
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa8()
 {
-   to_send.emplace(new a_abort {});
-   // start ARTIM
+   ul->queue_for_write(std::unique_ptr<property>(new a_abort {}));
+   ul->start_artim();
    // A-P-Abort indic
    state = CONN_STATE::STA13;
 }
@@ -102,16 +103,18 @@ void statemachine::ae3()
 void statemachine::ae4()
 {
    state = CONN_STATE::STA1;
+   ul->close_connection();
 }
 
 void statemachine::ae5()
 {
-   // start ARTIM timer
+   ul->start_artim();
    state = CONN_STATE::STA2;
 }
 
 void statemachine::ae6()
 {
+   ul->stop_artim();
    state = CONN_STATE::STA3;
 }
 
@@ -122,7 +125,7 @@ void statemachine::ae7()
 
 void statemachine::ae8()
 {
-   // start ARTIM timer
+   ul->start_artim();
    state = CONN_STATE::STA13;
 }
 
@@ -140,17 +143,18 @@ void statemachine::ar3()
 {
    state = CONN_STATE::STA1;
    // release conf handler
+   ul->close_connection();
 }
 
 void statemachine::ar4()
 {
-   // start ARTIM timer
+   ul->start_artim();
    state = CONN_STATE::STA13;
 }
 
 void statemachine::ar5()
 {
-   //stop artim timer
+   ul->stop_artim();
    state = CONN_STATE::STA1;
 }
 

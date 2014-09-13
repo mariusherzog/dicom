@@ -6,15 +6,14 @@
 #include <queue>
 #include <memory>
 
-#include "upperlayer_properties.hpp"
 
 namespace upperlayer
 {
 
+struct Istate_trans_ops;
+
 class statemachine
 {
-      friend class scx;
-
    public:
       /**
        * @brief The CONN_STATE enum contains the states for the state machine
@@ -61,17 +60,14 @@ class statemachine
          UNRECOG_PDU
       };
 
-      statemachine();
+      statemachine(Istate_trans_ops* ul);
 
       CONN_STATE get_state();
       CONN_STATE transition(EVENT e);
 
    private:
+      Istate_trans_ops* ul;
       CONN_STATE state;
-
-      bool process_next;
-      bool reset_artim;
-      std::queue<std::unique_ptr<property>> to_send; // for example aa1();
 
       void aa1(); void aa2(); void aa3(); void aa4();
       void aa5(); void aa6(); void aa7(); void aa8();
