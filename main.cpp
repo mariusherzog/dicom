@@ -43,7 +43,7 @@ void request_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> 
    if (application_contexts.find(arq->application_context) == application_contexts.end()) {
       a_associate_rj rj;
       rj.reason_ = a_associate_rj::REASON::APPL_CONT_NOT_SUPP;
-      sc->send(&rj);
+      //sc->send(&rj);
    }
 
    // check the support of each presentation context and populate own a_associate_ac

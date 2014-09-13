@@ -72,14 +72,6 @@ class scx
       virtual boost::asio::io_service& io_s() = 0;
 
       /**
-       * @brief send takes a property and uses its property::make_pdu() function
-       *        for serialization. The serialized data is sent to the peer via
-       *        the socket.
-       * @param[in] p
-       */
-      void send(property* p);
-
-      /**
        * @brief run blocks until asynchronous operations are completed
        */
       void run();
@@ -119,6 +111,14 @@ class scx
       statemachine statem;
 
    private:
+      /**
+       * @brief send takes a property and uses its property::make_pdu() function
+       *        for serialization. The serialized data is sent to the peer via
+       *        the socket.
+       * @param[in] p
+       */
+      void send(property* p);
+
       std::queue<std::unique_ptr<property>> send_queue;
 
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;

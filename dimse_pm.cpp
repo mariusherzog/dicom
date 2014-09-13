@@ -50,7 +50,7 @@ bool dimse_pm::associate()
    if (application_contexts.find(arq->application_context) == application_contexts.end()) {
       a_associate_rj rj;
       rj.reason_ = a_associate_rj::REASON::APPL_CONT_NOT_SUPP;
-      ul.send(&rj);
+      //ul.send(&rj);
       return false;
    }
 
@@ -78,7 +78,7 @@ bool dimse_pm::associate()
    }
    ac.max_message_length = 0xFFFF;
 
-   ul.send(&ac);
+   //ul.send(&ac);
    connection_properties = ac;
    state = CONN_STATE::CONNECTED;
    return true;
@@ -101,7 +101,7 @@ void dimse_pm::send(std::vector<attribute> a)
 {
    if (state == CONN_STATE::CONNECTED) {
       upperlayer::p_data_tf d = serialize(a);
-      ul.send(&d);
+      //ul.send(&d);
    }
 }
 
@@ -109,7 +109,7 @@ void dimse_pm::abort()
 {
    if (state == CONN_STATE::CONNECTED) {
       a_abort a;
-      ul.send(&a);
+      //ul.send(&a);
       state = CONN_STATE::IDLE;
    }
 }
