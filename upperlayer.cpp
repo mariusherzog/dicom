@@ -293,16 +293,23 @@ scu::~scu()
 
 void upperlayer::scx::reset_artim()
 {
+   using namespace std::placeholders;
+   artim_timer().cancel();
+   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
 }
 
 void upperlayer::scx::stop_artim()
 {
+   artim_timer().cancel();
 }
 
 void upperlayer::scx::start_artim()
 {
+   using namespace std::placeholders;
+   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
 }
 
 void upperlayer::scx::ignore_next()
 {
+   //todo ?readqueue?
 }
