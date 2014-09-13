@@ -12,7 +12,6 @@
 #include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
-#include "upperlayer_statemachine.hpp"
 
 
 namespace upperlayer
@@ -42,10 +41,14 @@ std::size_t be_char_to_32b(std::vector<uchar> bs)
 
 }
 
+Istate_trans_ops::~Istate_trans_ops()
+{
+}
+
 
 
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   statem {},
+   statem {this},
    handlers {}
 {
    for (const auto p : l) {
@@ -150,11 +153,11 @@ void scx::do_read()
                statem.transition(e);
 
                // call appropriate handler
-               if (statem.process_next) {
+//               if (statem.process_next) {
                   handlers[ptype](this, make_property(*compl_data));
-               } else {
-                  statem.process_next = true; //reset
-               }
+//               } else {
+//                  statem.process_next = true; //reset
+//               }
 
 
                if (get_state() == statemachine::CONN_STATE::STA13) {
@@ -267,4 +270,21 @@ scu::~scu()
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
 }
 
+}
+
+
+void upperlayer::scx::reset_artim()
+{
+}
+
+void upperlayer::scx::stop_artim()
+{
+}
+
+void upperlayer::scx::start_artim()
+{
+}
+
+void upperlayer::scx::ignore_next()
+{
 }

@@ -6,16 +6,14 @@
 #include <queue>
 #include <memory>
 
-#include "upperlayer_properties.hpp"
 
 namespace upperlayer
 {
 
-class scx;
+struct Istate_trans_ops;
 
 class statemachine
 {
-      friend class scx;
 
    public:
       /**
@@ -63,17 +61,14 @@ class statemachine
          UNRECOG_PDU
       };
 
-      statemachine();
+      statemachine(Istate_trans_ops* ul);
 
       CONN_STATE get_state();
       CONN_STATE transition(EVENT e);
 
    private:
+      Istate_trans_ops* ul;
       CONN_STATE state;
-
-
-      upperlayer::scx* ul;
-      std::queue<std::unique_ptr<property>> to_send; // for example aa1();
 
       void aa1(); void aa2(); void aa3(); void aa4();
       void aa5(); void aa6(); void aa7(); void aa8();
@@ -85,7 +80,7 @@ class statemachine
       void dt1();
       void dt2();
 
-      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*, upperlayer::scx*)>> transition_table;
+      static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*)>> transition_table;
 };
 
 

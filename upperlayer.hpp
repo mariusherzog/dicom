@@ -57,7 +57,7 @@ struct Istate_trans_ops
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx
+class scx: public Istate_trans_ops
 {
    public:
 
@@ -134,6 +134,13 @@ class scx
       std::queue<std::unique_ptr<property>> send_queue;
 
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
+
+      // Istate_trans_ops interface
+   public:
+      void reset_artim();
+      void stop_artim();
+      void start_artim();
+      void ignore_next();
 };
 
 /**
