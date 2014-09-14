@@ -8,7 +8,7 @@
 #include <functional>
 #include <initializer_list>
 #include <utility>
-#include <queue>
+#include <deque>
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -38,7 +38,7 @@ struct Istate_trans_ops
       virtual void stop_artim() = 0;
       virtual void start_artim() = 0;
       virtual void ignore_next() = 0;
-      virtual void queue_for_write(std::unique_ptr<property> p) = 0;
+      virtual void queue_for_write_w_prio(std::unique_ptr<property> p) = 0;
       virtual void close_connection() = 0;
       virtual ~Istate_trans_ops() = 0;
 };
@@ -154,7 +154,7 @@ class scx: public Istate_trans_ops
        */
       void send(property* p);
 
-      std::queue<std::unique_ptr<property>> send_queue;
+      std::deque<std::unique_ptr<property>> send_queue;
 
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 
@@ -165,6 +165,7 @@ class scx: public Istate_trans_ops
       void start_artim();
       void ignore_next();
       void close_connection();
+      void queue_for_write_w_prio(std::unique_ptr<property> p);
 };
 
 /**

@@ -35,7 +35,7 @@ statemachine::CONN_STATE statemachine::transition(EVENT e)
 
 void statemachine::aa1()
 {
-   ul->queue_for_write(std::unique_ptr<property>(new a_abort {}));
+   ul->queue_for_write_w_prio(std::unique_ptr<property>(new a_abort {}));
    state = CONN_STATE::STA13;
 }
 
@@ -73,13 +73,13 @@ void statemachine::aa6()
 
 void statemachine::aa7()
 {
-   ul->queue_for_write(std::unique_ptr<property>(new a_abort {}));
+   ul->queue_for_write_w_prio(std::unique_ptr<property>(new a_abort {}));
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa8()
 {
-   ul->queue_for_write(std::unique_ptr<property>(new a_abort {}));
+   ul->queue_for_write_w_prio(std::unique_ptr<property>(new a_abort {}));
    ul->start_artim();
    // A-P-Abort indic
    state = CONN_STATE::STA13;

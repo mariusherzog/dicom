@@ -7,6 +7,7 @@
 #include <cassert>
 #include <initializer_list>
 #include <chrono>
+#include <deque>
 
 #include <boost/asio.hpp>
 
@@ -99,7 +100,7 @@ void scx::send(property* p)
       // empty
       boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
          [=](const boost::system::error_code& error, std::size_t bytes) {
-            send_queue.pop();
+            send_queue.pop_front();
             if (!send_queue.empty()) {
                send(send_queue.back().get());
             }
@@ -191,7 +192,7 @@ void scx::queue_for_write(std::unique_ptr<property> p)
    // when send_queue.size() is greater than 1, there are still properties being
    // written by scx::send(). To prevent interleaving, we do not call send here
    // and just leave the property in the queue
-   send_queue.emplace(std::move(p));
+   send_queue.emplace_back(std::move(p));
    if (send_queue.size() > 1) {
       return;
    }
@@ -334,4 +335,10 @@ void upperlayer::scx::close_connection()
 {
    io_s().reset();
    io_s().stop();
+}
+
+
+void upperlayer::scx::queue_for_write_w_prio(std::unique_ptr<upperlayer::property> p)
+{
+   send_queue.emplace_front(std::move(p));
 }

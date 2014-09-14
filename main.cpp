@@ -105,7 +105,6 @@ void release_rp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
 }
 
-
 int main()
 {
 //   dimse_pm dpm;
