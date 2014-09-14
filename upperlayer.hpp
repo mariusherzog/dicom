@@ -12,6 +12,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/log/trivial.hpp>
 
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
@@ -27,6 +28,10 @@ namespace upperlayer
 {
 
 
+/**
+ * @brief The Istate_trans_ops struct is an interface which the statemachine class uses to
+ *        perform certain operations, like resetting the ARTIM timer or sending an a_abort
+ */
 struct Istate_trans_ops
 {
       virtual void reset_artim() = 0;
@@ -79,6 +84,10 @@ class scx: public Istate_trans_ops
        */
       virtual boost::asio::io_service& io_s() = 0;
 
+      /**
+       * @brief artim_timer returns a reference to the artim timer
+       * @return ref to boost::asio::steady_timer
+       */
       virtual boost::asio::steady_timer& artim_timer() = 0;
 
       /**
@@ -115,12 +124,24 @@ class scx: public Istate_trans_ops
        */
       void do_read();
 
+      /**
+       * @brief queue_for_write takes ownership of a property and queues it for
+       *        writing
+       * @param[in] p
+       *
+       * A write queue is necessary to prevent multiple writes to the socket, which
+       * may result in interleaving
+       */
       void queue_for_write(std::unique_ptr<property> p);
 
 
    protected:
       statemachine statem;
 
+      /**
+       * @brief artim_expired is called when the artim timer expires
+       * @param error
+       */
       void artim_expired(const boost::system::error_code& error);
 
 

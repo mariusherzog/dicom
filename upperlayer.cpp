@@ -95,6 +95,8 @@ void scx::send(property* p)
    }
 
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
+      // call async_write after each sent property until the queue is
+      // empty
       boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
          [=](const boost::system::error_code& error, std::size_t bytes) {
             send_queue.pop();
@@ -108,9 +110,14 @@ void scx::send(property* p)
 
 void scx::do_read()
 {
+   // because the async operations terminate immediately the containers would go out of scope
+   // and async_write would write into "unallocated" memory. To prevent this, reference-counting
+   // shared_ptrs are used, which are captured, copied and therefore held alive by the lambda
+   // passed to the read handler.
    auto size = std::make_shared<std::vector<unsigned char>>(6);
    auto rem_data = std::make_shared<std::vector<unsigned char>>();
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
+
    boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
       [=](const boost::system::error_code& error, std::size_t bytes)  {
          assert(bytes == 6);
@@ -181,9 +188,11 @@ void scx::do_read()
 
 void scx::queue_for_write(std::unique_ptr<property> p)
 {
+   // when send_queue.size() is greater than 1, there are still properties being
+   // written by scx::send(). To prevent interleaving, we do not call send here
+   // and just leave the property in the queue
    send_queue.emplace(std::move(p));
    if (send_queue.size() > 1) {
-      // there are still active writes
       return;
    }
    send(send_queue.back().get());
@@ -198,6 +207,7 @@ void scx::run()
 void scx::artim_expired(const boost::system::error_code& error)
 {
    if (error != boost::asio::error::operation_aborted) {
+      BOOST_LOG_TRIVIAL(warning) << "ARTIM timer expired";
       statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
    }
 }
