@@ -10,6 +10,7 @@
 #include <utility>
 #include <deque>
 
+#include <boost/optional.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/log/trivial.hpp>
@@ -155,7 +156,7 @@ class scx: public Istate_trans_ops
       void send(property* p);
 
       std::deque<std::unique_ptr<property>> send_queue;
-
+      boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 
       // Istate_trans_ops interface

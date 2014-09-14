@@ -9,6 +9,7 @@
 #include <chrono>
 #include <deque>
 
+#include <boost/optional.hpp>
 #include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
@@ -51,6 +52,7 @@ Istate_trans_ops::~Istate_trans_ops()
 
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
+   received_pdu {boost::none},
    handlers {}
 {
    for (const auto p : l) {
@@ -115,6 +117,8 @@ void scx::do_read()
    // and async_write would write into "unallocated" memory. To prevent this, reference-counting
    // shared_ptrs are used, which are captured, copied and therefore held alive by the lambda
    // passed to the read handler.
+   // There may only be one async_read at a time. This is ensured by calling async_reads _only_
+   // in the read handlers, i.e. when the previous read has completed.
    auto size = std::make_shared<std::vector<unsigned char>>(6);
    auto rem_data = std::make_shared<std::vector<unsigned char>>();
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
@@ -131,8 +135,9 @@ void scx::do_read()
                compl_data->reserve(size->size() + rem_data->size());
                compl_data->insert(compl_data->end(), size->begin(), size->end());
                compl_data->insert(compl_data->end(), rem_data->begin(), rem_data->end());
-               auto ptype = get_type(*compl_data);
+               received_pdu = compl_data.get();
 
+               auto ptype = get_type(*compl_data);
                statemachine::EVENT e;
                switch (ptype) {
                   case TYPE::A_ABORT:
@@ -159,16 +164,14 @@ void scx::do_read()
                   default:
                      e = statemachine::EVENT::UNRECOG_PDU;
                }
+
                statem.transition(e);
 
-
                // call appropriate handler
-//               if (statem.process_next) {
+               if (received_pdu != boost::none) {
                   handlers[ptype](this, make_property(*compl_data));
-//               } else {
-//                  statem.process_next = true; //reset
-//               }
-
+               }
+               received_pdu = boost::none;
 
                if (get_state() == statemachine::CONN_STATE::STA13) {
                   io_s().stop();
@@ -327,7 +330,8 @@ void upperlayer::scx::start_artim()
 
 void upperlayer::scx::ignore_next()
 {
-   //todo ?readqueue?
+   received_pdu = boost::none;
+   assert(!received_pdu.is_initialized());
 }
 
 
