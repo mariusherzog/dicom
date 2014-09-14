@@ -104,7 +104,7 @@ void scx::send(property* p)
          [=](const boost::system::error_code& error, std::size_t bytes) {
             send_queue.pop_front();
             if (!send_queue.empty()) {
-               send(send_queue.back().get());
+               send(send_queue.front().get());
             }
          }
       );
@@ -199,7 +199,7 @@ void scx::queue_for_write(std::unique_ptr<property> p)
    if (send_queue.size() > 1) {
       return;
    }
-   send(send_queue.back().get());
+   send(send_queue.front().get());
 }
 
 
@@ -344,5 +344,10 @@ void upperlayer::scx::close_connection()
 
 void upperlayer::scx::queue_for_write_w_prio(std::unique_ptr<upperlayer::property> p)
 {
+   // see scx::queue_for_write for explanation
    send_queue.emplace_front(std::move(p));
+   if (send_queue.size() > 1) {
+      return;
+   }
+   send(send_queue.front().get());
 }
