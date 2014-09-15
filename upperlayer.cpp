@@ -244,7 +244,7 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
       } );
 }
 
-scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx{l},
    io_service(),
    resolver(io_service),
@@ -262,6 +262,13 @@ scu::scu(std::string host, std::string port, std::initializer_list<std::pair<TYP
      socket.connect(*endpoint_iterator++, error);
    }
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
+
+
+   auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
+   boost::asio::async_write(socket, boost::asio::buffer(*pdu),
+      [this, pdu](const boost::system::error_code& error, std::size_t bytes) {
+         do_read();
+   });
 
    assert(!error);
 }

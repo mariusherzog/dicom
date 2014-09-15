@@ -194,7 +194,7 @@ class scp: public scx
 class scu: public scx
 {
    public:
-      scu(std::string host, std::string port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
+      scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
