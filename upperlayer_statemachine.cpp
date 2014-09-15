@@ -3,6 +3,8 @@
 #include <map>
 #include <functional>
 
+#include <boost/log/trivial.hpp>
+
 #include "upperlayer_properties.hpp"
 #include "upperlayer.hpp"
 
@@ -24,8 +26,8 @@ statemachine::CONN_STATE statemachine::get_state()
 
 statemachine::CONN_STATE statemachine::transition(EVENT e)
 {
-   if (transition_table.find(std::make_pair(e, state)) != transition_table.end()) {
-      transition_table[std::make_pair(e, state)](this);
+   if (transition_table.find({e, state}) != transition_table.end()) {
+      transition_table[{e, state}](this);
       return state;
    } else {
       return CONN_STATE::INV;
@@ -169,8 +171,11 @@ void statemachine::ar7()
 
 void statemachine::ar8()
 {
-   //if scu state = sta10
-   state = CONN_STATE::STA9;
+   if (dynamic_cast<upperlayer::scu*>(ul)) {
+      state = CONN_STATE::STA9;
+   } else {
+      state = CONN_STATE::STA10;
+   }
    // a release indication collision
 }
 

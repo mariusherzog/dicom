@@ -5,6 +5,8 @@
 #include <boost/asio.hpp>
 #include <set>
 
+
+
 //#include "dimse_pm.hpp"
 #include "upperlayer.hpp"
 
@@ -110,6 +112,8 @@ int main()
 //   dimse_pm dpm;
 //   dpm.inject(1, print);
 //   dpm.receive();
+
+
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
                                {upperlayer::TYPE::P_DATA_TF, printall},
                                {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
