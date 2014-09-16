@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <chrono>
 #include <deque>
+#include <exception>
 
 #include <boost/optional.hpp>
 #include <boost/asio.hpp>
@@ -101,7 +102,10 @@ void scx::send(property* p)
       // call async_write after each sent property until the queue is
       // empty
       boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-         [=](const boost::system::error_code& error, std::size_t bytes) {
+         [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
+            if (error) {
+               throw boost::system::error_code(error);
+            }
             send_queue.pop_front();
             if (!send_queue.empty()) {
                send(send_queue.front().get());
@@ -126,15 +130,17 @@ void scx::do_read()
    boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
       [=](const boost::system::error_code& error, std::size_t bytes)  {
          if (error) {
-            int q = 0;
-            q *= 2;
+            throw boost::system::error_code(error);
          }
          assert(bytes == 6);
 
          std::size_t len = be_char_to_32b({size->begin()+2, size->begin()+6});
          rem_data->resize(len);
          boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(len),
-            [=](const boost::system::error_code& error, std::size_t bytes) {
+            [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
+               if (error) {
+                  throw boost::system::error_code(error);
+               }
 
                compl_data->reserve(size->size() + rem_data->size());
                compl_data->insert(compl_data->end(), size->begin(), size->end());
@@ -280,11 +286,14 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
 {
    artim.cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
-   acptr.async_accept(socket, [=](boost::system::error_code ec) {
+   acptr.async_accept(socket,
+      [=](boost::system::error_code ec) {
          if (!ec) {
             do_read();
+         } else {
+            throw boost::system::error_code(ec);
          }
-      } );
+      });
 }
 
 scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
@@ -305,16 +314,23 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
      socket.close();
      socket.connect(*endpoint_iterator++, error);
    }
+
+   if (error) {
+      throw boost::system::error_code(error);
+   }
+
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
 
 
    auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
    boost::asio::async_write(socket, boost::asio::buffer(*pdu),
-      [this, pdu](const boost::system::error_code& error, std::size_t bytes) {
-         do_read();
+      [this, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
+         if (!error) {
+            do_read();
+         } else {
+            throw boost::system::error_code(error);
+         }
    });
-
-   assert(!error);
 }
 
 boost::asio::ip::tcp::socket& scp::sock()

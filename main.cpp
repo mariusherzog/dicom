@@ -114,10 +114,14 @@ int main()
 //   dpm.receive();
 
 
+
+   try
+   {
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
                                {upperlayer::TYPE::P_DATA_TF, printall},
                                {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
-//   sc.receive(); // receive a_associate_rq
-//   sc.receive(); // receive data
    sc.run();
+   } catch (const boost::system::error_code& ec) {
+      std::cout << ec.message();
+   }
 }
