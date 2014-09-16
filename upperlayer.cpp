@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <chrono>
 #include <deque>
+#include <exception>
 
 #include <boost/optional.hpp>
 #include <boost/asio.hpp>
@@ -304,6 +305,11 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
      socket.close();
      socket.connect(*endpoint_iterator++, error);
    }
+
+   if (error) {
+      throw boost::system::error_code(error);
+   }
+
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
 
 
@@ -312,8 +318,6 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
       [this, pdu](const boost::system::error_code& error, std::size_t bytes) {
          do_read();
    });
-
-   assert(!error);
 }
 
 boost::asio::ip::tcp::socket& scp::sock()
