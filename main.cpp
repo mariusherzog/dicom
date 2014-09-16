@@ -114,19 +114,14 @@ int main()
 //   dpm.receive();
 
 
-   try {
-      upperlayer::a_associate_rq r;
-      upperlayer::scu sc("localhost", "3333", r, {{}});
-      sc.run();
-   } catch (const boost::system::error_code& e) {
-      std::cout << e.message();
-                            return 0;
-   }
 
+   try
+   {
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
                                {upperlayer::TYPE::P_DATA_TF, printall},
                                {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
-//   sc.receive(); // receive a_associate_rq
-//   sc.receive(); // receive data
    sc.run();
+   } catch (const boost::system::error_code& ec) {
+      std::cout << ec.message();
+   }
 }
