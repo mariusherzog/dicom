@@ -135,6 +135,41 @@ class scx: public Istate_trans_ops
        */
       void queue_for_write(std::unique_ptr<property> p);
 
+      /**
+       * @brief queue_for_write_w_prio queues a property for writing, but moves it
+       *        in the front of the queue so it will be retrieved first
+       * @param[in] p
+       * @see queue_for_write();
+       */
+      void queue_for_write_w_prio(std::unique_ptr<property> p);
+
+      /**
+       * @brief reset_artim resets the artim timer
+       */
+      void reset_artim();
+
+      /**
+       * @brief stop_artim stops the artim timer
+       */
+      void stop_artim();
+
+      /**
+       * @brief start_artim starts the artim timer
+       */
+      void start_artim();
+
+      /**
+       * @brief ignore_next indicates whether a received pdu shall be ignored by
+       *        not invoking the respective handler
+       */
+      void ignore_next();
+
+      /**
+       * @brief close_connection aborts all async operations on the io_service object,
+       *        making io_service::run() terminate
+       */
+      void close_connection();
+
 
    protected:
       statemachine statem;
@@ -158,15 +193,6 @@ class scx: public Istate_trans_ops
       std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
-
-      // Istate_trans_ops interface
-   public:
-      void reset_artim();
-      void stop_artim();
-      void start_artim();
-      void ignore_next();
-      void close_connection();
-      void queue_for_write_w_prio(std::unique_ptr<property> p);
 };
 
 /**

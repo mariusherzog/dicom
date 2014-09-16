@@ -125,6 +125,10 @@ void scx::do_read()
 
    boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
       [=](const boost::system::error_code& error, std::size_t bytes)  {
+         if (error) {
+            int q = 0;
+            q *= 2;
+         }
          assert(bytes == 6);
 
          std::size_t len = be_char_to_32b({size->begin()+2, size->begin()+6});
@@ -165,7 +169,7 @@ void scx::do_read()
                      e = statemachine::EVENT::UNRECOG_PDU;
                }
 
-               statem.transition(e);
+               statem.transition(e); // side effects of the statemachine's transition function
 
                // call appropriate handler
                if (received_pdu != boost::none) {
@@ -174,15 +178,13 @@ void scx::do_read()
                received_pdu = boost::none;
 
                if (get_state() == statemachine::CONN_STATE::STA13) {
-                  io_s().stop();
-                  return;
+                  close_connection();
                }
 
-               // be ready for new incoming data
-               if (get_state() != statemachine::CONN_STATE::STA2) {
-                  //do_read();
+               // be ready for new data
+               if (!io_s().stopped()) {
+                  do_read();
                }
-               do_read();
             }
          );
       }
@@ -200,6 +202,47 @@ void scx::queue_for_write(std::unique_ptr<property> p)
       return;
    }
    send(send_queue.front().get());
+}
+
+void upperlayer::scx::queue_for_write_w_prio(std::unique_ptr<upperlayer::property> p)
+{
+   // see scx::queue_for_write for explanation
+   send_queue.emplace_front(std::move(p));
+   if (send_queue.size() > 1) {
+      return;
+   }
+   send(send_queue.front().get());
+}
+
+void upperlayer::scx::reset_artim()
+{
+   stop_artim();
+   start_artim();
+}
+
+void upperlayer::scx::stop_artim()
+{
+   artim_timer().cancel();
+}
+
+void upperlayer::scx::start_artim()
+{
+   using namespace std::placeholders;
+   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
+      //member function artim_expired has implicit scx* as first parameter
+}
+
+void upperlayer::scx::ignore_next()
+{
+   received_pdu = boost::none;
+   assert(!received_pdu.is_initialized());
+}
+
+
+void upperlayer::scx::close_connection()
+{
+   io_s().reset();
+   io_s().stop();
 }
 
 
@@ -313,48 +356,4 @@ scu::~scu()
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
 }
 
-}
-
-
-void upperlayer::scx::reset_artim()
-{
-   using namespace std::placeholders;
-   artim_timer().cancel();
-   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
-      //member function artim_expired has implicit scx* as first parameter
-}
-
-void upperlayer::scx::stop_artim()
-{
-   artim_timer().cancel();
-}
-
-void upperlayer::scx::start_artim()
-{
-   using namespace std::placeholders;
-   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
-}
-
-void upperlayer::scx::ignore_next()
-{
-   received_pdu = boost::none;
-   assert(!received_pdu.is_initialized());
-}
-
-
-void upperlayer::scx::close_connection()
-{
-   io_s().reset();
-   io_s().stop();
-}
-
-
-void upperlayer::scx::queue_for_write_w_prio(std::unique_ptr<upperlayer::property> p)
-{
-   // see scx::queue_for_write for explanation
-   send_queue.emplace_front(std::move(p));
-   if (send_queue.size() > 1) {
-      return;
-   }
-   send(send_queue.front().get());
 }
