@@ -247,6 +247,7 @@ void upperlayer::scx::ignore_next()
 
 void upperlayer::scx::close_connection()
 {
+   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
    io_s().reset();
    io_s().stop();
 }
@@ -348,11 +349,6 @@ boost::asio::steady_timer&scp::artim_timer()
    return artim;
 }
 
-scp::~scp()
-{
-   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
-}
-
 boost::asio::ip::tcp::socket& scu::sock()
 {
    return socket;
@@ -366,11 +362,6 @@ boost::asio::io_service& scu::io_s()
 boost::asio::steady_timer&scu::artim_timer()
 {
    return artim;
-}
-
-scu::~scu()
-{
-   statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
 }
 
 }

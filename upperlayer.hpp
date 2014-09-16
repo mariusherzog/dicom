@@ -203,8 +203,7 @@ class scx: public Istate_trans_ops
 class scp: public scx
 {
    public:
-      scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
-      ~scp() override;
+      scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -225,8 +224,7 @@ class scp: public scx
 class scu: public scx
 {
    public:
-      scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
-      ~scu() override;
+      scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
 
