@@ -178,7 +178,7 @@ class scx: public Istate_trans_ops
 
       /**
        * @brief artim_expired is called when the artim timer expires
-       * @param error
+       * @param[in] error
        */
       void artim_expired(const boost::system::error_code& error);
 
@@ -238,7 +238,7 @@ class scu: public scx
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::resolver resolver;
       boost::asio::ip::tcp::resolver::query query;
-      boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+      boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
       boost::asio::ip::tcp::socket socket;
       boost::asio::steady_timer artim;
 };

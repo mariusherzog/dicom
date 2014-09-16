@@ -82,7 +82,7 @@ void scx::send(property* p)
          e = statemachine::EVENT::LOCL_A_ASSOCIATE_RJ_PDU;
          break;
       case TYPE::A_ASSOCIATE_RQ:
-         e = statemachine::EVENT::LOCL_A_ASSOCIATE_RJ_PDU;
+         assert(false);
          break;
       case TYPE::A_RELEASE_RQ:
          e = statemachine::EVENT::LOCL_A_RELEASE_RQ_PDU;
@@ -273,10 +273,10 @@ statemachine::CONN_STATE scx::get_state()
 
 scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {l},
-   io_service(),
-   socket(io_service),
-   acptr(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-   artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
+   io_service {},
+   socket {io_service},
+   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
+   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 {
    artim.cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
@@ -288,15 +288,16 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
 }
 
 scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx{l},
-   io_service(),
-   resolver(io_service),
-   query(host, port),
-   endpoint_iterator(resolver.resolve(query)),
-   socket(io_service),
-   artim(io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10))
+   scx {l},
+   io_service {},
+   resolver {io_service},
+   query {host, port},
+   endpoint_iterator {resolver.resolve(query)},
+   socket {io_service},
+   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 {
    statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
+
    boost::asio::ip::tcp::resolver::iterator end;
    boost::system::error_code error = boost::asio::error::host_not_found;
    while(error && endpoint_iterator != end)
