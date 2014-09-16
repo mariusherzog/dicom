@@ -66,8 +66,6 @@ property::~property()
 
 void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 {
-   std::size_t pdu_len = be_char_to_32b({pdu.begin()+2, pdu.begin()+6});
-
    std::size_t pos = 6;
    bool pdvs_left = true;
    while (pdvs_left) {
@@ -89,7 +87,7 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
    }
 }
 
-std::vector<uchar> p_data_tf::make_pdu()
+std::vector<uchar> p_data_tf::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::P_DATA_TF));
@@ -129,7 +127,7 @@ std::vector<uchar> p_data_tf::make_pdu()
    return pack;
 }
 
-TYPE p_data_tf::type()
+TYPE p_data_tf::type() const
 {
    return TYPE::P_DATA_TF;
 }
@@ -209,7 +207,7 @@ void a_associate_rq::from_pdu(std::vector<unsigned char> pdu)
  * @param[in] t
  * @return pdu representing structured data
  */
-std::vector<uchar> a_associate_rq::make_pdu()
+std::vector<uchar> a_associate_rq::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_RQ));
@@ -284,7 +282,7 @@ std::vector<uchar> a_associate_rq::make_pdu()
 }
 
 
-TYPE a_associate_rq::type()
+TYPE a_associate_rq::type() const
 {
    return TYPE::A_ASSOCIATE_RQ;
 }
@@ -337,7 +335,7 @@ void a_associate_ac::from_pdu(std::vector<unsigned char> pdu)
    }
 }
 
-std::vector<uchar> a_associate_ac::make_pdu()
+std::vector<uchar> a_associate_ac::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_AC));
@@ -398,7 +396,7 @@ std::vector<uchar> a_associate_ac::make_pdu()
    return pack;
 }
 
-TYPE a_associate_ac::type()
+TYPE a_associate_ac::type() const
 {
    return TYPE::A_ASSOCIATE_AC;
 }
@@ -410,7 +408,7 @@ void a_associate_rj::from_pdu(std::vector<uchar> pdu)
    reason_ = static_cast<REASON>(pdu[9]);
 }
 
-std::vector<uchar> a_associate_rj::make_pdu()
+std::vector<uchar> a_associate_rj::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_RJ));
@@ -420,7 +418,7 @@ std::vector<uchar> a_associate_rj::make_pdu()
    return pack;
 }
 
-TYPE a_associate_rj::type()
+TYPE a_associate_rj::type() const
 {
    return TYPE::A_ASSOCIATE_RJ;
 }
@@ -430,7 +428,7 @@ void a_release_rq::from_pdu(std::vector<unsigned char>)
 {
 }
 
-std::vector<uchar> a_release_rq::make_pdu()
+std::vector<uchar> a_release_rq::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_RELEASE_RQ));
@@ -438,7 +436,7 @@ std::vector<uchar> a_release_rq::make_pdu()
    return pack;
 }
 
-TYPE a_release_rq::type()
+TYPE a_release_rq::type() const
 {
    return TYPE::A_RELEASE_RQ;
 }
@@ -448,7 +446,7 @@ void a_release_rp::from_pdu(std::vector<unsigned char>)
 {
 }
 
-std::vector<uchar> a_release_rp::make_pdu()
+std::vector<uchar> a_release_rp::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_RELEASE_RP));
@@ -456,7 +454,7 @@ std::vector<uchar> a_release_rp::make_pdu()
    return pack;
 }
 
-TYPE a_release_rp::type()
+TYPE a_release_rp::type() const
 {
    return TYPE::A_RELEASE_RP;
 }
@@ -468,7 +466,7 @@ void a_abort::from_pdu(std::vector<unsigned char> pdu)
    reason_ = static_cast<REASON>(pdu[9]);
 }
 
-std::vector<uchar> a_abort::make_pdu()
+std::vector<uchar> a_abort::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ABORT));
@@ -478,7 +476,7 @@ std::vector<uchar> a_abort::make_pdu()
    return pack;
 }
 
-TYPE a_abort::type()
+TYPE a_abort::type() const
 {
    return TYPE::A_ABORT;
 }

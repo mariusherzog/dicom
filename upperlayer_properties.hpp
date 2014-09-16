@@ -31,8 +31,8 @@ TYPE get_type(const std::vector<unsigned char>& pdu);
 struct property
 {
       virtual void from_pdu(std::vector<unsigned char> pdu) = 0;
-      virtual std::vector<unsigned char> make_pdu() = 0;
-      virtual TYPE type() = 0;
+      virtual std::vector<unsigned char> make_pdu() const = 0;
+      virtual TYPE type() const = 0;
       virtual ~property() = 0;
 };
 
@@ -50,8 +50,8 @@ struct p_data_tf: property
 {
       p_data_tf() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      virtual std::vector<unsigned char> make_pdu();
-      virtual TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
       unsigned char message_id;
       std::vector<unsigned char> command_set;
@@ -59,7 +59,7 @@ struct p_data_tf: property
 };
 
 /**
- * @brief The upperlayer_connection_propertie struct contains information about
+ * @brief The upperlayer_connection_property struct contains information about
  *        the offered / negotiated association with the remote application
  *        entity.
  *
@@ -69,8 +69,8 @@ struct a_associate_rq: property
 {
       a_associate_rq() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      virtual TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
 
       std::string called_ae;
@@ -93,8 +93,8 @@ struct a_associate_ac: property
 {
       a_associate_ac() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
 
       std::string called_ae;
@@ -125,8 +125,8 @@ struct a_associate_rj: property
 {
       a_associate_rj() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu() override;
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
       enum class SOURCE : unsigned char
       {
@@ -147,24 +147,24 @@ struct a_release_rq: property
 {
       a_release_rq() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 };
 
 struct a_release_rp: property
 {
       a_release_rp() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 };
 
 struct a_abort: property
 {
       a_abort() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
       enum class SOURCE : unsigned char
       {
