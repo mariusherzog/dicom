@@ -64,6 +64,8 @@ class scx: public Istate_trans_ops
    public:
 
       explicit scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
+      scx(const scx&) = delete;
+      scx& operator=(const scx&) = delete;
       virtual ~scx() = 0;
 
       /**
@@ -203,6 +205,9 @@ class scp: public scx
    public:
       scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scp() override;
+      scp(const scp&) = delete;
+      scp& operator=(const scp&) = delete;
+
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
@@ -222,6 +227,9 @@ class scu: public scx
    public:
       scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       ~scu() override;
+      scu(const scu&) = delete;
+      scu& operator=(const scu&) = delete;
+
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
