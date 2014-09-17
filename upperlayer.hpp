@@ -28,6 +28,7 @@
 namespace upperlayer
 {
 
+class scx;
 
 /**
  * @brief The Istate_trans_ops struct is an interface which the statemachine class uses to
@@ -44,6 +45,17 @@ struct Istate_trans_ops
       virtual ~Istate_trans_ops() = 0;
 };
 
+/**
+ * @brief The Iupperlayer_comm_ops struct is an interface used for writing properties and
+ *        injecting handlers for received properties
+ */
+struct Iupperlayer_comm_ops
+{
+      virtual void queue_for_write(std::unique_ptr<property> p) = 0;
+      virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
+      virtual ~Iupperlayer_comm_ops() = 0;
+};
+
 
 
 /**
@@ -51,6 +63,7 @@ struct Istate_trans_ops
  *        subclasses, like reading and writing to the connected peer. It also manages the
  *        state machine
  * @todo  write reconnect() method using unique_ptr<socket>
+ *        inherit from a service class interface
  *
  * upperlayer::scx provides send() and read() functions independetly if the
  * subclass for clients (scu) or servers (scp) is used.
@@ -59,7 +72,7 @@ struct Istate_trans_ops
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx: public Istate_trans_ops
+class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 {
    public:
 
@@ -101,6 +114,7 @@ class scx: public Istate_trans_ops
       /**
        * @brief get_state returns the current state
        * @return
+       * @callgraph
        */
       statemachine::CONN_STATE get_state();
 
@@ -171,6 +185,7 @@ class scx: public Istate_trans_ops
        *        making io_service::run() terminate
        */
       void close_connection();
+
 
 
    protected:

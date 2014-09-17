@@ -47,6 +47,10 @@ Istate_trans_ops::~Istate_trans_ops()
 {
 }
 
+Iupperlayer_comm_ops::~Iupperlayer_comm_ops()
+{
+}
+
 
 
 
@@ -251,7 +255,6 @@ void upperlayer::scx::close_connection()
    io_s().reset();
    io_s().stop();
 }
-
 
 void scx::run()
 {
