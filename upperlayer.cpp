@@ -325,7 +325,6 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
 
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
 
-
    auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
    boost::asio::async_write(socket, boost::asio::buffer(*pdu),
       [this, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {

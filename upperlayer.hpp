@@ -82,31 +82,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       virtual ~scx() = 0;
 
       /**
-       * @brief sock is used by send() and receive() to access the socket of the
-       *        subclasses
-       * @return ref to boost::asio::ip::tcp::socket of the subclass
-       *
-       * for initalization reasons the socket cannot be declared in this abstract
-       * class.
-       */
-      virtual boost::asio::ip::tcp::socket& sock() = 0;
-
-      /**
-       * @brief sock is used by the subclasses to use the ::run() member function
-       * @return ref to boost::asio::io_service
-       *
-       * for initalization reasons the socket cannot be declared in this abstract
-       * class.
-       */
-      virtual boost::asio::io_service& io_s() = 0;
-
-      /**
-       * @brief artim_timer returns a reference to the artim timer
-       * @return ref to boost::asio::steady_timer
-       */
-      virtual boost::asio::steady_timer& artim_timer() = 0;
-
-      /**
        * @brief run blocks until asynchronous operations are completed
        */
       void run();
@@ -125,21 +100,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] f
        */
       void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f);
-
-      /**
-       * @brief scx::do_read reads a pdu asynchronously from the peer
-       *
-       * The pdu is received in two steps:
-       * The first async_read is passed a handler which is called when
-       * exactly six bytes are received. These first six bytes contain
-       * the size of the pdu _len_.
-       * Then, in this first read-handler, another async_read is
-       * dispatched which calls its read-handler when exactly _len_
-       * bytes (ie the whole pdu) are received. This second read-handler
-       * contains the code which actually processes the pdu (calls the
-       * appropriate handler, manages state transitions, ...)
-       */
-      void do_read();
 
       /**
        * @brief queue_for_write takes ownership of a property and queues it for
@@ -192,6 +152,21 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       statemachine statem;
 
       /**
+       * @brief scx::do_read reads a pdu asynchronously from the peer
+       *
+       * The pdu is received in two steps:
+       * The first async_read is passed a handler which is called when
+       * exactly six bytes are received. These first six bytes contain
+       * the size of the pdu _len_.
+       * Then, in this first read-handler, another async_read is
+       * dispatched which calls its read-handler when exactly _len_
+       * bytes (ie the whole pdu) are received. This second read-handler
+       * contains the code which actually processes the pdu (calls the
+       * appropriate handler, manages state transitions, ...)
+       */
+      void do_read();
+
+      /**
        * @brief artim_expired is called when the artim timer expires
        * @param[in] error
        */
@@ -206,6 +181,31 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] p
        */
       void send(property* p);
+
+      /**
+       * @brief sock is used by send() and receive() to access the socket of the
+       *        subclasses
+       * @return ref to boost::asio::ip::tcp::socket of the subclass
+       *
+       * for initalization reasons the socket cannot be declared in this abstract
+       * class.
+       */
+      virtual boost::asio::ip::tcp::socket& sock() = 0;
+
+      /**
+       * @brief sock is used by the subclasses to use the ::run() member function
+       * @return ref to boost::asio::io_service
+       *
+       * for initalization reasons the socket cannot be declared in this abstract
+       * class.
+       */
+      virtual boost::asio::io_service& io_s() = 0;
+
+      /**
+       * @brief artim_timer returns a reference to the artim timer
+       * @return ref to boost::asio::steady_timer
+       */
+      virtual boost::asio::steady_timer& artim_timer() = 0;
 
       std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
@@ -222,11 +222,11 @@ class scp: public scx
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
+   private:
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
 
-   private:
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::socket socket;
       boost::asio::ip::tcp::acceptor acptr;
@@ -243,11 +243,11 @@ class scu: public scx
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
 
+   private:
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
 
-   private:
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::resolver resolver;
       boost::asio::ip::tcp::resolver::query query;
