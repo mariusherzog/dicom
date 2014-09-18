@@ -108,7 +108,7 @@ void scx::send(property* p)
       boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
          [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
             if (error) {
-               throw boost::system::error_code(error);
+               throw boost::system::system_error(error);
             }
             send_queue.pop_front();
             if (!send_queue.empty()) {
@@ -134,7 +134,7 @@ void scx::do_read()
    boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
       [=](const boost::system::error_code& error, std::size_t bytes)  {
          if (error) {
-            throw boost::system::error_code(error);
+            throw boost::system::system_error(error);
          }
          assert(bytes == 6);
 
@@ -143,7 +143,7 @@ void scx::do_read()
          boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(len),
             [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
                if (error) {
-                  throw boost::system::error_code(error);
+                  throw boost::system::system_error(error);
                }
 
                compl_data->reserve(size->size() + rem_data->size());
@@ -295,7 +295,7 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
          if (!ec) {
             do_read();
          } else {
-            throw boost::system::error_code(ec);
+            throw boost::system::system_error(ec);
          }
       });
 }
@@ -320,7 +320,7 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
    }
 
    if (error) {
-      throw boost::system::error_code(error);
+      throw boost::system::system_error(error);
    }
 
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
@@ -331,7 +331,7 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
          if (!error) {
             do_read();
          } else {
-            throw boost::system::error_code(error);
+            throw boost::system::system_error(error);
          }
    });
 }

@@ -121,7 +121,7 @@ int main()
                                {upperlayer::TYPE::P_DATA_TF, printall},
                                {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
    sc.run();
-   } catch (const boost::system::error_code& ec) {
-      std::cout << ec.message();
+   } catch (std::exception& ec) {
+      std::cout << ec.what();
    }
 }
