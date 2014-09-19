@@ -267,9 +267,7 @@ std::vector<uchar> a_associate_rq::make_pdu() const
       {
          // insert maximum length item
          pack.insert(pack.end(), {0x51, 0x00, 0x00, 0x04});
-         std::vector<uchar> mli_len = ui_to_16b_be(0x04);
-         std::vector<uchar> max_len = ui_to_16b_be(max_message_length);
-         pack.insert(pack.end(), mli_len.begin(), mli_len.end());
+         std::vector<uchar> max_len = ui_to_32b_be(max_message_length);
          pack.insert(pack.end(), max_len.begin(), max_len.end());
       }
    }
@@ -382,9 +380,7 @@ std::vector<uchar> a_associate_ac::make_pdu() const
       {
          // insert maximum length item
          pack.insert(pack.end(), {0x51, 0x00, 0x00, 0x04});
-         std::vector<uchar> mli_len = ui_to_16b_be(0x04);
-         std::vector<uchar> max_len = ui_to_16b_be(max_message_length);
-         pack.insert(pack.end(), mli_len.begin(), mli_len.end());
+         std::vector<uchar> max_len = ui_to_32b_be(max_message_length);
          pack.insert(pack.end(), max_len.begin(), max_len.end());
       }
    }
