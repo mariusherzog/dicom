@@ -23,18 +23,18 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc):
 {
    using namespace std::placeholders;
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
-             std::bind(&dimse_pm::associate, this, _1, _2));
+             std::bind(&dimse_pm::association_rq_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::P_DATA_TF,
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
-             std::bind(&dimse_pm::release_resp, this, _1, _2));
+             std::bind(&dimse_pm::release_rp_handler, this, _1, _2));
 }
 
 dimse_pm::~dimse_pm()
 {
 }
 
-void dimse_pm::associate(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
+void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 {
    a_associate_rq* arq = dynamic_cast<a_associate_rq*>(rq.get());
    assert(arq);
@@ -109,7 +109,7 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
-void dimse_pm::release_resp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
 {
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
    state = CONN_STATE::IDLE;

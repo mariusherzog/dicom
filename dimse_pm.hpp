@@ -36,9 +36,27 @@ class dimse_pm
       void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
 
    private:
-      void associate(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq);
+      /**
+       * @brief association_rq_handler is called upon reception of an a-associate-rq property. It negotiates the supported
+       *        abstract syntaxes and the application context and transmits a respective a-associate-ac property.
+       * @param[in, out] sc upperlayer service received from
+       * @param[in] rq associate request data
+       */
+      void association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq);
+
+      /**
+       * @brief data_handler is called when a p-data-tf property is received.
+       * @param[in, out] sc upperlayer service received from
+       * @param[in] d data
+       */
       void data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> d);
-      void release_resp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+
+      /**
+       * @brief release_resp is called when an a-associate-rq property is received. An a-associate-rp is transmitted.
+       * @param[in, out] sc upperlayer service received from
+       * @param r
+       */
+      void release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
       CONN_STATE state;
 
