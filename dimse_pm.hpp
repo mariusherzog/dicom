@@ -21,30 +21,22 @@ class attribute
 class dimse_pm
 {
    public:
-      enum class service
-      {
-         C_ECHO
-      };
-
       enum class CONN_STATE
       {
          IDLE, CONNECTED
       };
 
-      static const std::map<service, std::string> service_uid;
+      //static const std::map<service, std::string> service_uid;
 
-      dimse_pm();
+      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc);
       ~dimse_pm();
-      bool associate();
-      void receive();
-      void send(std::vector<attribute> a);
-      void abort();
 
       void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
 
    private:
-      std::vector<attribute> deserialize(upperlayer::p_data_tf* data);
-      upperlayer::p_data_tf serialize(std::vector<attribute> a);
+      void associate(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq);
+      void data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> d);
+      void release_resp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
       CONN_STATE state;
 
@@ -57,7 +49,7 @@ class dimse_pm
       std::set<std::string> abstract_syntaxes;
       std::set<std::string> application_contexts;
 
-      upperlayer::scp ul;
+      //upperlayer::Iupperlayer_comm_ops& ul;
 };
 
 #endif // DIMSE_PM_HPP
