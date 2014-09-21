@@ -35,7 +35,6 @@ dimse_pm::~dimse_pm()
 
 void dimse_pm::associate(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 {
-   std::unique_ptr<property> p = nullptr;
    a_associate_rq* arq = dynamic_cast<a_associate_rq*>(rq.get());
    assert(arq);
 
@@ -51,6 +50,7 @@ void dimse_pm::associate(upperlayer::scx* sc, std::unique_ptr<upperlayer::proper
       a_associate_rj rj;
       rj.reason_ = a_associate_rj::REASON::APPL_CONT_NOT_SUPP;
       sc->queue_for_write(std::unique_ptr<property>(new a_associate_rj {rj}));
+      state = CONN_STATE::IDLE;
    }
 
    // check the support of each presentation context and populate own a_associate_ac
@@ -108,9 +108,10 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
-void dimse_pm::release_resp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
+void dimse_pm::release_resp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
 {
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
+   state = CONN_STATE::CONNECTED;
 }
 
 
