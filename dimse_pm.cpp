@@ -15,6 +15,7 @@ using namespace upperlayer;
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc):
    state {CONN_STATE::IDLE},
+   connection_properties {boost::none},
    transfer_syntaxes {"1.2.840.10008.1.2"},
    abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
    application_contexts {"1.2.840.10008.3.1.1.1"}/*,
@@ -78,7 +79,7 @@ void dimse_pm::associate(upperlayer::scx* sc, std::unique_ptr<upperlayer::proper
    ac.max_message_length = 0xFFFE;
 
    sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
-   connection_properties = ac;
+   *connection_properties = ac;
    state = CONN_STATE::CONNECTED;
 }
 
@@ -111,7 +112,8 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
 void dimse_pm::release_resp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
 {
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
-   state = CONN_STATE::CONNECTED;
+   state = CONN_STATE::IDLE;
+   connection_properties = boost::none;
 }
 
 

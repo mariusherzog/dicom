@@ -7,6 +7,8 @@
 #include <functional>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include "upperlayer.hpp"
 
 
@@ -40,7 +42,7 @@ class dimse_pm
 
       CONN_STATE state;
 
-      upperlayer::a_associate_ac connection_properties;
+      boost::optional<upperlayer::a_associate_ac> connection_properties;
 
       std::map<unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)>> procs;
 
