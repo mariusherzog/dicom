@@ -1,14 +1,8 @@
 #include <iostream>
-#include <memory>
-#include <algorithm>
-#include <vector>
-#include <boost/asio.hpp>
-#include <set>
-
-
 
 #include "dimse_pm.hpp"
 #include "upperlayer.hpp"
+
 
 int main()
 {

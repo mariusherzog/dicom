@@ -79,7 +79,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    ac.max_message_length = 0xFFFE;
 
    sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
-   *connection_properties = ac;
+   connection_properties = ac;
    state = CONN_STATE::CONNECTED;
 }
 
