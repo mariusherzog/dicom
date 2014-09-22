@@ -2,8 +2,15 @@
 #define IOD_HPP
 
 #include <set>
+#include <vector>
+#include <chrono>
+#include <memory>
 
 #include <boost/optional.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/local_time/local_time.hpp>
+
+class iod;
 
 enum class VR
 {
@@ -17,8 +24,8 @@ struct attribute_base
 {
       struct tag_type
       {
-            int group_id;
-            int element_id;
+            short group_id;
+            short element_id;
       };
       tag_type tag;
       boost::optional<VR> value_rep;
@@ -38,6 +45,131 @@ struct attribute<VR::AE>: attribute_base
 };
 template <>
 struct attribute<VR::AS>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::AT>: attribute_base
+{
+      attribute::tag_type value_field;
+};
+template <>
+struct attribute<VR::CS>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::DA>: attribute_base
+{
+      boost::gregorian::date value_field;
+};
+template <>
+struct attribute<VR::DS>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::DT>: attribute_base
+{
+      boost::local_time::local_date_time value_field;
+};
+template <>
+struct attribute<VR::FL>: attribute_base
+{
+      float value_field;
+};
+template <>
+struct attribute<VR::FD>: attribute_base
+{
+      double value_field;
+};
+template <>
+struct attribute<VR::IS>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::LO>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::LT>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::OB>: attribute_base
+{
+      std::vector<unsigned char> value_field;
+};
+template <>
+struct attribute<VR::OF>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::OW>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::PN>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::SH>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::SL>: attribute_base
+{
+      long value_field;
+};
+template <>
+struct attribute<VR::SQ>: attribute_base
+{
+      std::vector<std::unique_ptr<iod>> value_field;
+};
+template <>
+struct attribute<VR::SS>: attribute_base
+{
+      short value_field;
+};
+template <>
+struct attribute<VR::ST>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::TM>: attribute_base
+{
+      boost::local_time::local_date_time value_field;
+};
+template <>
+struct attribute<VR::UI>: attribute_base
+{
+      std::string value_field;
+};
+template <>
+struct attribute<VR::UL>: attribute_base
+{
+      unsigned long value_field;
+};
+template <>
+struct attribute<VR::UN>: attribute_base
+{
+      std::vector<unsigned char> value_field;
+};
+template <>
+struct attribute<VR::US>: attribute_base
+{
+      unsigned short value_field;
+};
+template <>
+struct attribute<VR::UT>: attribute_base
 {
       std::string value_field;
 };
