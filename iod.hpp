@@ -30,6 +30,10 @@ struct attribute_base
       tag_type tag;
       boost::optional<VR> value_rep;
       std::size_t value_len;
+      int value_field; //subclasses will shadow this field
+
+   protected:
+      attribute_base() = default;
 };
 
 template <VR>
@@ -192,7 +196,7 @@ class iod
       {
          attribute<VR::AE> a1;
          attribute<VR::AS> a2;
-         a1 < a2;
+         attributes.insert(a1);
       }
 
    private:
