@@ -12,10 +12,6 @@
 #include "upperlayer.hpp"
 
 
-class attribute
-{
-};
-
 /**
  * @brief The dimse_pm class
  * @todo - implement (de)serialization methods <BR>
@@ -52,11 +48,18 @@ class dimse_pm
       void data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> d);
 
       /**
-       * @brief release_resp is called when an a-associate-rq property is received. An a-associate-rp is transmitted.
+       * @brief release_rq_handler is called when an a-associate-rq property is received. An a-associate-rp is transmitted.
        * @param[in, out] sc upperlayer service received from
+       * @param[in] r release
+       */
+      void release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+
+      /**
+       * @brief abort_handler is called upon reception of an a-abort pdu
+       * @param[in, out] sc
        * @param r
        */
-      void release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+      void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
       CONN_STATE state;
 

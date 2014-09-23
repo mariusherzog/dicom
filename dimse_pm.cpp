@@ -27,7 +27,7 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc):
    sc.inject(upperlayer::TYPE::P_DATA_TF,
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
-             std::bind(&dimse_pm::release_rp_handler, this, _1, _2));
+             std::bind(&dimse_pm::release_rq_handler, this, _1, _2));
 }
 
 dimse_pm::~dimse_pm()
@@ -104,16 +104,19 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
 
    p_data_tf data;
    data.from_pdu(echo_rsp);
-   data.make_pdu();
 
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
-void dimse_pm::release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
 {
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
    state = CONN_STATE::IDLE;
    connection_properties = boost::none;
+}
+
+void dimse_pm::abort_handler(scx* sc, std::unique_ptr<property> r)
+{
 }
 
 
