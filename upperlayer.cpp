@@ -106,7 +106,7 @@ void scx::send(property* p)
       // call async_write after each sent property until the queue is
       // empty
       boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-         [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
+         [this, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
             if (error) {
                throw boost::system::system_error(error);
             }
