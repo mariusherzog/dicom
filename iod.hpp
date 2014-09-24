@@ -10,8 +10,6 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
-class iod;
-
 enum class VR
 {
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
@@ -135,7 +133,7 @@ struct attribute<VR::SL>: attribute_base
 template <>
 struct attribute<VR::SQ>: attribute_base
 {
-      std::vector<std::unique_ptr<iod>> value_field;
+      std::vector<std::set<attribute_base>> value_field;
 };
 template <>
 struct attribute<VR::SS>: attribute_base
@@ -181,21 +179,7 @@ struct attribute<VR::UT>: attribute_base
 
 bool operator<(const attribute_base& lhs, const attribute_base& rhs);
 
+using iod = std::set<attribute_base>;
 
-class iod
-{
-   public:
-
-
-      iod()
-      {
-         attribute<VR::AE> a1;
-         attribute<VR::AS> a2;
-         attributes.insert(a1);
-      }
-
-   private:
-      std::set<attribute_base> attributes;
-};
 
 #endif // IOD_HPP
