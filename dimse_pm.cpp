@@ -118,9 +118,24 @@ void dimse_pm::abort_handler(scx* sc, std::unique_ptr<property> r)
 {
 }
 
-
-void dimse_pm::inject(unsigned char id, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn)
+std::string dimse_pm::trans_synt_from_mid(unsigned char cid)
 {
-   procs[id] = fn;
+   using namespace upperlayer;
+   auto ac = connection_properties.get();
+   auto pos = std::find_if(ac.pres_contexts.begin(), ac.pres_contexts.end(),
+      [cid](const a_associate_ac::presentation_context& pc) -> bool {
+         return pc.id == cid
+            && pc.result_ == a_associate_ac::presentation_context::RESULT::ACCEPTANCE;
+   });
+   // The context id not being found or not accepted would imply an error in the protocol
+   // implementation, as that data package must not have been received in the first place.
+   assert(pos != ac.pres_contexts.end());
+   return pos->transfer_syntax;
+}
+
+
+void dimse_pm::inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn)
+{
+   procs[transfer_syntax] = fn;
 }
 

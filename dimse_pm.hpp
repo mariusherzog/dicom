@@ -10,6 +10,7 @@
 #include <boost/optional.hpp>
 
 #include "upperlayer.hpp"
+#include "transfer_processor.hpp"
 
 
 /**
@@ -29,7 +30,7 @@ class dimse_pm
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc);
       ~dimse_pm();
 
-      void inject(unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> f);
+      void inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn);
 
    private:
       /**
@@ -61,18 +62,25 @@ class dimse_pm
        */
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
+      /**
+       * @brief trans_synt_from_mid acquires the transfer-syntax-name from a given context id
+       * @param[in] mid
+       * @return transfer-syntax-name
+       */
+      std::string trans_synt_from_mid(unsigned char cid);
+
+
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
-      std::map<unsigned char, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)>> procs;
+      std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
+      std::map<std::string, std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
 
       // supported
       std::set<std::string> transfer_syntaxes;
       std::set<std::string> abstract_syntaxes;
       std::set<std::string> application_contexts;
-
-      //upperlayer::Iupperlayer_comm_ops& ul;
 };
 
 #endif // DIMSE_PM_HPP
