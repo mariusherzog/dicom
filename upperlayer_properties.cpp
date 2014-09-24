@@ -77,9 +77,9 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 
       pos += 2;
       if (msg_control & 0x01) {
-         command_set.insert(command_set.end(), pdu.begin()+pos, pdu.begin()+pos+pdv_len-2);
+         command_set.insert(command_set.end(), pdu.begin()+pos, pdu.begin()+(pos+pdv_len-2));
       } else {
-         data_set.insert(data_set.end(), pdu.begin()+pos, pdu.begin()+pos+pdv_len-2);
+         data_set.insert(data_set.end(), pdu.begin()+pos, pdu.begin()+(pos+pdv_len-2));
       }
 
       pdvs_left = !(msg_control & 0x02);
