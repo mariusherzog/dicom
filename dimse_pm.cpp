@@ -18,8 +18,7 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc):
    connection_properties {boost::none},
    transfer_syntaxes {"1.2.840.10008.1.2"},
    abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
-   application_contexts {"1.2.840.10008.3.1.1.1"}/*,
-   ul {sc}*/
+   application_contexts {"1.2.840.10008.3.1.1.1"}
 {
    using namespace std::placeholders;
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
