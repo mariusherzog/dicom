@@ -214,7 +214,7 @@ void scx::queue_for_write(std::unique_ptr<property> p)
    send(send_queue.front().get());
 }
 
-void upperlayer::scx::queue_for_write_w_prio(std::unique_ptr<upperlayer::property> p)
+void scx::queue_for_write_w_prio(std::unique_ptr<property> p)
 {
    // see scx::queue_for_write for explanation
    send_queue.emplace_front(std::move(p));
@@ -224,32 +224,32 @@ void upperlayer::scx::queue_for_write_w_prio(std::unique_ptr<upperlayer::propert
    send(send_queue.front().get());
 }
 
-void upperlayer::scx::reset_artim()
+void scx::reset_artim()
 {
    stop_artim();
    start_artim();
 }
 
-void upperlayer::scx::stop_artim()
+void scx::stop_artim()
 {
    artim_timer().cancel();
 }
 
-void upperlayer::scx::start_artim()
+void scx::start_artim()
 {
    using namespace std::placeholders;
    artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
       //member function artim_expired has implicit scx* as first parameter
 }
 
-void upperlayer::scx::ignore_next()
+void scx::ignore_next()
 {
    received_pdu = boost::none;
    assert(!received_pdu.is_initialized());
 }
 
 
-void upperlayer::scx::close_connection()
+void scx::close_connection()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
    io_s().reset();
