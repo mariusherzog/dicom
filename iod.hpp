@@ -10,6 +10,10 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
+/**
+ * @brief The VR enum defines the value representations of an attribute
+ * a Value Representation can be described as a data type.
+ */
 enum class VR
 {
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
@@ -18,7 +22,12 @@ enum class VR
 };
 
 
-struct attribute_base
+/**
+ * @brief The elementfield_base struct defines all information contained in an
+ *        attribute of an iod
+ * @see DICOM standard 3.5, chapter 7
+ */
+struct elementfield_base
 {
       struct tag_type
       {
@@ -31,155 +40,163 @@ struct attribute_base
       int value_field; //subclasses will shadow this field
 
    protected:
-      attribute_base() = default;
+      elementfield_base() = default;
 };
 
 template <VR>
-struct attribute: attribute_base
+struct element_field: elementfield_base
 {
 
 };
 
 template <>
-struct attribute<VR::AE>: attribute_base
+struct element_field<VR::AE>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::AS>: attribute_base
+struct element_field<VR::AS>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::AT>: attribute_base
+struct element_field<VR::AT>: elementfield_base
 {
-      attribute::tag_type value_field;
+      element_field::tag_type value_field;
 };
 template <>
-struct attribute<VR::CS>: attribute_base
+struct element_field<VR::CS>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::DA>: attribute_base
+struct element_field<VR::DA>: elementfield_base
 {
       boost::gregorian::date value_field;
 };
 template <>
-struct attribute<VR::DS>: attribute_base
+struct element_field<VR::DS>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::DT>: attribute_base
+struct element_field<VR::DT>: elementfield_base
 {
       boost::local_time::local_date_time value_field;
 };
 template <>
-struct attribute<VR::FL>: attribute_base
+struct element_field<VR::FL>: elementfield_base
 {
       float value_field;
 };
 template <>
-struct attribute<VR::FD>: attribute_base
+struct element_field<VR::FD>: elementfield_base
 {
       double value_field;
 };
 template <>
-struct attribute<VR::IS>: attribute_base
+struct element_field<VR::IS>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::LO>: attribute_base
+struct element_field<VR::LO>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::LT>: attribute_base
+struct element_field<VR::LT>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::OB>: attribute_base
+struct element_field<VR::OB>: elementfield_base
 {
       std::vector<unsigned char> value_field;
 };
 template <>
-struct attribute<VR::OF>: attribute_base
+struct element_field<VR::OF>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::OW>: attribute_base
+struct element_field<VR::OW>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::PN>: attribute_base
+struct element_field<VR::PN>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::SH>: attribute_base
+struct element_field<VR::SH>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::SL>: attribute_base
+struct element_field<VR::SL>: elementfield_base
 {
       long value_field;
 };
 template <>
-struct attribute<VR::SQ>: attribute_base
+struct element_field<VR::SQ>: elementfield_base
 {
-      std::vector<std::set<attribute_base>> value_field;
+      std::vector<std::set<elementfield_base>> value_field;
 };
 template <>
-struct attribute<VR::SS>: attribute_base
+struct element_field<VR::SS>: elementfield_base
 {
       short value_field;
 };
 template <>
-struct attribute<VR::ST>: attribute_base
+struct element_field<VR::ST>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::TM>: attribute_base
+struct element_field<VR::TM>: elementfield_base
 {
       boost::local_time::local_date_time value_field;
 };
 template <>
-struct attribute<VR::UI>: attribute_base
+struct element_field<VR::UI>: elementfield_base
 {
       std::string value_field;
 };
 template <>
-struct attribute<VR::UL>: attribute_base
+struct element_field<VR::UL>: elementfield_base
 {
       unsigned long value_field;
 };
 template <>
-struct attribute<VR::UN>: attribute_base
+struct element_field<VR::UN>: elementfield_base
 {
       std::vector<unsigned char> value_field;
 };
 template <>
-struct attribute<VR::US>: attribute_base
+struct element_field<VR::US>: elementfield_base
 {
       unsigned short value_field;
 };
 template <>
-struct attribute<VR::UT>: attribute_base
+struct element_field<VR::UT>: elementfield_base
 {
       std::string value_field;
 };
 
+/**
+ * @brief operator < is necessary for the storage in the set
+ * @param lhs
+ * @param rhs
+ * @return
+ * The order is defined by the attribute group and element ids. a < b is true
+ * iff the group id of a is lesser than b, or if they are equal, iff the
+ * element id of a is lesser than b.
+ */
+bool operator<(const elementfield_base& lhs, const elementfield_base& rhs);
 
-bool operator<(const attribute_base& lhs, const attribute_base& rhs);
-
-using iod = std::set<attribute_base>;
+using iod = std::set<elementfield_base>;
 
 
 #endif // IOD_HPP
