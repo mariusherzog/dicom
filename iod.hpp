@@ -59,6 +59,8 @@ struct elementfield_base
       template <VR vr>
       void accept(attribute_visitor<vr>& op) {
          element_field<vr>* ef = dynamic_cast<element_field<vr>*>(this);
+         assert(ef); // this class is abstract; the dynamic type of this must be
+                     // a pointer to a subclass, therefore ef cannot be nullptr.
          op.accept(ef);
       }
 
