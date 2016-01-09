@@ -26,6 +26,11 @@ struct elementfield_base;
 template <VR vr>
 struct element_field;
 
+
+/**
+ * @brief The attribute_visitor class is the base class for the visitors that
+ *        operate on the VR dependent types.
+ */
 template <VR vr>
 class attribute_visitor
 {
@@ -38,9 +43,19 @@ class attribute_visitor
       virtual void apply(element_field<vr>*) { assert(false); }
 };
 
-
+/**
+ * @brief The elementfield_base struct is the base type for the element fields
+ *        with their different types.
+ * This struct may not be dependent on any template parameters, as it is used
+ * by the elementfield struct which holds a "type-dependency-free" pointer to
+ * it.
+ */
 struct elementfield_base
 {
+      /**
+       * @brief accept
+       * @param op
+       */
       template <VR vr>
       void accept(attribute_visitor<vr>& op) {
          element_field<vr>* ef = dynamic_cast<element_field<vr>*>(this);
@@ -129,6 +144,10 @@ template<>
 struct type_of<VR::UT> { using type = std::string; };
 
 
+/**
+ * @brief The element_field struct contains the type-specific data and methods
+ *        for setting / receiving those
+ */
 template <VR vr>
 struct element_field: elementfield_base
 {
@@ -141,6 +160,10 @@ struct element_field: elementfield_base
 };
 
 
+/**
+ * @brief The set_visitor class is used to set a specified value into the
+ *        value field.
+ */
 template <VR vr>
 class set_visitor : public attribute_visitor<vr>
 {
@@ -158,6 +181,14 @@ class set_visitor : public attribute_visitor<vr>
 };
 
 
+/**
+ * @brief make_elementfield is a factory function to return a prepared attribute
+ *        / element field.
+ * @param gid group id
+ * @param eid element id
+ * @param data data for the value field
+ * @return prepared instance of elementfield
+ */
 template <VR vr>
 elementfield make_elementfield(short gid, short eid, typename type_of<vr>::type data)
 {
