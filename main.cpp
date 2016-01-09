@@ -7,8 +7,11 @@
 int main()
 {
    iod dat;
-   elementfield el = make_elementfield<VR::US>(28, 10, 99);
+   elementfield el = make_elementfield<VR::US>(28, 10, 2, 1243);
    dat.insert(el);
+   short unsigned n;
+   get_value_field<VR::US>(el, n);
+   std::cout << n << std::flush;
 
 
    try
