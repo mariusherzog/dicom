@@ -14,11 +14,3 @@ bool operator<(const elementfield& lhs, const elementfield& rhs)
 }
 
 
-std::ostream& operator<<(std::ostream& os, elementfield& attribute)
-{
-   os << "(" << attribute.tag.group_id << "," << attribute.tag.element_id << ")"
-      << " " << attribute.value_len << " bytes. Data: "
-      << attribute.value_field << "\n";
-   return os;
-}
-
