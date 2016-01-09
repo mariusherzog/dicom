@@ -225,11 +225,12 @@ class set_visitor : public attribute_visitor<vr>
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(short gid, short eid, typename type_of<vr>::type data)
+elementfield make_elementfield(short gid, short eid, std::size_t data_len, typename type_of<vr>::type data)
 {
    elementfield el;
    el.tag.group_id = gid; el.tag.element_id = eid;
    el.value_rep = vr;
+   el.value_len = data_len;
    el.value_field = std::shared_ptr<elementfield_base> {new element_field<vr>};
 
    set_visitor<vr> setter(data);
