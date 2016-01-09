@@ -1,5 +1,11 @@
 #include "iod.hpp"
 
+
+elementfield_base::~elementfield_base()
+{
+}
+
+
 bool operator<(const elementfield& lhs, const elementfield& rhs)
 {
    return lhs.tag.group_id == rhs.tag.group_id ?

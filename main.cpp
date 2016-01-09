@@ -7,7 +7,7 @@
 int main()
 {
    iod dat;
-   elementfield el = make_elementfield<VR::US>(28, 10, 99);
+   elementfield el = make_elementfield<VR::US>(28, 10, 1243);
    dat.insert(el);
 
 

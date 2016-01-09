@@ -26,15 +26,8 @@ struct elementfield_base;
 template <VR vr>
 struct element_field;
 
-
-class base_visitor
-{
-   public:
-      virtual ~base_visitor() {}
-};
-
 template <VR vr>
-class attribute_visitor: public base_visitor
+class attribute_visitor
 {
    public:
       virtual void accept(element_field<vr>* ef)
@@ -49,12 +42,12 @@ class attribute_visitor: public base_visitor
 struct elementfield_base
 {
       template <VR vr>
-      void accept(base_visitor& op) {
-//         V* vis = dynamic_cast<V*>(&op);
-         attribute_visitor<vr>* vis = dynamic_cast<attribute_visitor<vr>*>(&op);
-         element_field<vr>* ef = static_cast<element_field<vr>*>(this);
-         vis->accept(ef);
+      void accept(attribute_visitor<vr>& op) {
+         element_field<vr>* ef = dynamic_cast<element_field<vr>*>(this);
+         op.accept(ef);
       }
+
+      virtual ~elementfield_base() = 0;
 };
 
 
