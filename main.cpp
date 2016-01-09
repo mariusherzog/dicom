@@ -6,6 +6,11 @@
 
 int main()
 {
+   iod dat;
+   elementfield el = make_elementfield<VR::US>(28, 10, 99);
+   dat.insert(el);
+
+
    try
    {
       upperlayer::scp sc(11112);
