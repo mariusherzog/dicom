@@ -21,13 +21,42 @@ enum class VR
    ST, TM, UI, UL, UN, US, UT
 };
 
-struct elementfield_base
-{
-      virtual void f();
-};
+struct elementfield_base;
 
 template <VR vr>
 struct element_field;
+
+
+class base_visitor
+{
+   public:
+      virtual ~base_visitor() {}
+};
+
+template <VR vr>
+class attribute_visitor: public base_visitor
+{
+   public:
+      virtual void accept(element_field<vr>* ef)
+      {
+        this->apply(ef);
+      }
+
+      virtual void apply(element_field<vr>*) { assert(false); }
+};
+
+
+struct elementfield_base
+{
+      template <VR vr>
+      void accept(base_visitor& op) {
+//         V* vis = dynamic_cast<V*>(&op);
+         attribute_visitor<vr>* vis = dynamic_cast<attribute_visitor<vr>*>(&op);
+         element_field<vr>* ef = static_cast<element_field<vr>*>(this);
+         vis->accept(ef);
+      }
+};
+
 
 /**
  * @brief The elementfield_base struct defines all information contained in an
@@ -36,7 +65,6 @@ struct element_field;
  */
 struct elementfield
 {
-
       struct tag_type
       {
             short group_id;
@@ -109,19 +137,46 @@ struct type_of<VR::UT> { using type = std::string; };
 
 
 template <VR vr>
+struct element_field: elementfield_base
+{
+      using vrtype = typename type_of<vr>::type;
+      vrtype value_field;
+
+      void set(vrtype data) {
+         value_field = data;
+      }
+};
+
+
+template <VR vr>
+class set_visitor : public attribute_visitor<vr>
+{
+   private:
+      typename type_of<vr>::type setdata;
+
+   public:
+      set_visitor(typename type_of<vr>::type data) {
+         setdata = data;
+      }
+
+      virtual void apply(element_field<vr>* ef) override {
+         ef->set(setdata);
+      }
+};
+
+
+template <VR vr>
 elementfield make_elementfield(short gid, short eid, typename type_of<vr>::type data)
 {
    elementfield el;
    el.tag.group_id = gid, el.tag.element_id = eid;
    el.value_rep = vr;
-   typename type_of<vr>::type data2;
-}
+   el.value_field = new element_field<vr> {};
 
-template <VR vr>
-struct element_field: elementfield_base
-{
-      typename type_of<vr>::type value_field;
-};
+   set_visitor<vr> setter(data);
+   el.value_field->accept<vr>(setter);
+   return el;
+}
 
 
 /**
