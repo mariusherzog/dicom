@@ -156,14 +156,6 @@ struct element_field: elementfield_base
       using vrtype = typename type_of<vr>::type;
       vrtype value_field;
 
-      void set(vrtype data) {
-         value_field = data;
-      }
-
-      vrtype get() {
-         return value_field;
-      }
-
       virtual ~element_field() {}
 };
 
@@ -183,10 +175,16 @@ class get_visitor : public attribute_visitor<vr>
       }
 
       virtual void apply(element_field<vr>* ef) override {
-         getdata = ef->get();
+         getdata = ef->value_field;
       }
 };
 
+/**
+ * @brief get_value_field is used to retrieve the value of the value field
+ *        of an attribute.
+ * @param e element field / attribute operated upon
+ * @param out_data reference where the value will be stored
+ */
 template <VR vr>
 void get_value_field(elementfield& e, typename type_of<vr>::type& out_data)
 {
@@ -211,7 +209,7 @@ class set_visitor : public attribute_visitor<vr>
       }
 
       virtual void apply(element_field<vr>* ef) override {
-         ef->set(setdata);
+         ef->value_field = setdata;
       }
 };
 
