@@ -2,3 +2,9 @@ Boost ASIO - based implementation of the DICOM network protocol.
 Currently, only the upperlayer as described in chapter 8 of the standard is realized, 
 but should be completely functional.
 
+Implementation of the DIMSE layer is currently wip on the dimse branch.
+
+Instructions:
+$ cmake CMakeLists.txt
+$ make
+
