@@ -235,7 +235,7 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
 
    set_visitor<vr> setter(data);
    el.value_field->accept<vr>(setter);
-   return std::move(el);
+   return el;
 }
 
 
