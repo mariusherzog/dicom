@@ -66,6 +66,7 @@ struct elementfield_base
 };
 
 
+
 /**
  * @brief The elementfield_base struct defines all information contained in an
  *        attribute of an iod
@@ -83,6 +84,7 @@ struct elementfield
       std::size_t value_len;
       std::shared_ptr<elementfield_base> value_field;
 };
+
 
 /**
  * construct a type mapping VR -> T using specialized templates
@@ -158,8 +160,39 @@ struct element_field: elementfield_base
          value_field = data;
       }
 
+      vrtype get() {
+         return value_field;
+      }
+
       virtual ~element_field() {}
 };
+
+
+/**
+ * @brief The get_visitor class is used to retrieve the value of the value field
+ *        of an attribute.
+ */
+template <VR vr>
+class get_visitor : public attribute_visitor<vr>
+{
+   private:
+      typename type_of<vr>::type& getdata;
+
+   public:
+      get_visitor(typename type_of<vr>::type& data): getdata(data) {
+      }
+
+      virtual void apply(element_field<vr>* ef) override {
+         getdata = ef->get();
+      }
+};
+
+template <VR vr>
+void get_value_field(elementfield& e, typename type_of<vr>::type& out_data)
+{
+   get_visitor<vr> getter(out_data);
+   e.value_field->accept<vr>(getter);
+}
 
 
 /**
