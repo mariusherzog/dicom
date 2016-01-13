@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "dimse_pm.hpp"
-#include "upperlayer.hpp"
+#include "dimse/dimse_pm.hpp"
+#include "upperlayer/upperlayer.hpp"
 
 
 int main()

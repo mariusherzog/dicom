@@ -4,8 +4,8 @@
 #include <string>
 #include <functional>
 
-#include "upperlayer_properties.hpp"
-#include "upperlayer.hpp"
+#include "../upperlayer/upperlayer_properties.hpp"
+#include "../upperlayer/upperlayer.hpp"
 
 using namespace upperlayer;
 
