@@ -252,6 +252,7 @@ bool operator<(const elementfield& lhs, const elementfield& rhs);
 
 
 using iod = std::set<elementfield>;
+using commandset_data = std::set<elementfield>;
 
 
 #endif // IOD_HPP

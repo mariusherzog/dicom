@@ -21,4 +21,20 @@ struct Itransfer_processor
       virtual ~Itransfer_processor() = 0;
 };
 
+/**
+ * @brief The commandset_processor class is used to (de)serialize the command
+ *        set of the DICOM message, which is always encoded in little endian
+ *        with implicit vr.
+ * @todo implementation
+ */
+class commandset_processor
+{
+
+      // Itransfer_processor interface
+   public:
+      std::vector<unsigned char> deserialize(commandset_data data) const;
+      commandset_data serialize(std::vector<unsigned char> data) const;
+};
+
+
 #endif // TRANSFER_PROCESSOR_HPP
