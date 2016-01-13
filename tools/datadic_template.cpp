@@ -4,7 +4,6 @@
 #include <string>
 #include "iod.hpp"
 
-template <unsigned, unsigned>
 struct datadictionary_type
 {
    protected:
@@ -22,16 +21,9 @@ struct datadictionary_type
       const bool retired;
 };
 
-template <unsigned, unsigned>
-struct datadictionary
-{
-      datadictionary() = delete;
-};
 
-template <unsigned, unsigned>
-struct datadictionary_rng
-{
-      datadictionary_rng() = delete;
-};
+template<bool> struct bool_t;
 
+template<unsigned gid, unsigned eid, typename = bool_t<true>, typename = bool_t<true> >
+struct datadictionary;
 

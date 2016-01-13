@@ -1,31 +1,31 @@
 #!/bin/bash
 
 
+# This script is used to process a datadictionary file and generate a appropriate header
+# containing all the information
+
+
 function write_template_struct {
-   echo "template <>
-struct datadictionary<$1, $2>: datadictionary_type<$1, $2>
-{
+   echo "template<unsigned gid, unsigned eid>
+struct datadictionary<gid, eid, bool_t<(gid & 0xffff) == $1>, bool_t<(eid & 0xffff) == $2>>: datadictionary_type {
    datadictionary():
-      datadictionary_type {VR::$3, \"$4\", \"$5\", \"$6\", $7} {}
+      datadictionary_type(VR::$3, \"$4\", \"$5\", \"$6\", $7) {}
 };"
 }
+
 
 
 function write_template_rng_struct {
-echo "template <>
-struct datadictionary_rng<$1, $2>: datadictionary_type<$1, $2>
-{
-   datadictionary_rng():
+   echo "template <unsigned gid, unsigned eid>
+struct datadictionary<gid, eid, bool_t<(gid & $3) == $1>, bool_t<(eid & $4) == $2>>: datadictionary_type {
+   datadictionary():
       datadictionary_type(VR::$5, \"$6\", \"$7\", \"$8\", $9) {}
-};
-
-template <unsigned gid, unsigned eid>
-struct datadictionary<gid, eid>: datadictionary_rng<(gid & $3), (eid & $4)>
-{
-   datadictionary() {}
 };"
 }
 
+
+
+declare -A template_map_mask
 
 
 
