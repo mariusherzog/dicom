@@ -3,7 +3,11 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
+
+namespace upperlayer
+{
 
 enum class TYPE : unsigned char
 {
@@ -16,16 +20,29 @@ enum class TYPE : unsigned char
    A_ABORT = 0x07
 };
 
-TYPE get_type(std::vector<unsigned char> pdu);
+TYPE get_type(const std::vector<unsigned char>& pdu);
 
 
+/**
+ * @brief The property struct or rather its subclasses represent the serial pdu data
+ *        in a structured form, so information contained in these pdus can be accessed
+ *        easily.
+ */
 struct property
 {
       virtual void from_pdu(std::vector<unsigned char> pdu) = 0;
-      virtual std::vector<unsigned char> make_pdu() = 0;
-      virtual TYPE type() = 0;
+      virtual std::vector<unsigned char> make_pdu() const = 0;
+      virtual TYPE type() const = 0;
       virtual ~property() = 0;
 };
+
+/**
+ * @brief make_property is a factory function which creates structured data
+ *        depending on the type of pdu passed to it
+ * @param[in] pdu
+ * @return unique_ptr to the structured data
+ */
+std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu);
 
 
 
@@ -33,8 +50,8 @@ struct p_data_tf: property
 {
       p_data_tf() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      virtual std::vector<unsigned char> make_pdu();
-      virtual TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
       unsigned char message_id;
       std::vector<unsigned char> command_set;
@@ -42,7 +59,7 @@ struct p_data_tf: property
 };
 
 /**
- * @brief The upperlayer_connection_propertie struct contains information about
+ * @brief The upperlayer_connection_property struct contains information about
  *        the offered / negotiated association with the remote application
  *        entity.
  *
@@ -52,8 +69,8 @@ struct a_associate_rq: property
 {
       a_associate_rq() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      virtual TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
 
       std::string called_ae;
@@ -76,8 +93,8 @@ struct a_associate_ac: property
 {
       a_associate_ac() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
 
       std::string called_ae;
@@ -91,7 +108,7 @@ struct a_associate_ac: property
                ACCEPTANCE = 0x00, USER_REJEC = 0x01,
                PROV_REJEC_NO_REASON = 0x02,
                ABSTR_CONT_NOT_SUPP = 0x03,
-               TRANFS_SYNT_NOT_SUPP = 0x04
+               TRANSF_SYNT_NOT_SUPP = 0x04
             };
 
             presentation_context() = default;
@@ -108,8 +125,8 @@ struct a_associate_rj: property
 {
       a_associate_rj() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu() override;
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
       enum class SOURCE : unsigned char
       {
@@ -130,24 +147,24 @@ struct a_release_rq: property
 {
       a_release_rq() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 };
 
 struct a_release_rp: property
 {
       a_release_rp() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 };
 
 struct a_abort: property
 {
       a_abort() = default;
       void from_pdu(std::vector<unsigned char> pdu);
-      std::vector<unsigned char> make_pdu();
-      TYPE type();
+      std::vector<unsigned char> make_pdu() const override;
+      TYPE type() const override;
 
       enum class SOURCE : unsigned char
       {
@@ -169,5 +186,6 @@ struct a_abort: property
 
 std::ostream& operator<<(std::ostream& os, a_associate_rq t);
 
+}
 
 #endif // DICOM_UPPERLAYER_CONNECTION_PROPERTIES_HPP

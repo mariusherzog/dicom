@@ -8,10 +8,13 @@
 
 
 
-namespace { using uchar = unsigned char; }
+namespace upperlayer
+{
 
 namespace
 {
+using uchar = unsigned char;
+
 std::size_t be_char_to_16b(std::vector<uchar> bs)
 {
    assert(bs.size() == 2);
@@ -50,7 +53,7 @@ std::vector<uchar> ui_to_32b_be(unsigned val)
 
 
 
-TYPE get_type(std::vector<unsigned char> pdu)
+TYPE get_type(const std::vector<unsigned char>& pdu)
 {
    return static_cast<TYPE>(pdu[0]);
 }
@@ -63,8 +66,6 @@ property::~property()
 
 void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 {
-   std::size_t pdu_len = be_char_to_32b({pdu.begin()+2, pdu.begin()+6});
-
    std::size_t pos = 6;
    bool pdvs_left = true;
    while (pdvs_left) {
@@ -76,9 +77,9 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 
       pos += 2;
       if (msg_control & 0x01) {
-         command_set.insert(command_set.end(), pdu.begin()+pos, pdu.begin()+pos+pdv_len-2);
+         command_set.insert(command_set.end(), pdu.begin()+pos, pdu.begin()+(pos+pdv_len-2));
       } else {
-         data_set.insert(data_set.end(), pdu.begin()+pos, pdu.begin()+pos+pdv_len-2);
+         data_set.insert(data_set.end(), pdu.begin()+pos, pdu.begin()+(pos+pdv_len-2));
       }
 
       pdvs_left = !(msg_control & 0x02);
@@ -86,7 +87,7 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
    }
 }
 
-std::vector<uchar> p_data_tf::make_pdu()
+std::vector<uchar> p_data_tf::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::P_DATA_TF));
@@ -96,17 +97,27 @@ std::vector<uchar> p_data_tf::make_pdu()
    {
       // insert command part
       // one extra byte each for message id and message header
-      std::vector<uchar> pdv_len = ui_to_32b_be(command_set.size()+2);
-      pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-      pack.push_back(message_id);
-      pack.push_back(0x01);
-      pack.insert(pack.end(), command_set.begin(), command_set.end());
+      std::vector<uchar> pdv_len;
 
-      pdv_len = ui_to_32b_be(data_set.size()+2);
-      pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-      pack.push_back(message_id);
-      pack.push_back(0x02);
-      pack.insert(pack.end(), data_set.begin(), data_set.end());
+      if (!command_set.empty()) {
+         pdv_len = ui_to_32b_be(command_set.size()+2);
+         pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
+         pack.push_back(message_id);
+         if (data_set.empty()) {
+            pack.push_back(0x03);
+         } else {
+            pack.push_back(0x01);
+         }
+         pack.insert(pack.end(), command_set.begin(), command_set.end());
+      }
+
+      if (!data_set.empty()) {
+         pdv_len = ui_to_32b_be(data_set.size()+2);
+         pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
+         pack.push_back(message_id);
+         pack.push_back(0x02);
+         pack.insert(pack.end(), data_set.begin(), data_set.end());
+      }
    }
 
    std::size_t pdu_len = pack.size()-6;
@@ -116,7 +127,7 @@ std::vector<uchar> p_data_tf::make_pdu()
    return pack;
 }
 
-TYPE p_data_tf::type()
+TYPE p_data_tf::type() const
 {
    return TYPE::P_DATA_TF;
 }
@@ -196,7 +207,7 @@ void a_associate_rq::from_pdu(std::vector<unsigned char> pdu)
  * @param[in] t
  * @return pdu representing structured data
  */
-std::vector<uchar> a_associate_rq::make_pdu()
+std::vector<uchar> a_associate_rq::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_RQ));
@@ -256,9 +267,7 @@ std::vector<uchar> a_associate_rq::make_pdu()
       {
          // insert maximum length item
          pack.insert(pack.end(), {0x51, 0x00, 0x00, 0x04});
-         std::vector<uchar> mli_len = ui_to_16b_be(0x04);
-         std::vector<uchar> max_len = ui_to_16b_be(max_message_length);
-         pack.insert(pack.end(), mli_len.begin(), mli_len.end());
+         std::vector<uchar> max_len = ui_to_32b_be(max_message_length);
          pack.insert(pack.end(), max_len.begin(), max_len.end());
       }
    }
@@ -271,7 +280,7 @@ std::vector<uchar> a_associate_rq::make_pdu()
 }
 
 
-TYPE a_associate_rq::type()
+TYPE a_associate_rq::type() const
 {
    return TYPE::A_ASSOCIATE_RQ;
 }
@@ -324,7 +333,7 @@ void a_associate_ac::from_pdu(std::vector<unsigned char> pdu)
    }
 }
 
-std::vector<uchar> a_associate_ac::make_pdu()
+std::vector<uchar> a_associate_ac::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_AC));
@@ -371,9 +380,7 @@ std::vector<uchar> a_associate_ac::make_pdu()
       {
          // insert maximum length item
          pack.insert(pack.end(), {0x51, 0x00, 0x00, 0x04});
-         std::vector<uchar> mli_len = ui_to_16b_be(0x04);
-         std::vector<uchar> max_len = ui_to_16b_be(max_message_length);
-         pack.insert(pack.end(), mli_len.begin(), mli_len.end());
+         std::vector<uchar> max_len = ui_to_32b_be(max_message_length);
          pack.insert(pack.end(), max_len.begin(), max_len.end());
       }
    }
@@ -385,7 +392,7 @@ std::vector<uchar> a_associate_ac::make_pdu()
    return pack;
 }
 
-TYPE a_associate_ac::type()
+TYPE a_associate_ac::type() const
 {
    return TYPE::A_ASSOCIATE_AC;
 }
@@ -397,7 +404,7 @@ void a_associate_rj::from_pdu(std::vector<uchar> pdu)
    reason_ = static_cast<REASON>(pdu[9]);
 }
 
-std::vector<uchar> a_associate_rj::make_pdu()
+std::vector<uchar> a_associate_rj::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_RJ));
@@ -407,17 +414,17 @@ std::vector<uchar> a_associate_rj::make_pdu()
    return pack;
 }
 
-TYPE a_associate_rj::type()
+TYPE a_associate_rj::type() const
 {
    return TYPE::A_ASSOCIATE_RJ;
 }
 
 
-void a_release_rq::from_pdu(std::vector<unsigned char> pdu)
+void a_release_rq::from_pdu(std::vector<unsigned char>)
 {
 }
 
-std::vector<uchar> a_release_rq::make_pdu()
+std::vector<uchar> a_release_rq::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_RELEASE_RQ));
@@ -425,17 +432,17 @@ std::vector<uchar> a_release_rq::make_pdu()
    return pack;
 }
 
-TYPE a_release_rq::type()
+TYPE a_release_rq::type() const
 {
    return TYPE::A_RELEASE_RQ;
 }
 
 
-void a_release_rp::from_pdu(std::vector<unsigned char> pdu)
+void a_release_rp::from_pdu(std::vector<unsigned char>)
 {
 }
 
-std::vector<uchar> a_release_rp::make_pdu()
+std::vector<uchar> a_release_rp::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_RELEASE_RP));
@@ -443,7 +450,7 @@ std::vector<uchar> a_release_rp::make_pdu()
    return pack;
 }
 
-TYPE a_release_rp::type()
+TYPE a_release_rp::type() const
 {
    return TYPE::A_RELEASE_RP;
 }
@@ -455,7 +462,7 @@ void a_abort::from_pdu(std::vector<unsigned char> pdu)
    reason_ = static_cast<REASON>(pdu[9]);
 }
 
-std::vector<uchar> a_abort::make_pdu()
+std::vector<uchar> a_abort::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ABORT));
@@ -465,7 +472,7 @@ std::vector<uchar> a_abort::make_pdu()
    return pack;
 }
 
-TYPE a_abort::type()
+TYPE a_abort::type() const
 {
    return TYPE::A_ABORT;
 }
@@ -486,4 +493,50 @@ std::ostream& operator<<(std::ostream& os, a_associate_rq t)
       }
    }
    return os;
+}
+
+
+std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
+{
+   auto ptype = get_type(pdu);
+   switch (ptype) {
+      case TYPE::A_ABORT: {
+         auto a = new a_abort();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_abort>(a);
+      }
+      case TYPE::A_RELEASE_RQ: {
+         auto a = new a_release_rq();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_release_rq>(a);
+      }
+      case TYPE::A_RELEASE_RP: {
+         auto a = new a_release_rp();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_release_rp>(a);
+      }
+      case TYPE::A_ASSOCIATE_RQ: {
+         auto a = new a_associate_rq();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_associate_rq>(a);
+      }
+      case TYPE::A_ASSOCIATE_AC: {
+         auto a = new a_associate_ac();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_associate_ac>(a);
+      }
+      case TYPE::A_ASSOCIATE_RJ: {
+         auto a = new a_associate_rj();
+         a->from_pdu(pdu);
+         return std::unique_ptr<a_associate_rj>(a);
+      }
+      case TYPE::P_DATA_TF: {
+         auto p = new p_data_tf();
+         p->from_pdu(pdu);
+         return std::unique_ptr<p_data_tf>(p);
+      }
+   }
+   return nullptr;
+}
+
 }
