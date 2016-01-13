@@ -42,8 +42,8 @@
 (0008,0081) Institution Address InstitutionAddress                                             ST 1
 (0008,0082) Institution Code    InstitutionCodeSequence                                        SQ 1
 (0008,0090) Referring           ReferringPhysicianName                                         PN 1
-(0008,0092) Physician’s       ReferringPhysicianAddress                                      ST 1
-(0008,0094) Physician’s       ReferringPhysicianTelephoneNumbers                             SH n
+(0008,0092) Physicians       ReferringPhysicianAddress                                      ST 1
+(0008,0094) Physicians       ReferringPhysicianTelephoneNumbers                             SH n
 (0008,0096) Identification      ReferringPhysicianIdentificationSequence                       SQ 1
 (0008,0100) Code Value          CodeValue                                                      SH 1
 (0008,0102) Coding Scheme       CodingSchemeDesignator                                         SH 1
@@ -76,11 +76,11 @@
 (0008,1052) Physician           PerformingPhysicianIdentificationSequence                      SQ 1
 (0008,1060) Name of Physician   NameOfPhysiciansReadingStudy                                   PN 1-
 (0008,1062) Reading Study       PhysiciansReadingStudyIdentificationSequence                   SQ 1
-(0008,1070) Operators’ Name   OperatorsName                                                  PN 1-
+(0008,1070) Operators Name   OperatorsName                                                  PN 1-
 (0008,1072) Identification      OperatorIdentificationSequence                                 SQ 1
 (0008,1080) Admitting Diagnoses AdmittingDiagnosesDescription                                  LO 1-
 (0008,1084) Admitting Diagnoses AdmittingDiagnosesCodeSequence                                 SQ 1
-(0008,1090) Manufacturer’s    ManufacturerModelName                                          LO 1
+(0008,1090) Manufacturers    ManufacturerModelName                                          LO 1
 (0008,1100) Referenced Results  ReferencedResultsSequence                                      SQ 1  RET
 (0008,1110) Referenced Study    ReferencedStudySequence                                        SQ 1
 (0008,1111) Performed Procedure ReferencedPerformedProcedureStepSequence                       SQ 1
@@ -168,28 +168,28 @@
 (0008,9458) Frame Display       FrameDisplaySequence                                           SQ 1
 (0008,9459) Recommended Display RecommendedDisplayFrameRateInFloat                             FL 1
 (0008,9460) Skip Frame Range    SkipFrameRangeFlag                                             CS 1
-(0010,0010) Patient’s Name    PatientName                                                    PN 1
+(0010,0010) Patients Name    PatientName                                                    PN 1
 (0010,0020) Patient ID          PatientID                                                      LO 1
 (0010,0021) Issuer of Patient   IssuerOfPatientID                                              LO 1
 (0010,0022) Type of Patient ID  TypeOfPatientID                                                CS 1
 (0010,0024) ID Qualifiers       IssuerOfPatientIDQualifiersSequence                            SQ 1
-(0010,0030) Patient’s Birth   PatientBirthDate                                               DA 1
-(0010,0032) Patient’s Birth   PatientBirthTime                                               TM 1
-(0010,0040) Patient’s Sex     PatientSex                                                     CS 1
+(0010,0030) Patients Birth   PatientBirthDate                                               DA 1
+(0010,0032) Patients Birth   PatientBirthTime                                               TM 1
+(0010,0040) Patients Sex     PatientSex                                                     CS 1
 (0010,0050) Insurance Plan Code PatientInsurancePlanCodeSequence                               SQ 1
 (0010,0101) Language Code       PatientPrimaryLanguageCodeSequence                             SQ 1
 (0010,0102) Language Modifier   PatientPrimaryLanguageModifierCodeSequence                     SQ 1
 (0010,1000) Other Patient IDs   OtherPatientIDs                                                LO 1-
 (0010,1001) Other Patient Names OtherPatientNames                                              PN 1-
 (0010,1002) Other Patient IDs   OtherPatientIDsSequence                                        SQ 1
-(0010,1005) Patient’s Birth   PatientBirthName                                               PN 1
-(0010,1010) Patient’s Age     PatientAge                                                     AS 1
-(0010,1020) Patient’s Size    PatientSize                                                    DS 1
-(0010,1021) Patient’s Size    PatientSizeCodeSequence                                        SQ 1
-(0010,1030) Patient’s Weight  PatientWeight                                                  DS 1
-(0010,1040) Patient’s Address PatientAddress                                                 LO 1
+(0010,1005) Patients Birth   PatientBirthName                                               PN 1
+(0010,1010) Patients Age     PatientAge                                                     AS 1
+(0010,1020) Patients Size    PatientSize                                                    DS 1
+(0010,1021) Patients Size    PatientSizeCodeSequence                                        SQ 1
+(0010,1030) Patients Weight  PatientWeight                                                  DS 1
+(0010,1040) Patients Address PatientAddress                                                 LO 1
 (0010,1050) Insurance Plan      InsurancePlanIdentification                                    LO 1- RET
-(0010,1060) Mother’s Birth    PatientMotherBirthName                                         PN 1
+(0010,1060) Mothers Birth    PatientMotherBirthName                                         PN 1
 (0010,1080) Military Rank       MilitaryRank                                                   LO 1
 (0010,1081) Branch of Service   BranchOfService                                                LO 1
 (0010,1090) Medical Record      MedicalRecordLocator                                           LO 1
@@ -197,7 +197,7 @@
 (0010,2110) Allergies           Allergies                                                      LO 1-
 (0010,2150) Country of          CountryOfResidence                                             LO 1
 (0010,2152) Region of Residence RegionOfResidence                                              LO 1
-(0010,2154) Patient’s         PatientTelephoneNumbers                                        SH 1-
+(0010,2154) Patients         PatientTelephoneNumbers                                        SH 1-
 (0010,2160) Ethnic Group        EthnicGroup                                                    SH 1
 (0010,2180) Occupation          Occupation                                                     SH 1
 (0010,21A0) Smoking Status      SmokingStatus                                                  CS 1
@@ -207,7 +207,7 @@
 (0010,21F0) Religious           PatientReligiousPreference                                     LO 1
 (0010,2201) Patient Species     PatientSpeciesDescription                                      LO 1
 (0010,2202) Patient Species     PatientSpeciesCodeSequence                                     SQ 1
-(0010,2203) Patient’s Sex     PatientSexNeutered                                             CS 1
+(0010,2203) Patients Sex     PatientSexNeutered                                             CS 1
 (0010,2210) Anatomical          AnatomicalOrientationType                                      CS 1
 (0010,2292) Patient Breed       PatientBreedDescription                                        LO 1
 (0010,2293) Patient Breed Code  PatientBreedCodeSequence                                       SQ 1
@@ -433,7 +433,7 @@
 (0018,1018) Device              SecondaryCaptureDeviceManufacturerModelName                    LO 1
 (0018,1019) Device Software     SecondaryCaptureDeviceSoftwareVersions                         LO n
 (0018,101A) Hardcopy Device     HardcopyDeviceSoftwareVersion                                  LO 1- RET
-(0018,101B) Manufacturer’s    HardcopyDeviceManufacturerModelName                            LO 1  RET
+(0018,101B) Manufacturers    HardcopyDeviceManufacturerModelName                            LO 1  RET
 (0018,1020) Software Version(s) SoftwareVersions                                               LO 1-
 (0018,1022) Video Image Format  VideoImageFormatAcquired                                       SH 1
 (0018,1023) Digital Image       DigitalImageFormatAcquired                                     LO 1
@@ -508,7 +508,7 @@
 (0018,1150) Exposure Time       ExposureTime                                                   IS 1
 (0018,1151) X-Ray Tube Current  XRayTubeCurrent                                                IS 1
 (0018,1152) Exposure            Exposure                                                       IS 1
-(0018,1153) Exposure in µAs    ExposureInuAs                                                  IS 1
+(0018,1153) Exposure in As    ExposureInuAs                                                  IS 1
 (0018,1154) Average Pulse Width AveragePulseWidth                                              DS 1
 (0018,1155) Radiation Setting   RadiationSetting                                               CS 1
 (0018,1156) Rectification Type  RectificationType                                              CS 1
@@ -699,7 +699,7 @@
 (0018,7026) Detector Active     DetectorActiveDimensions                                       DS 1-
 (0018,7028) Detector Active     DetectorActiveOrigin                                           DS 2
 (0018,702A) Detector            DetectorManufacturerName                                       LO 1
-(0018,702B) Manufacturer’s    DetectorManufacturerModelName                                  LO 1
+(0018,702B) Manufacturers    DetectorManufacturerModelName                                  LO 1
 (0018,7030) Field of View       FieldOfViewOrigin                                              DS 2
 (0018,7032) Field of View       FieldOfViewRotation                                            DS 1
 (0018,7034) Field of View       FieldOfViewHorizontalFlip                                      CS 1
@@ -1311,7 +1311,7 @@ to 31FF)                                                                        
 (0024,0039) Excessive Fixation  ExcessiveFixationLossesDataFlag                                CS 1
 (0024,0040) Excessive Fixation  ExcessiveFixationLosses                                        CS 1
 (0024,0042) Stimuli Retesting   StimuliRetestingQuantity                                       US 1
-(0024,0044) Patient’s         CommentsOnPatientPerformanceOfVisualField                      LT 1
+(0024,0044) Patients         CommentsOnPatientPerformanceOfVisualField                      LT 1
 (0024,0045) False Negatives     FalseNegativesEstimateFlag                                     CS 1
 (0024,0046) False Negatives     FalseNegativesEstimate                                         FL 1
 (0024,0048) Negative Catch      NegativeCatchTrialsQuantity                                    US 1
@@ -1789,8 +1789,8 @@ to 31FF)                                                                        
 (0040,1012) Performed Procedure ReasonForPerformedProcedureCodeSequence                        SQ 1
 (0040,1060) Requested Procedure RequestedProcedureDescriptionTrial                             LO 1  RET
 (0040,1101) Identification Code PersonIdentificationCodeSequence                               SQ 1
-(0040,1102) Person’s Address  PersonAddress                                                  ST 1
-(0040,1103) Person’s          PersonTelephoneNumbers                                         LO 1-
+(0040,1102) Persons Address  PersonAddress                                                  ST 1
+(0040,1103) Persons          PersonTelephoneNumbers                                         LO 1-
 (0040,1400) Requested Procedure RequestedProcedureComments                                     LT 1
 (0040,2001) Imaging Service     ReasonForTheImagingServiceRequest                              LO 1  RET
 (0040,2004) Imaging Service     IssueDateOfImagingServiceRequest                               DA 1
@@ -1798,7 +1798,7 @@ to 31FF)                                                                        
 (0040,2006) / Imaging Service   PlacerOrderNumberImagingServiceRequestRetired                  SH 1  RET
 (0040,2007) / Imaging Service   FillerOrderNumberImagingServiceRequestRetired                  SH 1  RET
 (0040,2008) Order Entered By    OrderEnteredBy                                                 PN 1
-(0040,2009) Order Enterer’s   OrderEntererLocation                                           SH 1
+(0040,2009) Order Enterers   OrderEntererLocation                                           SH 1
 (0040,2010) Order Callback      OrderCallbackPhoneNumber                                       SH 1
 (0040,2016) / Imaging Service   PlacerOrderNumberImagingServiceRequest                         LO 1
 (0040,2017) / Imaging Service   FillerOrderNumberImagingServiceRequest                         LO 1
@@ -1833,8 +1833,8 @@ to 31FF)                                                                        
 (0040,4033) Output Information  OutputInformationSequence                                      SQ 1
 (0040,4034) Scheduled Human     ScheduledHumanPerformersSequence                               SQ 1
 (0040,4035) Actual Human        ActualHumanPerformersSequence                                  SQ 1
-(0040,4036) Human Performer’s HumanPerformerOrganization                                     LO 1
-(0040,4037) Human Performer’s HumanPerformerName                                             PN 1
+(0040,4036) Human Performers HumanPerformerOrganization                                     LO 1
+(0040,4037) Human Performers HumanPerformerName                                             PN 1
 (0040,4040) Raw Data Handling   RawDataHandling                                                CS 1
 (0040,4041) Input Readiness     InputReadinessState                                            CS 1
 (0040,4050) Performed Procedure PerformedProcedureStepStartDateTime                            DT 1
@@ -2377,7 +2377,7 @@ to 31FF)                                                                        
 (0070,0081) Content Description ContentDescription                                             LO 1
 (0070,0082) Presentation        PresentationCreationDate                                       DA 1
 (0070,0083) Presentation        PresentationCreationTime                                       TM 1
-(0070,0084) Content Creator’s ContentCreatorName                                             PN 1
+(0070,0084) Content Creators ContentCreatorName                                             PN 1
 (0070,0086) Identification Code ContentCreatorIdentificationCodeSequence                       SQ 1
 (0070,0087) Description         AlternateContentDescriptionSequence                            SQ 1
 (0070,0100) Presentation Size   PresentationSizeMode                                           CS 1
