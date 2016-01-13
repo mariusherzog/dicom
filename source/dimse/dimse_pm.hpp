@@ -77,6 +77,8 @@ class dimse_pm
       std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
       std::map<std::string, std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
 
+      std::vector<std::string> ts_of_cont_id;
+
       // supported
       std::set<std::string> transfer_syntaxes;
       std::set<std::string> abstract_syntaxes;

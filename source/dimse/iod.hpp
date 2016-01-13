@@ -27,6 +27,7 @@ template <VR vr>
 struct element_field;
 
 
+
 /**
  * @brief The attribute_visitor class is the base class for the visitors that
  *        operate on the VR dependent types.
@@ -86,6 +87,7 @@ struct elementfield
       std::size_t value_len;
       std::shared_ptr<elementfield_base> value_field;
 };
+
 
 
 /**

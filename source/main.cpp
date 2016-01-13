@@ -3,6 +3,8 @@
 #include "dimse/dimse_pm.hpp"
 #include "upperlayer/upperlayer.hpp"
 
+#include "datadictionary.hpp"
+
 
 int main()
 {
@@ -12,6 +14,10 @@ int main()
    short unsigned n;
    get_value_field<VR::US>(el, n);
    std::cout << n << std::flush;
+
+   datadictionary<0x4010, 0x1017> dic;
+   std::cout << dic.keyword;
+
 
 
    try
