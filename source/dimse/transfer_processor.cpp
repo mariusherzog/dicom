@@ -5,10 +5,10 @@ Itransfer_processor::~Itransfer_processor()
 }
 
 
-std::vector<unsigned char> commandset_processor::deserialize(iod data) const
+std::vector<unsigned char> commandset_processor::deserialize(commandset_data data) const
 {
 }
 
-iod commandset_processor::serialize(std::vector<unsigned char> data) const
+commandset_data commandset_processor::serialize(std::vector<unsigned char> data) const
 {
 }

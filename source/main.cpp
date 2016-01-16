@@ -1,7 +1,12 @@
 #include <iostream>
+#include <chrono>
 
 #include "dimse/dimse_pm.hpp"
 #include "upperlayer/upperlayer.hpp"
+
+#include "dictionary/dictionary_dyn.hpp"
+#include "dictionary/datadictionary.hpp"
+
 
 
 
