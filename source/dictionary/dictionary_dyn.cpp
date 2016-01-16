@@ -60,8 +60,9 @@ dictionary_dyn::dictionary_entry dictionary_dyn::lookup(unsigned gid, unsigned e
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
          }
+         bool retired = fields[num_fields-2] == " RET";
          return dictionary_entry {dictionary_entry::vr_of_string[fields[0]]
-                  , fields[1], fields[2], fields[3]};
+                  , fields[1], fields[2], fields[3], retired};
       }
    }
    throw std::runtime_error {"Tag not found"};

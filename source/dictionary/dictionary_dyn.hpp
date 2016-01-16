@@ -26,8 +26,8 @@ class dictionary_dyn
       {
          friend class dictionary_dyn;
          private:
-            dictionary_entry(VR vr, std::string mf, std::string kw, std::string vm):
-               vr {vr}, message_field {mf}, keyword {kw}, vm {vm}
+            dictionary_entry(VR vr, std::string mf, std::string kw, std::string vm, bool ret):
+               vr {vr}, message_field {mf}, keyword {kw}, vm {vm}, retired {ret}
             {
 
             }
@@ -37,12 +37,20 @@ class dictionary_dyn
             const std::string message_field;
             const std::string keyword;
             const std::string vm;
+            const bool retired;
 
             static std::map<std::string, VR> vr_of_string;
       };
 
       dictionary_dyn(std::string file, MODE mode);
 
+      /**
+       * @brief lookup performs an dynamic lookup on the tag.
+       * @param gid group id
+       * @param eid element id
+       * @return dictionary entry corresponding to the tag
+       * @todo trim leading and trailing whitespaces from segments
+       */
       dictionary_entry lookup(unsigned gid, unsigned eid);
 
    private:
