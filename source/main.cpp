@@ -12,13 +12,6 @@
 
 int main()
 {
-   dictionary_dyn d {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/datadictionary.csv", dictionary_dyn::MODE::LAZY};
-
-   std::cout << d.lookup(0x4008, 0x0101).retired << std::flush;
-   datadictionary<0x4008, 0x0101> dat;
-   std::cout << dat.retired << "\n" << std::flush;
-
-
    try
    {
       upperlayer::scp sc(11112);

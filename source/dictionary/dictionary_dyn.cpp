@@ -17,7 +17,8 @@ dictionary_entry dictionary_dyn::lookup(short gid, short eid)
 {
    BOOST_SCOPE_EXIT(&dictionary_file) {
       dictionary_file.seekg(0, std::ios_base::beg);
-   } BOOST_SCOPE_EXIT_END;
+   } BOOST_SCOPE_EXIT_END; // move the get pointer to the beginning of the
+                           // dictionary file
 
    if (buffermode == MODE::LAZY) {
       return lazylookup(gid, eid);
