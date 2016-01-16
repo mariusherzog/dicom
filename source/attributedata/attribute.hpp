@@ -1,5 +1,5 @@
-#ifndef IOD_HPP
-#define IOD_HPP
+#ifndef ATTRIBUTE_HPP
+#define ATTRIBUTE_HPP
 
 #include <set>
 #include <vector>
@@ -20,6 +20,7 @@ enum class VR
    LO, LT, OB, OF, OW, PN, SH, SL, SQ, SS,
    ST, TM, UI, UL, UN, US, UT
 };
+
 
 struct elementfield_base;
 
@@ -89,7 +90,6 @@ struct elementfield
 };
 
 
-
 /**
  * construct a type mapping VR -> T using specialized templates
  */
@@ -148,6 +148,7 @@ template<>
 struct type_of<VR::US> { using type = unsigned short; };
 template<>
 struct type_of<VR::UT> { using type = std::string; };
+
 
 
 /**
@@ -252,9 +253,6 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
  */
 bool operator<(const elementfield& lhs, const elementfield& rhs);
 
-
-using iod = std::set<elementfield>;
-using commandset_data = std::set<elementfield>;
 
 
 #endif // IOD_HPP
