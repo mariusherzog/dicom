@@ -4,7 +4,8 @@
 #include <vector>
 #include <string>
 
-#include "iod.hpp"
+#include "../attributedata/iod.hpp"
+#include "../attributedata/commandset_data.hpp"
 
 /**
  * @brief The Itransfer_processor struct defines the interface for serializing
