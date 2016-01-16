@@ -6,6 +6,7 @@
 
 #include "../attributedata/iod.hpp"
 #include "../attributedata/commandset_data.hpp"
+#include "datadictionary.hpp"
 
 /**
  * @brief The Itransfer_processor struct defines the interface for serializing
