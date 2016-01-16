@@ -8,9 +8,15 @@ elementfield_base::~elementfield_base()
 
 bool operator<(const elementfield& lhs, const elementfield& rhs)
 {
-   return lhs.tag.group_id == rhs.tag.group_id ?
-            lhs.tag.element_id < rhs.tag.element_id :
-            lhs.tag.group_id < rhs.tag.group_id;
+   return lhs.tag < rhs.tag;
+}
+
+bool operator<(const elementfield::tag_type& lhs
+               , const elementfield::tag_type& rhs)
+{
+   return lhs.group_id == rhs.group_id ?
+          lhs.element_id < rhs.element_id :
+          lhs.group_id < rhs.group_id;
 }
 
 

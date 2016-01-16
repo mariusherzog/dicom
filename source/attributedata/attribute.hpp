@@ -253,6 +253,8 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
  */
 bool operator<(const elementfield& lhs, const elementfield& rhs);
 
+bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+
 
 
 #endif // IOD_HPP

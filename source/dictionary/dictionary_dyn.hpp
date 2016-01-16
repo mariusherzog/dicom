@@ -15,13 +15,18 @@
 class dictionary_dyn
 {
    public:
+      /**
+       * @brief The MODE enum is used to control if the content of the
+       *        dictionary file should be buffered
+       */
       enum class MODE
       {
-         FROMFILE, INMEMORY
+         LAZY,    /** do not buffer */
+         GREEDY   /** buffer complete dictionary */
       };
 
 
-      dictionary_dyn(std::string file, MODE mode);
+      dictionary_dyn(std::string file, MODE mode = MODE::GREEDY);
 
       /**
        * @brief lookup performs an dynamic lookup on the tag.
@@ -30,11 +35,13 @@ class dictionary_dyn
        * @return dictionary entry corresponding to the tag
        * @todo trim leading and trailing whitespaces from segments
        */
-      dictionary_entry lookup(unsigned gid, unsigned eid);
+      dictionary_entry lookup(short gid, short eid);
 
    private:
       std::fstream dictionary_file;
-      MODE mode_;
+      MODE buffermode;
+
+      std::map<elementfield::tag_type, dictionary_entry> dict_buffer;
 
       /**
        * @brief comparetag
@@ -43,7 +50,25 @@ class dictionary_dyn
        * @param eid eid to be looked for
        * @return true if the tag and gid / eid match, false otherwise
        */
-      bool comparetag(std::string tag, unsigned gid, unsigned eid) const;
+      bool comparetag(std::string tag, short gid, short eid) const;
+
+      /**
+       * @brief lazylookup performs a lookup on the tag directly from the
+       *        dictionary file.
+       * @param gid gid to be looked for
+       * @param eid eid to be looked for
+       * @return dictionary entry corresponding to the tag
+       */
+      dictionary_entry lazylookup(short gid, short eid);
+
+      /**
+       * @brief greedylookup performs a greedy lookup given the tag, ie. the
+       *        contents are read from an internal buffer.
+       * @param gid gid to be looked for
+       * @param eid eid to be looked for
+       * @return dictionary entry corresponding to the tag
+       */
+      dictionary_entry greedylookup(short gid, short eid);
 
 };
 

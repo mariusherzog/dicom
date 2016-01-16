@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 #include "dimse/dimse_pm.hpp"
 #include "upperlayer/upperlayer.hpp"
@@ -11,10 +12,12 @@
 
 int main()
 {
-   dictionary_dyn d {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/datadictionary.csv", dictionary_dyn::MODE::FROMFILE};
+   dictionary_dyn d {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/datadictionary.csv", dictionary_dyn::MODE::LAZY};
+
    std::cout << d.lookup(0x4008, 0x0101).retired << std::flush;
    datadictionary<0x4008, 0x0101> dat;
-   std::cout << dat.retired << std::flush;
+   std::cout << dat.retired << "\n" << std::flush;
+
 
    try
    {
