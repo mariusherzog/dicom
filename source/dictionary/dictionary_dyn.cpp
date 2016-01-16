@@ -5,44 +5,13 @@
 
 #include <cassert>
 
-std::map<std::string, VR> dictionary_dyn::dictionary_entry::vr_of_string
-{
-   {"AE", VR::AE},
-   {"AS", VR::AS},
-   {"AT", VR::AT},
-   {"CS", VR::CS},
-   {"DA", VR::DA},
-   {"DS", VR::DS},
-   {"DT", VR::DT},
-   {"FL", VR::FL},
-   {"FD", VR::FD},
-   {"IS", VR::IS},
-   {"LO", VR::LO},
-   {"LT", VR::LT},
-   {"OB", VR::OB},
-   {"OF", VR::OF},
-   {"OW", VR::OW},
-   {"PN", VR::PN},
-   {"SH", VR::SH},
-   {"SL", VR::SL},
-   {"SQ", VR::SQ},
-   {"SS", VR::SS},
-   {"ST", VR::ST},
-   {"TM", VR::TM},
-   {"UI", VR::UI},
-   {"UL", VR::UL},
-   {"UN", VR::UN},
-   {"US", VR::US},
-   {"UT", VR::UT}
-};
-
 dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
    dictionary_file {file, std::ios_base::in}, mode_ {mode}
 {
 }
 
 
-dictionary_dyn::dictionary_entry dictionary_dyn::lookup(unsigned gid, unsigned eid)
+dictionary_entry dictionary_dyn::lookup(unsigned gid, unsigned eid)
 {
    const int num_fields = 6;
    std::string line;
@@ -61,7 +30,7 @@ dictionary_dyn::dictionary_entry dictionary_dyn::lookup(unsigned gid, unsigned e
             std::getline(entry, fields[i], ';');
          }
          bool retired = fields[num_fields-2] == " RET";
-         return dictionary_entry {dictionary_entry::vr_of_string[fields[0]]
+         return dictionary_entry {dictionary_entry::vr_of_string.at(fields[0])
                   , fields[1], fields[2], fields[3], retired};
       }
    }

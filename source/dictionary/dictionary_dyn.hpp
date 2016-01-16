@@ -4,9 +4,7 @@
 #include <string>
 #include <map>
 
-#include "../attributedata/iod.hpp"
-#include "../attributedata/commandset_data.hpp"
-#include "../attributedata/attribute.hpp"
+#include "dictionary_entry.hpp"
 
 /**
  * @brief The commanddictionary_dyn class is used to acquire information about
@@ -22,25 +20,6 @@ class dictionary_dyn
          FROMFILE, INMEMORY
       };
 
-      struct dictionary_entry
-      {
-         friend class dictionary_dyn;
-         private:
-            dictionary_entry(VR vr, std::string mf, std::string kw, std::string vm, bool ret):
-               vr {vr}, message_field {mf}, keyword {kw}, vm {vm}, retired {ret}
-            {
-
-            }
-
-         public:
-            const VR vr;
-            const std::string message_field;
-            const std::string keyword;
-            const std::string vm;
-            const bool retired;
-
-            static std::map<std::string, VR> vr_of_string;
-      };
 
       dictionary_dyn(std::string file, MODE mode);
 

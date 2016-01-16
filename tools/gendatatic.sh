@@ -7,9 +7,9 @@
 
 function write_template_struct {
    echo "template<unsigned gid, unsigned eid>
-struct datadictionary<gid, eid, bool_t<(gid & 0xffff) == $1>, bool_t<(eid & 0xffff) == $2>>: datadictionary_type {
+struct datadictionary<gid, eid, bool_t<(gid & 0xffff) == $1>, bool_t<(eid & 0xffff) == $2>>: dictionary_entry {
    datadictionary():
-      datadictionary_type(VR::$3, \"$4\", \"$5\", \"$6\", $7) {}
+      dictionary_entry(VR::$3, \"$4\", \"$5\", \"$6\", $7) {}
 };"
 }
 
@@ -17,9 +17,9 @@ struct datadictionary<gid, eid, bool_t<(gid & 0xffff) == $1>, bool_t<(eid & 0xff
 
 function write_template_rng_struct {
    echo "template <unsigned gid, unsigned eid>
-struct datadictionary<gid, eid, bool_t<(gid & $3) == $1>, bool_t<(eid & $4) == $2>>: datadictionary_type {
+struct datadictionary<gid, eid, bool_t<(gid & $3) == $1>, bool_t<(eid & $4) == $2>>: dictionary_entry {
    datadictionary():
-      datadictionary_type(VR::$5, \"$6\", \"$7\", \"$8\", $9) {}
+      dictionary_entry(VR::$5, \"$6\", \"$7\", \"$8\", $9) {}
 };"
 }
 

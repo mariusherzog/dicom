@@ -3,9 +3,9 @@
 
 function write_cmd_struct {
    echo "template<>
-struct commanddictionary<$1, $2>: commanddictionary_type {
+struct commanddictionary<$1, $2>: dictionary_entry {
    commanddictionary():
-      commanddictionary_type(VR::$3, \"$4\", \"$5\", \"$6\") {}
+      dictionary_entry(VR::$3, \"$4\", \"$5\", \"$6\", false) {}
 };"
 }
 
