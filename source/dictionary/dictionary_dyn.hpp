@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <fstream>
 
 #include "dictionary_entry.hpp"
 

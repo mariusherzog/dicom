@@ -7,8 +7,6 @@
 #include <memory>
 
 #include <boost/optional.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/local_time/local_time.hpp>
 
 /**
  * @brief The VR enum defines the value representations of an attribute
@@ -123,7 +121,7 @@ struct type_of<VR::CS>
 template<>
 struct type_of<VR::DA>
 {
-      using type = boost::gregorian::date;
+      using type = std::string;
       static const std::size_t len = 8;
 };
 template<>
@@ -135,7 +133,7 @@ struct type_of<VR::DS>
 template<>
 struct type_of<VR::DT>
 {
-      using type = boost::local_time::local_date_time;
+      using type = std::string;
       static const std::size_t max_len = 26;
 };
 template<>
@@ -219,7 +217,7 @@ struct type_of<VR::ST>
 template<>
 struct type_of<VR::TM>
 {
-      using type = boost::local_time::local_date_time;
+      using type = std::string;
       static const std::size_t max_len = 16;
 };
 template<>
