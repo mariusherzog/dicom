@@ -1,7 +1,7 @@
 project(dicom)
 cmake_minimum_required(VERSION 2.8)
 
-#set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
+set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -pthread -g -D BOOST_ASIO_HAS_STD_CHRONO")
 
 add_definitions(-DBOOST_LOG_DYN_LINK)
