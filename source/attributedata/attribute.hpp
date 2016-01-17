@@ -17,8 +17,8 @@
 enum class VR
 {
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
-   LO, LT, OB, OF, OW, PN, SH, SL, SQ, SS,
-   ST, TM, UI, UL, UN, US, UT
+   LO, LT, OB, OD, OF, OW, PN, SH, SL, SQ,
+   SS, ST, TM, UI, UL, UN, US, UT
 };
 
 
@@ -97,57 +97,151 @@ template<VR>
 struct type_of {};
 
 template<>
-struct type_of<VR::AE> { using type = std::string; };
+struct type_of<VR::AE>
+{
+      using type = std::string;
+      static const std::size_t max_len = 16;
+};
 template<>
-struct type_of<VR::AS> { using type = std::string; };
+struct type_of<VR::AS>
+{
+      using type = std::string;
+      static const std::size_t len = 4;
+};
 template<>
-struct type_of<VR::AT> { using type = elementfield::tag_type; };
+struct type_of<VR::AT>
+{
+      using type = elementfield::tag_type;
+      static const std::size_t len = 4;
+};
 template<>
-struct type_of<VR::CS> { using type = std::string; };
+struct type_of<VR::CS>
+{
+      using type = std::string;
+      static const std::size_t max_len = 16;
+};
 template<>
-struct type_of<VR::DA> { using type = boost::gregorian::date; };
+struct type_of<VR::DA>
+{
+      using type = boost::gregorian::date;
+      static const std::size_t len = 8;
+};
 template<>
-struct type_of<VR::DS> { using type = std::string; };
+struct type_of<VR::DS>
+{
+      using type = std::string;
+      static const std::size_t max_len = 16;
+};
 template<>
-struct type_of<VR::DT> { using type = boost::local_time::local_date_time; };
+struct type_of<VR::DT>
+{
+      using type = boost::local_time::local_date_time;
+      static const std::size_t max_len = 26;
+};
 template<>
-struct type_of<VR::FL> { using type = float; };
+struct type_of<VR::FL>
+{
+      using type = float;
+      static const std::size_t len = 4;
+};
 template<>
-struct type_of<VR::FD> { using type = double; };
+struct type_of<VR::FD>
+{
+      using type = double;
+      static const std::size_t len = 8;
+};
 template<>
-struct type_of<VR::IS> { using type = std::string; };
+struct type_of<VR::IS>
+{
+      using type = std::string;
+      static const std::size_t max_len = 12;
+};
 template<>
-struct type_of<VR::LO> { using type = std::string; };
+struct type_of<VR::LO>
+{
+      using type = std::string;
+      static const std::size_t max_len = 64;
+};
 template<>
-struct type_of<VR::LT> { using type = std::string; };
+struct type_of<VR::LT>
+{
+      using type = std::string;
+      static const std::size_t max_len = 10240;
+};
 template<>
 struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
-struct type_of<VR::OF> { using type = std::string; };
+struct type_of<VR::OD>
+{
+      using type = std::vector<unsigned char>;
+      static constexpr std::size_t max_len = std::pow(2, 32)-8;
+};
+template<>
+struct type_of<VR::OF>
+{
+      using type = std::string;
+      static constexpr std::size_t max_len = std::pow(2, 32)-4;
+};
 template<>
 struct type_of<VR::OW> { using type = std::string; };
 template<>
-struct type_of<VR::PN> { using type = std::string; };
+struct type_of<VR::PN>
+{
+      using type = std::string;
+      static const std::size_t max_len = 64;
+};
 template<>
-struct type_of<VR::SH> { using type = std::string; };
+struct type_of<VR::SH>
+{
+      using type = std::string;
+      static const std::size_t max_len = 16;
+};
 template<>
-struct type_of<VR::SL> { using type = long; };
+struct type_of<VR::SL>
+{
+      using type = long;
+      static const std::size_t len = 4;
+};
 template<>
 struct type_of<VR::SQ> { using type = std::vector<std::set<elementfield_base>>; };
 template<>
-struct type_of<VR::SS> { using type = short; };
+struct type_of<VR::SS>
+{
+      using type = short;
+      static const std::size_t len = 2;
+};
 template<>
-struct type_of<VR::ST> { using type = std::string; };
+struct type_of<VR::ST>
+{
+      using type = std::string;
+      static const std::size_t max_len = 1024;
+};
 template<>
-struct type_of<VR::TM> { using type = boost::local_time::local_date_time; };
+struct type_of<VR::TM>
+{
+      using type = boost::local_time::local_date_time;
+      static const std::size_t max_len = 16;
+};
 template<>
-struct type_of<VR::UI> { using type = std::string; };
+struct type_of<VR::UI>
+{
+      using type = std::string;
+      static const std::size_t max_len = 16;
+};
 template<>
 struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
 template<>
-struct type_of<VR::US> { using type = unsigned short; };
+struct type_of<VR::US>
+{
+      using type = unsigned short;
+      static const std::size_t len = 2;
+};
 template<>
-struct type_of<VR::UT> { using type = std::string; };
+struct type_of<VR::UT>
+{
+      using type = std::string;
+      static constexpr std::size_t max_len = std::pow(2, 32)-2;
+};
 
 
 
