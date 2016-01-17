@@ -172,13 +172,13 @@ template<>
 struct type_of<VR::OD>
 {
       using type = std::vector<unsigned char>;
-      static constexpr std::size_t max_len = std::pow(2, 32)-8;
+      static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
 struct type_of<VR::OF>
 {
       using type = std::string;
-      static constexpr std::size_t max_len = std::pow(2, 32)-4;
+      static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
 struct type_of<VR::OW> { using type = std::string; };
@@ -238,7 +238,7 @@ template<>
 struct type_of<VR::UT>
 {
       using type = std::string;
-      static constexpr std::size_t max_len = std::pow(2, 32)-2;
+      static const std::size_t max_len = 4294967294; //2^32-2
 };
 
 
