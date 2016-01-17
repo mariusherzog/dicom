@@ -26,14 +26,13 @@ class dictionary_dyn
       };
 
 
-      dictionary_dyn(std::string file, MODE mode = MODE::GREEDY);
+      dictionary_dyn(std::string file, MODE mode = MODE::LAZY);
 
       /**
        * @brief lookup performs an dynamic lookup on the tag.
        * @param gid group id
        * @param eid element id
        * @return dictionary entry corresponding to the tag
-       * @todo trim leading and trailing whitespaces from segments
        */
       dictionary_entry lookup(short gid, short eid);
 
