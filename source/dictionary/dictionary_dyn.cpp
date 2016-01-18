@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <exception>
+#include <sstream>
 
 #include <cassert>
 

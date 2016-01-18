@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <iostream>
 
 #include "../upperlayer/upperlayer_properties.hpp"
 #include "../upperlayer/upperlayer.hpp"
