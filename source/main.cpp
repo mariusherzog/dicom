@@ -12,7 +12,7 @@
 
 int main()
 {
-   dictionary_dyn dic {""};
+   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
    commandset_data dat;
    commandset_processor cpr(dic);
 
@@ -31,15 +31,22 @@ int main()
    std::cout << "\n" << std::flush;
 
    dat.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 0x00f0));
-   dat.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 4, "1.2.840.10008.1.1"));
+   dat.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
    dat.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, 2));
    dat.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
    dat.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, 0));
 
    auto boog = cpr.deserialize(dat);
    for (const auto e : boog) {
-      std::cout << e << " ";
+      std::cout << e;
    }
+
+   commandset_data cs = cpr.serialize(boog);
+   boog = cpr.deserialize(cs);
+   for (const auto e : boog) {
+      std::cout << e;
+   }
+   std::cout << std::flush;
 
    try
    {
