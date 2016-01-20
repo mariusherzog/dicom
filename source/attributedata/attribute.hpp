@@ -84,7 +84,7 @@ struct elementfield
       tag_type tag;
       boost::optional<VR> value_rep;
       std::size_t value_len;
-      std::shared_ptr<elementfield_base> value_field;
+      std::unique_ptr<elementfield_base> value_field;
 };
 
 
@@ -326,7 +326,7 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
    el.tag.group_id = gid; el.tag.element_id = eid;
    el.value_rep = vr;
    el.value_len = data_len;
-   el.value_field = std::shared_ptr<elementfield_base> {new element_field<vr>};
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
 
    set_visitor<vr> setter(data);
    el.value_field->accept<vr>(setter);
