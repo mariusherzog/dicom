@@ -6,6 +6,7 @@
 #include <set>
 #include <functional>
 #include <vector>
+#include <utility>
 #include <initializer_list>
 
 #include <boost/optional.hpp>
@@ -28,10 +29,8 @@ class dimse_pm
       };
 
 
-      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<SOP_class> operations);
+      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations);
       ~dimse_pm();
-
-      void inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn);
 
    private:
       /**
@@ -76,15 +75,10 @@ class dimse_pm
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
       //std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
-      std::map<std::string, SOP_class> operations;
-      std::vector<std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
+      std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
+//      static std::map<std::string, std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
 
-      std::vector<std::string> ts_of_cont_id;
-
-      // supported
-      std::set<std::string> transfer_syntaxes;
-      std::set<std::string> abstract_syntaxes;
-      std::set<std::string> application_contexts;
+      std::vector<std::string> application_contexts;
 };
 
 #endif // DIMSE_PM_HPP

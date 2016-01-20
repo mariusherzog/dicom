@@ -11,16 +11,10 @@
 
 using namespace upperlayer;
 
-//const std::map<dimse_pm::service, std::string> dimse_pm::service_uid {
-//   {dimse_pm::service::C_ECHO, "1.2.840.10008.3.1.1.1"},
-//};
 
-
-dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<SOP_class> operations_):
+dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_):
    state {CONN_STATE::IDLE},
    connection_properties {boost::none},
-   transfer_syntaxes {"1.2.840.10008.1.2"},
-   abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
    application_contexts {"1.2.840.10008.3.1.1.1"},
    operations {}
 {
@@ -32,8 +26,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<SOP_class> 
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
              std::bind(&dimse_pm::release_rq_handler, this, _1, _2));
 
-   for (const SOP_class op : operations_) {
-      this->operations.insert({op.get_SOP_class_UID(), op});
+   for (const auto op_and_ts : operations_) {
+      this->operations.insert({op_and_ts.first.get_SOP_class_UID(), op_and_ts});
    }
 }
 
@@ -54,21 +48,26 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
    ac.application_context = arq->application_context;
 
-   if (application_contexts.find(arq->application_context) == application_contexts.end()) {
+   if (std::find(application_contexts.begin(), application_contexts.end(), arq->application_context)
+       == application_contexts.end()) {
       a_associate_rj rj;
       rj.reason_ = a_associate_rj::REASON::APPL_CONT_NOT_SUPP;
       sc->queue_for_write(std::unique_ptr<property>(new a_associate_rj {rj}));
       state = CONN_STATE::IDLE;
+      return;
    }
 
    // check the support of each presentation context and populate own a_associate_ac
    // accordingly
    for (const auto pc : arq->pres_contexts) {
-      if (abstract_syntaxes.find(pc.abstract_syntax) != abstract_syntaxes.end()) {
+      auto as_pos = operations.end();
+      if ((as_pos = operations.find(pc.abstract_syntax)) != operations.end()) {
 
          bool have_common_ts = false;
+         auto transfer_syntaxes = as_pos->second.second;
          for (const auto ts : pc.transfer_syntaxes) {
-            if (transfer_syntaxes.find(ts) != transfer_syntaxes.end()) {
+            if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
+                != transfer_syntaxes.end()) {
                ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
                have_common_ts = true;
                break;
@@ -125,7 +124,7 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
       }
    }
 
-   this->operations.at(SOP_UID.c_str())(dsg, nullptr);
+   this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
 
    p_data_tf data;
    data.from_pdu(echo_rsp);
@@ -157,11 +156,5 @@ std::string dimse_pm::trans_synt_from_mid(unsigned char cid)
    // implementation, as that data package must not have been received in the first place.
    assert(pos != ac.pres_contexts.end());
    return pos->transfer_syntax;
-}
-
-
-void dimse_pm::inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn)
-{
-   //procs[transfer_syntax] = fn;
 }
 
