@@ -109,9 +109,23 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
       0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x09, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
    };
 
-   std::string s = "1.2.840.10008.1.1";
-   this->operations.at(s)(DIMSE_SERVICE_GROUP::C_ECHO_RQ, nullptr);
-//   sop(DIMSE_SERVICE_GROUP::C_ECHO_RQ, nullptr);
+   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
+   commandset_processor proc{dic};
+   commandset_data b = proc.serialize(d->command_set);
+
+   std::string SOP_UID;
+   DIMSE_SERVICE_GROUP dsg;
+   for (elementfield e : b) {
+      if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
+         get_value_field<VR::UI>(e, SOP_UID);
+      } else if (e.tag == elementfield::tag_type {0x0000, 0x0100}) {
+         short unsigned dsgint;
+         get_value_field<VR::US>(e, dsgint);
+         dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
+      }
+   }
+
+   this->operations.at(SOP_UID.c_str())(dsg, nullptr);
 
    p_data_tf data;
    data.from_pdu(echo_rsp);

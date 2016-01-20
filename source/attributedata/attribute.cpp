@@ -19,4 +19,8 @@ bool operator<(const elementfield::tag_type& lhs
           lhs.group_id < rhs.group_id;
 }
 
-
+bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
+{
+   return lhs.group_id == rhs.group_id &&
+          rhs.element_id == lhs.element_id;
+}
