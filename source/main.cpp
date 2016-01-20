@@ -48,10 +48,17 @@ int main()
    }
    std::cout << std::flush;
 
+   SOP_class echo("1.2.840.10008.1.1", {{DIMSE_SERVICE_GROUP::C_ECHO_RQ, [](std::unique_ptr<iod> data) {
+                                            assert(data == nullptr);
+                                            std::cout << "Received C_ECHO_RQ\n";
+                                         } }}
+                  );
+
+
    try
    {
       upperlayer::scp sc(11112);
-      dimse_pm dpm(sc);
+      dimse_pm dpm(sc, {echo});
       sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();

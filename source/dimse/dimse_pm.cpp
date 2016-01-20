@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <initializer_list>
 #include <functional>
 #include <iostream>
 
@@ -15,12 +16,13 @@ using namespace upperlayer;
 //};
 
 
-dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc):
+dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<SOP_class> operations_):
    state {CONN_STATE::IDLE},
    connection_properties {boost::none},
    transfer_syntaxes {"1.2.840.10008.1.2"},
    abstract_syntaxes {"1.2.840.10008.1.1", "1.2.840.10008.5.1.4.1.1.9.1.3"},
-   application_contexts {"1.2.840.10008.3.1.1.1"}
+   application_contexts {"1.2.840.10008.3.1.1.1"},
+   operations {}
 {
    using namespace std::placeholders;
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
@@ -29,6 +31,10 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc):
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
              std::bind(&dimse_pm::release_rq_handler, this, _1, _2));
+
+   for (const SOP_class op : operations_) {
+      this->operations.insert({op.get_SOP_class_UID(), op});
+   }
 }
 
 dimse_pm::~dimse_pm()
@@ -103,6 +109,10 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
       0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x09, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
    };
 
+   std::string s = "1.2.840.10008.1.1";
+   this->operations.at(s)(DIMSE_SERVICE_GROUP::C_ECHO_RQ, nullptr);
+//   sop(DIMSE_SERVICE_GROUP::C_ECHO_RQ, nullptr);
+
    p_data_tf data;
    data.from_pdu(echo_rsp);
 
@@ -138,6 +148,6 @@ std::string dimse_pm::trans_synt_from_mid(unsigned char cid)
 
 void dimse_pm::inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn)
 {
-   procs[transfer_syntax] = fn;
+   //procs[transfer_syntax] = fn;
 }
 

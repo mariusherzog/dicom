@@ -44,7 +44,7 @@ static std::vector<unsigned char> decode_byte_string(std::string str)
 static std::string encode_byte_string(const std::vector<unsigned char>& strdata, int begin, int len)
 {
    std::vector<unsigned char> buf(len);
-   for (std::size_t i=begin; i<begin+len; ++i) {
+   for (int i=begin; i<begin+len; ++i) {
       buf[i-begin] = static_cast<unsigned char>(strdata[i]);
    }
    return std::string {buf.begin(), buf.end()};

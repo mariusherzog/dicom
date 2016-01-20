@@ -8,7 +8,7 @@ Itransfer_processor::~Itransfer_processor()
 
 
 commandset_processor::commandset_processor(dictionary_dyn& dict):
-   dict {dict}
+   dict(dict)
 {
 }
 

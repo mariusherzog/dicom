@@ -6,11 +6,13 @@
 #include <set>
 #include <functional>
 #include <vector>
+#include <initializer_list>
 
 #include <boost/optional.hpp>
 
 #include "../upperlayer/upperlayer.hpp"
 #include "transfer_processor.hpp"
+#include "sop_class.hpp"
 
 
 /**
@@ -25,9 +27,8 @@ class dimse_pm
          IDLE, CONNECTED
       };
 
-      //static const std::map<service, std::string> service_uid;
 
-      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc);
+      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<SOP_class> operations);
       ~dimse_pm();
 
       void inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn);
@@ -74,8 +75,9 @@ class dimse_pm
 
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
-      std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
-      std::map<std::string, std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
+      //std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
+      std::map<std::string, SOP_class> operations;
+      std::vector<std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
 
       std::vector<std::string> ts_of_cont_id;
 
