@@ -235,6 +235,8 @@ struct type_of<VR::US>
       static const std::size_t len = 2;
 };
 template<>
+struct type_of<VR::UL> { using type = unsigned int; };
+template<>
 struct type_of<VR::UT>
 {
       using type = std::string;
@@ -346,7 +348,5 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
 bool operator<(const elementfield& lhs, const elementfield& rhs);
 
 bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
-
-
 
 #endif // IOD_HPP

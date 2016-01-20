@@ -7,6 +7,7 @@
 #include "../attributedata/iod.hpp"
 #include "../attributedata/commandset_data.hpp"
 #include "../dictionary/datadictionary.hpp"
+#include "../dictionary/dictionary_dyn.hpp"
 
 /**
  * @brief The Itransfer_processor struct defines the interface for serializing
@@ -31,11 +32,14 @@ struct Itransfer_processor
  */
 class commandset_processor
 {
-
-      // Itransfer_processor interface
    public:
+      explicit commandset_processor(dictionary_dyn& dict);
+
       std::vector<unsigned char> deserialize(commandset_data data) const;
       commandset_data serialize(std::vector<unsigned char> data) const;
+
+   private:
+      dictionary_dyn& dict;
 };
 
 
