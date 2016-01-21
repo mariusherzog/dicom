@@ -57,7 +57,7 @@ struct elementfield_base
        * @param op
        */
       template <VR vr>
-      void accept(attribute_visitor<vr>& op) {
+      void accept(attribute_visitor<vr>& op)  {
          element_field<vr>* ef = dynamic_cast<element_field<vr>*>(this);
          assert(ef); // this class is abstract; the dynamic type of this must be
                      // a pointer to a subclass, therefore ef cannot be nullptr.
@@ -84,7 +84,8 @@ struct elementfield
       tag_type tag;
       boost::optional<VR> value_rep;
       std::size_t value_len;
-      std::unique_ptr<elementfield_base> value_field;
+      std::shared_ptr<elementfield_base> value_field;
+
 };
 
 
@@ -201,7 +202,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = std::vector<std::set<elementfield_base>>; };
+struct type_of<VR::SQ> { using type = std::set<elementfield>; };
 template<>
 struct type_of<VR::SS>
 {
@@ -283,7 +284,7 @@ class get_visitor : public attribute_visitor<vr>
  * @param out_data reference where the value will be stored
  */
 template <VR vr>
-void get_value_field(elementfield& e, typename type_of<vr>::type& out_data)
+void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data)
 {
    get_visitor<vr> getter(out_data);
    e.value_field->accept<vr>(getter);
