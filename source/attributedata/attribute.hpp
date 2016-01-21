@@ -78,8 +78,8 @@ struct elementfield
 {
       struct tag_type
       {
-            short group_id;
-            short element_id;
+            unsigned short group_id;
+            unsigned short element_id;
       };
       tag_type tag;
       boost::optional<VR> value_rep;

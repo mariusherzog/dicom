@@ -35,7 +35,7 @@ class dictionary_dyn
        * @param eid element id
        * @return dictionary entry corresponding to the tag
        */
-      dictionary_entry lookup(short gid, short eid);
+      dictionary_entry lookup(unsigned short gid, unsigned short eid);
 
    private:
       std::fstream dictionary_file;
@@ -50,7 +50,7 @@ class dictionary_dyn
        * @param eid eid to be looked for
        * @return true if the tag and gid / eid match, false otherwise
        */
-      bool comparetag(std::string tag, short gid, short eid) const;
+      bool comparetag(std::string tag, unsigned short gid, unsigned short eid) const;
 
       /**
        * @brief lazylookup performs a lookup on the tag directly from the
@@ -59,7 +59,7 @@ class dictionary_dyn
        * @param eid eid to be looked for
        * @return dictionary entry corresponding to the tag
        */
-      dictionary_entry lazylookup(short gid, short eid);
+      dictionary_entry lazylookup(unsigned short gid, unsigned short eid);
 
       /**
        * @brief greedylookup performs a greedy lookup given the tag, ie. the
@@ -68,7 +68,7 @@ class dictionary_dyn
        * @param eid eid to be looked for
        * @return dictionary entry corresponding to the tag
        */
-      dictionary_entry greedylookup(short gid, short eid);
+      dictionary_entry greedylookup(unsigned short gid, unsigned short eid);
 
 };
 
