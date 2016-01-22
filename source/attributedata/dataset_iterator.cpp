@@ -37,6 +37,18 @@ dataset_iterator dataset_iterator::operator--(int)
    return ret;
 }
 
+
+elementfield dataset_iterator::operator*() const
+{
+   return *cit;
+}
+
+
+const elementfield* dataset_iterator::operator->() const
+{
+   return &*cit;
+}
+
 bool operator==(const dataset_iterator& lhs, const dataset_iterator& rhs)
 {
    return lhs.cit == rhs.cit;
@@ -50,8 +62,6 @@ bool operator!=(const dataset_iterator& lhs, const dataset_iterator& rhs)
 std::set<elementfield>::iterator dataset_iterator::step_into_nested(std::set<elementfield>::iterator curr)
 {
    parent_its.push(curr); // save current position of the iterator
-//   curr_nestedset_max = curr->value_len;
-//   curr_nestedset_size = 0;
    nested_set_sizes.push({0, curr->value_len});
    std::set<elementfield> nested_set;
    get_value_field<VR::SQ>(*curr, nested_set);
@@ -65,7 +75,6 @@ std::set<elementfield>::iterator dataset_iterator::step_outof_nested()
    auto last = parent_its.top();
    parent_its.pop();
    nested_sets.pop();
-//   curr_nestedset_max = curr_nestedset_size = 0;
    nested_set_sizes.pop();
    return ++last;
 }
@@ -74,7 +83,6 @@ std::set<elementfield>::iterator dataset_iterator::step_backw_into_nested(std::s
 {
    bool explicitlength = true;
    parent_its.push(prev);
-//   curr_nestedset_max = prev->value_len;
    nested_set_sizes.push({prev->value_len, prev->value_len});
    if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
       nested_set_sizes.top().curr_nestedset_size = nested_set_sizes.top().curr_nestedset_max;
@@ -96,7 +104,6 @@ std::set<elementfield>::iterator dataset_iterator::step_backw_outof_nested()
    parent_its.pop();
    nested_sets.pop();
    nested_set_sizes.pop();
-//   curr_nestedset_max = curr_nestedset_size = 0;
    return --last;
 }
 

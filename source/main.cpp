@@ -31,9 +31,14 @@ int main()
       ++it;
    }
    --it;
+   auto qt = --it;
    --it;
    --it;
-   --it;
+
+   std::swap(it, qt);
+
+   elementfield e = *it;
+   std::cout << it->tag.element_id << std::flush;
 
    try
    {
