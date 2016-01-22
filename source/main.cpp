@@ -24,12 +24,16 @@ int main()
    dat2.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0xf0f0));
 //   dat2.insert(make_elementfield<VR::DT>(0xfffe, 0xe0dd, 2, "0xf0f0"));
    dat.insert(make_elementfield<VR::SQ>(0x0008, 0x0006, 28, dat2));
-   dat.insert(make_elementfield<VR::US>(0x0008, 0x0900, 2, 0x1234));
+   dat.insert(make_elementfield<VR::US>(0x0009, 0x0900, 2, 0x1234));
 
    dataset_iterator it = dat.begin();
-   for (;;) {
+   for (; it != dat.end();) {
       ++it;
    }
+   --it;
+   --it;
+   --it;
+   --it;
 
    try
    {
