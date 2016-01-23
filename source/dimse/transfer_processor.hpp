@@ -40,8 +40,6 @@ class commandset_processor
 
    private:
       dictionary_dyn& dict;
-
-      std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg) const;
 };
 
 
