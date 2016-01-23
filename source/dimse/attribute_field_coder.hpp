@@ -7,16 +7,16 @@
 
 
 /**
- * @brief decode_little_endian converts the attribute into a serialized little
+ * @brief encode_little_endian converts the attribute into a serialized little
  *        endian representation.
  * @param attr attribute to be encoded
  * @param vr VR of given attribute
  * @return vector of bytes representing the attribute
  */
-std::vector<unsigned char> decode_little_endian(elementfield attr, const VR vr);
+std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr);
 
 /**
- * @brief encode_little_endian converts a serialized attribute into a structured
+ * @brief decode_little_endian converts a serialized attribute into a structured
  *        elementfield representation.
  * @param data stream with serialized data
  * @param tag tag of the field
@@ -30,42 +30,42 @@ std::vector<unsigned char> decode_little_endian(elementfield attr, const VR vr);
  * as a parameter, parses the respective value field, and returns an instance of
  * elementfield which contains all the data.
  */
-elementfield encode_little_endian(const std::vector<unsigned char>& data, elementfield::tag_type tag, std::size_t len, VR vr, int begin);
+elementfield decode_little_endian(const std::vector<unsigned char>& data, elementfield::tag_type tag, std::size_t len, VR vr, int begin);
 
 /**
- * @brief decode_tag_little_endian converts the element tag into a little endian
+ * @brief encode_tag_little_endian converts the element tag into a little endian
  *        representation of 8 bytes
  * @param tag tag to be encoded
  * @return vector of bytes representing the tag in little endian
  */
-std::vector<unsigned char> decode_tag_little_endian(elementfield::tag_type tag);
+std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag);
 
 /**
- * @brief decode_len_little_endian converts a length of a value field into
+ * @brief encode_len_little_endian converts a length of a value field into
  *        a 4-byte little endian representation.
  * @param len length
  * @return 4 bytes of the parameter length in little endian
  */
-std::vector<unsigned char> decode_len_little_endian(std::size_t len);
+std::vector<unsigned char> encode_len_little_endian(std::size_t len);
 
 /**
- * @brief encode_tag_little_endian transforms the serialized tag data into a
+ * @brief decode_tag_little_endian transforms the serialized tag data into a
  *        structured form.
  * @param data serialized stream data
  * @param begin beginning, as in absolute position from the data stream start,
  *        of the value field
  * @return instance of tag_type with the tag elements
  */
-elementfield::tag_type encode_tag_little_endian(const std::vector<unsigned char>& data, int begin);
+elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int begin);
 
 /**
- * @brief encode_len_little_endian transforms the serialized length data into a
+ * @brief decode_len_little_endian transforms the serialized length data into a
  *        structured form.
  * @param data serialized stream data
  * @param begin beginning, as in absolute position from the data stream start,
  *        of the value field
  * @return length specified in the serialized stream data
  */
-std::size_t encode_len_little_endian(const std::vector<unsigned char>& data, int begin);
+std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, int begin);
 
 #endif // ATTRIBUTE_FIELD_CODER_HPP
