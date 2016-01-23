@@ -18,8 +18,8 @@
  */
 struct Itransfer_processor
 {
-      virtual std::vector<unsigned char> deserialize(iod data) const = 0;
-      virtual iod serialize(std::vector<unsigned char> data) const = 0;
+      virtual std::vector<unsigned char> serialize(iod data) const = 0;
+      virtual iod deserialize(std::vector<unsigned char> data) const = 0;
       virtual std::string get_transfer_syntax() const = 0;
       virtual ~Itransfer_processor() = 0;
 };
@@ -35,8 +35,8 @@ class commandset_processor
    public:
       explicit commandset_processor(dictionary_dyn& dict);
 
-      std::vector<unsigned char> deserialize(commandset_data data) const;
-      commandset_data serialize(std::vector<unsigned char> data) const;
+      std::vector<unsigned char> serialize(commandset_data data) const;
+      commandset_data deserialize(std::vector<unsigned char> data) const;
 
    private:
       dictionary_dyn& dict;

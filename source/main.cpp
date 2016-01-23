@@ -43,14 +43,14 @@ int main()
 
    dat.insert(make_elementfield<VR::SQ>(0x0002, 0x0800, 0xffff, dat2));
 
-   auto boog = cpr.deserialize(dat);
+   auto boog = cpr.serialize(dat);
    for (const auto e : boog) {
       std::cout << e;
    }
 
    std::cout << "\n";
 
-   commandset_data cs = cpr.serialize(boog);
+   commandset_data cs = cpr.deserialize(boog);
    for (dataset_iterator it = cs.begin(); it != cs.end(); ++it) {
       std::cout << it->tag.element_id << " ";
    }
