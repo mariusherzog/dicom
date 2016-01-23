@@ -36,7 +36,6 @@ std::vector<unsigned char> commandset_processor::deserialize(commandset_data dat
 
 commandset_data commandset_processor::serialize(std::vector<unsigned char> data) const
 {
-   /** @todo nested attributes */
    commandset_data cmd;
 
    std::size_t pos = 0;
@@ -45,25 +44,56 @@ commandset_data commandset_processor::serialize(std::vector<unsigned char> data)
       pos += 4;
       std::size_t value_len = encode_len_little_endian(data, pos);
       pos += 4;
-      VR repr;
-      try {
-         repr = dict.lookup(tag.group_id, tag.element_id).vr;
-      } catch (...) {
-         repr = VR::SQ;
-      }
 
-      if (repr == VR::SQ) {
-         if (value_len == 0xffff) {
+      if (!(tag.group_id == 0xfffe && tag.element_id == 0xe0dd)) {
+         VR repr = dict.lookup(tag.group_id, tag.element_id).vr;
 
-         } else {
-            commandset_data nested = serialize({data.begin()+pos, data.begin()+pos+value_len});
-            cmd.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
+
+         if (repr == VR::SQ) {
+            if (value_len == 0xffff) {
+               std::size_t len = find_enclosing(data, pos);
+               commandset_data nested = serialize({data.begin()+pos, data.begin()+pos+len});
+               cmd.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
+            } else {
+               commandset_data nested = serialize({data.begin()+pos, data.begin()+pos+value_len});
+               cmd.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
+            }
          }
-      }
 
-      elementfield e = encode_little_endian(data, tag, value_len, repr, pos);
-      pos += value_len;
-      cmd.insert(e);
+
+         elementfield e = encode_little_endian(data, tag, value_len, repr, pos);
+         pos += value_len;
+         cmd.insert(e);
+      } else {
+         pos += value_len;
+         cmd.insert(make_elementfield<VR::US>(tag.group_id, tag.element_id, 0, 22));
+      }
    }
    return cmd;
+}
+
+std::size_t commandset_processor::find_enclosing(std::vector<unsigned char> data, std::size_t beg) const
+{
+   std::size_t pos = beg;
+   int nested_sets = 0;
+   while (pos < data.size()) {
+      elementfield::tag_type tag = encode_tag_little_endian(data, pos);
+      if (tag.group_id == 0xfffe && tag.element_id == 0xe0dd
+          && nested_sets-- == 0) {
+         pos += 8;
+         break;
+      }
+      pos += 4;
+      std::size_t value_len = encode_len_little_endian(data, pos);
+      pos += 4;
+      VR repr = dict.lookup(tag.group_id, tag.element_id).vr;
+
+      if (repr == VR::SQ) {
+         nested_sets++;
+      }
+
+      pos += value_len;
+
+   }
+   return pos-beg;
 }

@@ -36,6 +36,7 @@ dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
 dictionary_entry dictionary_dyn::lookup(unsigned short gid, unsigned short eid)
 {
    BOOST_SCOPE_EXIT(&dictionary_file) {
+      dictionary_file.clear();
       dictionary_file.seekg(0, std::ios_base::beg);
    } BOOST_SCOPE_EXIT_END; // move the get pointer to the beginning of the
                            // dictionary file

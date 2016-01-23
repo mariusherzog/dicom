@@ -38,7 +38,7 @@ class dictionary_dyn
       dictionary_entry lookup(unsigned short gid, unsigned short eid);
 
    private:
-      std::fstream dictionary_file;
+      std::ifstream dictionary_file;
       MODE buffermode;
 
       std::map<elementfield::tag_type, dictionary_entry> dict_buffer;
