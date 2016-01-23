@@ -87,8 +87,6 @@ std::set<elementfield>::iterator dataset_iterator::step_backw_into_nested(std::s
    if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
       nested_set_sizes.top().curr_nestedset_size = nested_set_sizes.top().curr_nestedset_max;
    } else {
-      auto pprev =--prev;
-      assert(pprev->tag.group_id == (0xfffe) && pprev->tag.element_id == (0xe0dd));
       explicitlength = false;
    }
    std::set<elementfield> nested_set;
@@ -104,11 +102,17 @@ std::set<elementfield>::iterator dataset_iterator::step_backw_outof_nested()
    parent_its.pop();
    nested_sets.pop();
    nested_set_sizes.pop();
-   return --last;
+   return last;
 }
 
 std::set<elementfield>::iterator dataset_iterator::next()
 {
+   // accumulate the size of the nested set's elements if a sequence size was
+   // explicitly specified
+   if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
+      nested_set_sizes.top().curr_nestedset_size += cit->value_len + 4 + 4;
+   }
+
    if ((cit->tag.group_id == (0xfffe) && cit->tag.element_id == (0xe0dd))
        || (is_in_nested() && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
       //sequence delimination item encountered
@@ -122,12 +126,6 @@ std::set<elementfield>::iterator dataset_iterator::next()
               datadic.lookup(cit->tag.group_id, cit->tag.element_id).vr == VR::SQ) {
       cit = step_into_nested(cit);
       return cit;
-   }
-
-   // accumulate the size of the nested set's elements if a sequence size was
-   // explicitly specified
-   if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
-      nested_set_sizes.top().curr_nestedset_size += cit->value_len + 4 + 4;
    }
 
    return ++cit;

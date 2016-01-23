@@ -51,7 +51,6 @@ int main()
    }
    std::cout << std::flush;
 
-
    try
    {
       upperlayer::scp sc(11112);
