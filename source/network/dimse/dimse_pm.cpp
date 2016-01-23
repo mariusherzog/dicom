@@ -5,8 +5,8 @@
 #include <functional>
 #include <iostream>
 
-#include "upperlayer/upperlayer_properties.hpp"
-#include "upperlayer/upperlayer.hpp"
+#include "network/upperlayer/upperlayer_properties.hpp"
+#include "network/upperlayer/upperlayer.hpp"
 using namespace upperlayer;
 
 //const std::map<dimse_pm::service, std::string> dimse_pm::service_uid {

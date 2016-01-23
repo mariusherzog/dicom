@@ -9,8 +9,8 @@
 
 #include <boost/optional.hpp>
 
-#include "upperlayer/upperlayer.hpp"
-#include "transfer_processor.hpp"
+#include "network/upperlayer/upperlayer.hpp"
+#include "data/attribute/transfer_processor.hpp"
 
 
 /**

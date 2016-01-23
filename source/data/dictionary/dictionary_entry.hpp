@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 
-#include "attributedata/attribute.hpp"
+#include "data/attribute/attribute.hpp"
 
 class dictionary_entry
 {
