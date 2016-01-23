@@ -6,6 +6,7 @@
 
 #include "dictionary/dictionary_dyn.hpp"
 #include "dictionary/datadictionary.hpp"
+#include "attributedata/dataset_iterator.hpp"
 
 
 
@@ -13,7 +14,7 @@
 int main()
 {
    dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
-   commandset_data dat;
+   commandset_data dat, dat2;
    commandset_processor cpr(dic);
 
    std::vector<unsigned char> echo_rsp {
@@ -36,16 +37,28 @@ int main()
    dat.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
    dat.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, 0));
 
+   dat2.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+   dat2.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, 65));
+   dat2.insert(make_elementfield<VR::US>(0xfffe, 0xe0dd, 0, 65));
+
+   dat.insert(make_elementfield<VR::SQ>(0x0002, 0x0800, 0xffff, dat2));
+
    auto boog = cpr.deserialize(dat);
    for (const auto e : boog) {
       std::cout << e;
    }
 
+   std::cout << "\n";
+
    commandset_data cs = cpr.serialize(boog);
-   boog = cpr.deserialize(cs);
-   for (const auto e : boog) {
-      std::cout << e;
+   for (dataset_iterator it = cs.begin(); it != cs.end(); ++it) {
+      std::cout << it->tag.element_id << " ";
    }
+
+//   boog = cpr.deserialize(cs);
+//   for (const auto e : boog) {
+//      std::cout << e;
+//   }
    std::cout << std::flush;
 
    SOP_class echo("1.2.840.10008.1.1",

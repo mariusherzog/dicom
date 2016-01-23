@@ -16,7 +16,7 @@ enum class VR
 {
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
    LO, LT, OB, OD, OF, OW, PN, SH, SL, SQ,
-   SS, ST, TM, UI, UL, UN, US, UT
+   SS, ST, TM, UI, UL, UN, UR, US, UT
 };
 
 
@@ -57,7 +57,7 @@ struct elementfield_base
        * @param op
        */
       template <VR vr>
-      void accept(attribute_visitor<vr>& op) {
+      void accept(attribute_visitor<vr>& op)  {
          element_field<vr>* ef = dynamic_cast<element_field<vr>*>(this);
          assert(ef); // this class is abstract; the dynamic type of this must be
                      // a pointer to a subclass, therefore ef cannot be nullptr.
@@ -78,13 +78,14 @@ struct elementfield
 {
       struct tag_type
       {
-            short group_id;
-            short element_id;
+            unsigned short group_id;
+            unsigned short element_id;
       };
       tag_type tag;
       boost::optional<VR> value_rep;
       std::size_t value_len;
       std::shared_ptr<elementfield_base> value_field;
+
 };
 
 
@@ -171,7 +172,7 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = std::vector<unsigned char>;
+      using type = std::string;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
@@ -201,7 +202,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = std::vector<std::set<elementfield_base>>; };
+struct type_of<VR::SQ> { using type = std::set<elementfield>; };
 template<>
 struct type_of<VR::SS>
 {
@@ -228,6 +229,12 @@ struct type_of<VR::UI>
 };
 template<>
 struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
+template<>
+struct type_of<VR::UR>
+{
+      using type = std::string;
+      static const std::size_t max_len = 4294967294; //2^32-2
+};
 template<>
 struct type_of<VR::US>
 {
@@ -285,7 +292,7 @@ class get_visitor : public attribute_visitor<vr>
  * @param out_data reference where the value will be stored
  */
 template <VR vr>
-void get_value_field(elementfield& e, typename type_of<vr>::type& out_data)
+void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data)
 {
    get_visitor<vr> getter(out_data);
    e.value_field->accept<vr>(getter);
@@ -328,7 +335,7 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
    el.tag.group_id = gid; el.tag.element_id = eid;
    el.value_rep = vr;
    el.value_len = data_len;
-   el.value_field = std::shared_ptr<elementfield_base> {new element_field<vr>};
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
 
    set_visitor<vr> setter(data);
    el.value_field->accept<vr>(setter);
