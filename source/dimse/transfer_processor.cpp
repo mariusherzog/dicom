@@ -66,7 +66,7 @@ commandset_data commandset_processor::serialize(std::vector<unsigned char> data)
          cmd.insert(e);
       } else {
          pos += value_len;
-         cmd.insert(make_elementfield<VR::US>(tag.group_id, tag.element_id, 0, 22));
+         cmd.insert(make_elementfield<VR::NN>(tag.group_id, tag.element_id));
       }
    }
    return cmd;

@@ -39,7 +39,7 @@ int main()
 
    dat2.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
    dat2.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, 65));
-   dat2.insert(make_elementfield<VR::US>(0xfffe, 0xe0dd, 0, 65));
+   dat2.insert(make_elementfield<VR::NN>(0xfffe, 0xe0dd));
 
    dat.insert(make_elementfield<VR::SQ>(0x0002, 0x0800, 0xffff, dat2));
 
