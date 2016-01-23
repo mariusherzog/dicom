@@ -19,6 +19,19 @@
 #include "upperlayer_statemachine.hpp"
 
 
+/**
+ * The dicom namespace is the global namespace of the project, containing all
+ * DICOM related implementations.
+ */
+namespace dicom
+{
+
+/**
+ * The network namespace contains all DICOM network-related functionality, like
+ * the implementation of the upperlayer or the dimse protocol machine.
+ */
+namespace network
+{
 
 /**
  * The upperlayer namespace contains classes and functions which implement the upperlayer as
@@ -258,7 +271,9 @@ class scu: public scx
       boost::asio::steady_timer artim;
 };
 
+}
 
+}
 
 }
 

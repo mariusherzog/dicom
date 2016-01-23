@@ -7,6 +7,15 @@
 
 #include "dictionary_entry.hpp"
 
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dictionary
+{
+
 /**
  * @brief The commanddictionary_dyn class is used to acquire information about
  *        an iod at runtime.
@@ -41,7 +50,7 @@ class dictionary_dyn
       std::fstream dictionary_file;
       MODE buffermode;
 
-      std::map<elementfield::tag_type, dictionary_entry> dict_buffer;
+      std::map<attribute::elementfield::tag_type, dictionary_entry> dict_buffer;
 
       /**
        * @brief comparetag
@@ -71,5 +80,11 @@ class dictionary_dyn
       dictionary_entry greedylookup(short gid, short eid);
 
 };
+
+}
+
+}
+
+}
 
 #endif // COMMANDDICTIONARY_DYN_HPP

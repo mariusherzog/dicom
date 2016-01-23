@@ -5,6 +5,11 @@
 #include <string>
 #include <memory>
 
+namespace dicom
+{
+
+namespace network
+{
 
 namespace upperlayer
 {
@@ -185,6 +190,10 @@ struct a_abort: property
 };
 
 std::ostream& operator<<(std::ostream& os, a_associate_rq t);
+
+}
+
+}
 
 }
 

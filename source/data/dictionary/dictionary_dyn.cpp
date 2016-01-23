@@ -8,6 +8,14 @@
 
 #include <boost/scope_exit.hpp>
 
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dictionary
+{
 
 /**
  * @brief trim removes trailing and leading whitespaces
@@ -85,6 +93,7 @@ dictionary_entry dictionary_dyn::lazylookup(short gid, short eid)
 
 dictionary_entry dictionary_dyn::greedylookup(short gid, short eid)
 {
+   using namespace dicom::data::attribute;
    const int num_fields = 6;
    std::string line;
 
@@ -115,4 +124,10 @@ dictionary_entry dictionary_dyn::greedylookup(short gid, short eid)
       }
    }
    return dict_buffer.at(elementfield::tag_type {gid, eid});
+}
+
+}
+
+}
+
 }

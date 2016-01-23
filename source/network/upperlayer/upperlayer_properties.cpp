@@ -6,7 +6,11 @@
 #include <string>
 #include <cassert>
 
+namespace dicom
+{
 
+namespace network
+{
 
 namespace upperlayer
 {
@@ -537,6 +541,10 @@ std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
       }
    }
    return nullptr;
+}
+
+}
+
 }
 
 }

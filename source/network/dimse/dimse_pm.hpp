@@ -10,8 +10,16 @@
 #include <boost/optional.hpp>
 
 #include "network/upperlayer/upperlayer.hpp"
-#include "data/attribute/transfer_processor.hpp"
+#include "data/dataset/transfer_processor.hpp"
 
+namespace dicom
+{
+
+namespace network
+{
+
+namespace dimse
+{
 
 /**
  * @brief The dimse_pm class
@@ -75,7 +83,7 @@ class dimse_pm
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
       std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
-      std::map<std::string, std::unique_ptr<const Itransfer_processor>> transfer_syntax_handler;
+      std::map<std::string, std::unique_ptr<const data::dataset::Itransfer_processor>> transfer_syntax_handler;
 
       std::vector<std::string> ts_of_cont_id;
 
@@ -84,5 +92,11 @@ class dimse_pm
       std::set<std::string> abstract_syntaxes;
       std::set<std::string> application_contexts;
 };
+
+}
+
+}
+
+}
 
 #endif // DIMSE_PM_HPP

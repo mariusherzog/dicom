@@ -8,6 +8,19 @@
 #include "commandset_data.hpp"
 #include "data/dictionary/datadictionary.hpp"
 
+namespace dicom
+{
+
+namespace data
+{
+
+/**
+ * The dataset namespace contains all functionality related to sets of
+ * attributes comprising a DICOM dataset (iod or command header data).
+ */
+namespace dataset
+{
+
 /**
  * @brief The Itransfer_processor struct defines the interface for serializing
  *        and deserializing attribute sets (IODs), honoring the transfer
@@ -37,6 +50,12 @@ class commandset_processor
       std::vector<unsigned char> deserialize(commandset_data data) const;
       commandset_data serialize(std::vector<unsigned char> data) const;
 };
+
+}
+
+}
+
+}
 
 
 #endif // TRANSFER_PROCESSOR_HPP

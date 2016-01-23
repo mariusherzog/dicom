@@ -6,6 +6,11 @@
 #include <queue>
 #include <memory>
 
+namespace dicom
+{
+
+namespace network
+{
 
 namespace upperlayer
 {
@@ -82,6 +87,9 @@ class statemachine
       static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*)>> transition_table;
 };
 
+}
+
+}
 
 }
 

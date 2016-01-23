@@ -16,8 +16,15 @@
 #include "upperlayer_properties.hpp"
 
 
+namespace dicom
+{
+
+namespace network
+{
+
 namespace upperlayer
 {
+
 namespace
 {
 using uchar = unsigned char;
@@ -364,6 +371,10 @@ boost::asio::io_service& scu::io_s()
 boost::asio::steady_timer&scu::artim_timer()
 {
    return artim;
+}
+
+}
+
 }
 
 }
