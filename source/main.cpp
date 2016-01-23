@@ -23,22 +23,23 @@ int main()
    dat2.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
    dat2.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0xf0f0));
 //   dat2.insert(make_elementfield<VR::DT>(0xfffe, 0xe0dd, 2, "0xf0f0"));
-   dat.insert(make_elementfield<VR::SQ>(0x0008, 0x0006, 28, dat2));
+   dat.insert(make_elementfield<VR::SQ>(0x0008, 0x0006, 36, dat2));
    dat.insert(make_elementfield<VR::US>(0x0009, 0x0900, 2, 0x1234));
 
    dataset_iterator it = dat.begin();
    for (; it != dat.end();) {
+      std::cout << it->tag.element_id << " ";
       ++it;
    }
-   --it;
-   auto qt = --it;
-   --it;
-   --it;
-
-   std::swap(it, qt);
+   std::cout << "\n";
+   for (; it != dat.begin();) {
+      std::cout << it->tag.element_id << " ";
+      --it;
+   }
 
    elementfield e = *it;
-   std::cout << it->tag.element_id << std::flush;
+   std::cout << e.tag.element_id << " " << std::flush;
+
 
    try
    {
