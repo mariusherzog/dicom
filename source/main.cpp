@@ -6,6 +6,7 @@
 
 #include "dictionary/dictionary_dyn.hpp"
 #include "dictionary/datadictionary.hpp"
+#include "attributedata/dataset_iterator.hpp"
 
 
 
@@ -31,11 +32,6 @@ int main()
    std::cout << "\n" << std::flush;
 
    dat.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 0x00f0));
-   dat.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
-   dat.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, 2));
-   dat.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
-   dat.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, 0));
-
    auto boog = cpr.deserialize(dat);
    for (const auto e : boog) {
       std::cout << e;
@@ -47,6 +43,7 @@ int main()
       std::cout << e;
    }
    std::cout << std::flush;
+
 
    try
    {
