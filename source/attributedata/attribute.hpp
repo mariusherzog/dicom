@@ -16,7 +16,7 @@ enum class VR
 {
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
    LO, LT, OB, OD, OF, OW, PN, SH, SL, SQ,
-   SS, ST, TM, UI, UL, UN, US, UT
+   SS, ST, TM, UI, UL, UN, UR, US, UT
 };
 
 
@@ -172,7 +172,7 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = std::vector<unsigned char>;
+      using type = std::string;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
@@ -229,6 +229,12 @@ struct type_of<VR::UI>
 };
 template<>
 struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
+template<>
+struct type_of<VR::UR>
+{
+      using type = std::string;
+      static const std::size_t max_len = 4294967294; //2^32-2
+};
 template<>
 struct type_of<VR::US>
 {
