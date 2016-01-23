@@ -87,8 +87,6 @@ std::set<elementfield>::iterator dataset_iterator::step_backw_into_nested(std::s
    if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
       nested_set_sizes.top().curr_nestedset_size = nested_set_sizes.top().curr_nestedset_max;
    } else {
-      auto pprev =--prev;
-      assert(pprev->tag.group_id == (0xfffe) && pprev->tag.element_id == (0xe0dd));
       explicitlength = false;
    }
    std::set<elementfield> nested_set;
@@ -104,7 +102,7 @@ std::set<elementfield>::iterator dataset_iterator::step_backw_outof_nested()
    parent_its.pop();
    nested_sets.pop();
    nested_set_sizes.pop();
-   return --last;
+   return last;
 }
 
 std::set<elementfield>::iterator dataset_iterator::next()
