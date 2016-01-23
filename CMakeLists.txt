@@ -12,7 +12,7 @@ find_package(Boost COMPONENTS system log REQUIRED)
 
 if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
-   include_directories(${YOUR_DIRECTORY})
+    include_directories(${CMAKE_SOURCE_DIR}/source)
    aux_source_directory(. SRC_LIST)
    aux_source_directory(./source SRC_LIST)
    aux_source_directory(./source/attributedata SRC_LIST)
