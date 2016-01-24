@@ -5,6 +5,7 @@
 #include <vector>
 #include <chrono>
 #include <memory>
+#include <type_traits>
 
 #include <boost/optional.hpp>
 
@@ -33,7 +34,16 @@ enum class VR
 {
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
    LO, LT, OB, OD, OF, OW, PN, SH, SL, SQ,
-   SS, ST, TM, UI, UL, UN, US, UT
+   SS, ST, TM, UI, UL, UN, UR, US, UT,
+   NN
+};
+
+/**
+ * @brief empty_t dummy type for attributes without a data field
+ */
+struct empty_t
+{
+      empty_t& operator=(const empty_t&) = delete;
 };
 
 
@@ -74,7 +84,7 @@ struct elementfield_base
        * @param op
        */
       template <VR vr>
-      void accept(attribute_visitor<vr>& op) {
+      void accept(attribute_visitor<vr>& op)  {
          element_field<vr>* ef = dynamic_cast<element_field<vr>*>(this);
          assert(ef); // this class is abstract; the dynamic type of this must be
                      // a pointer to a subclass, therefore ef cannot be nullptr.
@@ -95,13 +105,14 @@ struct elementfield
 {
       struct tag_type
       {
-            short group_id;
-            short element_id;
+            unsigned short group_id;
+            unsigned short element_id;
       };
       tag_type tag;
       boost::optional<VR> value_rep;
       std::size_t value_len;
-      std::unique_ptr<elementfield_base> value_field;
+      std::shared_ptr<elementfield_base> value_field;
+
 };
 
 
@@ -188,7 +199,7 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = std::vector<unsigned char>;
+      using type = std::string;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
@@ -218,7 +229,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = std::vector<std::set<elementfield_base>>; };
+struct type_of<VR::SQ> { using type = std::set<elementfield>; };
 template<>
 struct type_of<VR::SS>
 {
@@ -246,16 +257,29 @@ struct type_of<VR::UI>
 template<>
 struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
 template<>
+struct type_of<VR::UR>
+{
+      using type = std::string;
+      static const std::size_t max_len = 4294967294; //2^32-2
+};
+template<>
 struct type_of<VR::US>
 {
       using type = unsigned short;
       static const std::size_t len = 2;
 };
 template<>
+struct type_of<VR::UL> { using type = unsigned int; };
+template<>
 struct type_of<VR::UT>
 {
       using type = std::string;
       static const std::size_t max_len = 4294967294; //2^32-2
+};
+template<>
+struct type_of<VR::NN>
+{
+      using type = empty_t;
 };
 
 
@@ -300,7 +324,7 @@ class get_visitor : public attribute_visitor<vr>
  * @param out_data reference where the value will be stored
  */
 template <VR vr>
-void get_value_field(elementfield& e, typename type_of<vr>::type& out_data)
+void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data)
 {
    get_visitor<vr> getter(out_data);
    e.value_field->accept<vr>(getter);
@@ -339,6 +363,7 @@ class set_visitor : public attribute_visitor<vr>
 template <VR vr>
 elementfield make_elementfield(short gid, short eid, std::size_t data_len, typename type_of<vr>::type data)
 {
+   static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;
    el.tag.group_id = gid; el.tag.element_id = eid;
    el.value_rep = vr;
@@ -350,7 +375,29 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
    return el;
 }
 
+
+/**
+ * @brief make_elementfield overload for attributes that do not have a value
+ *        field (like the sequence delimitation item)
+ * @param gid group id
+ * @param eid element id
+ * @return prepared instance of elementfield
+ */
+template <VR vr>
+elementfield make_elementfield(short gid, short eid)
+{
+   static_assert(std::is_same<typename type_of<vr>::type, empty_t>::value, "Expected empty_t type (VR == NN)");
+   elementfield el;
+   el.tag.group_id = gid; el.tag.element_id = eid;
+   el.value_rep = vr;
+   el.value_len = 0;
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+   return el;
+}
+
+
 bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+
 
 /**
  * @brief operator < is necessary for the storage in the set
@@ -363,6 +410,7 @@ bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& 
  */
 bool operator<(const elementfield& lhs, const elementfield& rhs);
 
+bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
 
 }
 
@@ -371,4 +419,4 @@ bool operator<(const elementfield& lhs, const elementfield& rhs);
 }
 
 
-#endif // IOD_HPP
+#endif // ATTRIBUTE_HPP

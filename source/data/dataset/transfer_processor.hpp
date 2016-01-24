@@ -7,6 +7,7 @@
 #include "iod.hpp"
 #include "commandset_data.hpp"
 #include "data/dictionary/datadictionary.hpp"
+#include "data/dictionary/dictionary_dyn.hpp"
 
 namespace dicom
 {
@@ -30,8 +31,8 @@ namespace dataset
  */
 struct Itransfer_processor
 {
-      virtual std::vector<unsigned char> deserialize(iod data) const = 0;
-      virtual iod serialize(std::vector<unsigned char> data) const = 0;
+      virtual std::vector<unsigned char> serialize(iod data) const = 0;
+      virtual iod deserialize(std::vector<unsigned char> data) const = 0;
       virtual std::string get_transfer_syntax() const = 0;
       virtual ~Itransfer_processor() = 0;
 };
@@ -44,11 +45,14 @@ struct Itransfer_processor
  */
 class commandset_processor
 {
-
-      // Itransfer_processor interface
    public:
-      std::vector<unsigned char> deserialize(commandset_data data) const;
-      commandset_data serialize(std::vector<unsigned char> data) const;
+      explicit commandset_processor(dictionary::dictionary_dyn& dict);
+
+      std::vector<unsigned char> serialize(commandset_data data) const;
+      commandset_data deserialize(std::vector<unsigned char> data) const;
+
+   private:
+      dictionary::dictionary_dyn& dict;
 };
 
 }
