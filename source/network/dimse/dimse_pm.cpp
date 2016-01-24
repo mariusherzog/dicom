@@ -26,8 +26,8 @@ using namespace data::dataset;
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_):
    state {CONN_STATE::IDLE},
    connection_properties {boost::none},
-   application_contexts {"1.2.840.10008.3.1.1.1"},
-   operations {}
+   operations {},
+   application_contexts {"1.2.840.10008.3.1.1.1"}
 {
    using namespace std::placeholders;
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
@@ -114,15 +114,6 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       std::cout << c << std::flush;
    }
 
-   std::vector<unsigned char> echo_rsp {
-      0x04, 0x00, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x50, 0x01, 0x03,
-      0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
-      0x12, 0x00, 0x00, 0x00, 0x31, 0x2E, 0x32, 0x2E, 0x38, 0x34, 0x30, 0x2E, 0x31, 0x30, 0x30, 0x30,
-      0x38, 0x2E, 0x31, 0x2E, 0x31, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x30, 0x80,
-      0x00, 0x00, 0x20, 0x01, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x02, 0x00,
-      0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x09, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-   };
-
    dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
    commandset_processor proc{dic};
    commandset_data b = proc.deserialize(d->command_set);
@@ -140,7 +131,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    }
 
    commandset_data resp;
-   resp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 0x38));
+   resp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
    resp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
    resp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(DIMSE_SERVICE_GROUP::C_ECHO_RSP)));
    resp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, d->message_id));
@@ -151,7 +142,6 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       0x04, 0x00, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x50, 0x01, 0x03
    };
 
-   std::cout << "####\n";
    auto boog = proc.serialize(resp);
    boog.insert(boog.begin(), echo_rsp_preamble.begin(), echo_rsp_preamble.end());
    for (const auto e : boog) {
@@ -175,21 +165,6 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
 
 void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
 {
-}
-
-std::string dimse_pm::trans_synt_from_mid(unsigned char cid)
-{
-   using namespace upperlayer;
-   auto ac = connection_properties.get();
-   auto pos = std::find_if(ac.pres_contexts.begin(), ac.pres_contexts.end(),
-      [cid](const a_associate_ac::presentation_context& pc) -> bool {
-         return pc.id == cid
-            && pc.result_ == a_associate_ac::presentation_context::RESULT::ACCEPTANCE;
-   });
-   // The context id not being found or not accepted would imply an error in the protocol
-   // implementation, as that data package must not have been received in the first place.
-   assert(pos != ac.pres_contexts.end());
-   return pos->transfer_syntax;
 }
 
 

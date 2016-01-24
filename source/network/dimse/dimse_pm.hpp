@@ -27,7 +27,8 @@ namespace dimse
 {
 
 /**
- * @brief The dimse_pm class
+ * @brief The dimse_pm class implements the DIMSE protocol machine as specified
+ *        in chapter 3.7 of the DICOM standard.
  */
 class dimse_pm
 {
@@ -70,13 +71,6 @@ class dimse_pm
        * @param r
        */
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
-
-      /**
-       * @brief trans_synt_from_mid acquires the transfer-syntax-name from a given context id
-       * @param[in] mid
-       * @return transfer-syntax-name
-       */
-      std::string trans_synt_from_mid(unsigned char cid);
 
 
       CONN_STATE state;
