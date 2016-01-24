@@ -10,7 +10,6 @@
 
 
 
-
 int main()
 {
    dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
@@ -48,12 +47,12 @@ int main()
       std::cout << e;
    }
 
-   std::cout << "\n";
 
    commandset_data cs = cpr.deserialize(boog);
    for (dataset_iterator it = cs.begin(); it != cs.end(); ++it) {
       std::cout << it->tag.element_id << " ";
    }
+
 
 //   boog = cpr.deserialize(cs);
 //   for (const auto e : boog) {

@@ -110,7 +110,7 @@ void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
 
    dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
    commandset_processor proc{dic};
-   commandset_data b = proc.serialize(d->command_set);
+   commandset_data b = proc.deserialize(d->command_set);
 
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
