@@ -1,0 +1,24 @@
+(0x0000,0x0000); Command Group Length; CommandGroupLength; UL; 1
+(0x0000,0x0002); Affected SOP Class UID;  AffectedSOPClassUID; UI; 1
+(0x0000,0x0003); Requested SOP Class UID; RequestedSOPClassUID; UI; 1
+(0x0000,0x0100); Command Field; CommandField; US; 1
+(0x0000,0x0110); Message ID;  MessageID; US; 1
+(0x0000,0x0120); Message ID Being Responded To; MessageIDBeingRespondedTo; US; 1
+(0x0000,0x0600); Move Destination; MoveDestination; AE; 1
+(0x0000,0x0700); Priority; Priority; US; 1
+(0x0000,0x0800); Command Data Set Type; CommandDataSetType; US; 1
+(0x0000,0x0900); Status; Status; US; 1
+(0x0000,0x0901); Offending Element; OffendingElement; AT; 1-n
+(0x0000,0x0902); Error Comment; ErrorComment; LO; 1
+(0x0000,0x0903); Error ID; ErrorID; US; 1
+(0x0000,0x1000); Affected SOP Instance UID; AffectedSOPInstanceUID; UI; 1
+(0x0000,0x1001); Requested SOP Instance UID; RequestedSOPInstanceUID; UI; 1 
+(0x0000,0x1002); Event Type ID; EventTypeID; US; 1
+(0x0000,0x1005); Attribute Identifier List; AttributeIdentifierList; AT; 1-n
+(0x0000,0x1008); Action Type ID;  ActionTypeID; US; 1
+(0x0000,0x1020); Number of Remaining Sub-operations; NumberOfRemainingSuboperations; US; 1
+(0x0000,0x1021); Number of Completed Sub-operations; NumberOfCompletedSuboperations; US; 1
+(0x0000,0x1022); Number of Failed Sub-operations; NumberOfFailedSuboperations; US; 1
+(0x0000,0x1023); Number of Warning Sub-operations; NumberOfWarningSuboperations; US; 1
+(0x0000,0x1030); Move Originator Application Entity Title; MoveOriginatorApplicationEntityTitle; AE; 1
+(0x0000,0x1031); Move Originator Message ID; MoveOriginatorMessageID; US; 1
