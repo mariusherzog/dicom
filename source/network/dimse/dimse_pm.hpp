@@ -6,11 +6,16 @@
 #include <set>
 #include <functional>
 #include <vector>
+#include <utility>
+#include <initializer_list>
 
 #include <boost/optional.hpp>
 
+
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
+#include "sop_class.hpp"
+
 
 namespace dicom
 {
@@ -22,8 +27,8 @@ namespace dimse
 {
 
 /**
- * @brief The dimse_pm class
- * @todo - implement (de)serialization methods <BR>
+ * @brief The dimse_pm class implements the DIMSE protocol machine as specified
+ *        in chapter 3.7 of the DICOM standard.
  */
 class dimse_pm
 {
@@ -33,12 +38,9 @@ class dimse_pm
          IDLE, CONNECTED
       };
 
-      //static const std::map<service, std::string> service_uid;
 
-      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc);
+      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations);
       ~dimse_pm();
-
-      void inject(std::string transfer_syntax, std::function<void(std::vector<unsigned char>, std::vector<unsigned char>)> fn);
 
    private:
       /**
@@ -70,27 +72,14 @@ class dimse_pm
        */
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
-      /**
-       * @brief trans_synt_from_mid acquires the transfer-syntax-name from a given context id
-       * @param[in] mid
-       * @return transfer-syntax-name
-       */
-      std::string trans_synt_from_mid(unsigned char cid);
-
 
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
-      std::map<std::string, std::function<void(std::vector<unsigned char> cs, std::vector<unsigned char> ds)>> procs;
-      std::map<std::string, std::unique_ptr<const data::dataset::Itransfer_processor>> transfer_syntax_handler;
+      std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
 
-      std::vector<std::string> ts_of_cont_id;
-
-      // supported
-      std::set<std::string> transfer_syntaxes;
-      std::set<std::string> abstract_syntaxes;
-      std::set<std::string> application_contexts;
+      std::vector<std::string> application_contexts;
 };
 
 }

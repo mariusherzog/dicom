@@ -41,9 +41,10 @@ dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
 }
 
 
-dictionary_entry dictionary_dyn::lookup(short gid, short eid)
+dictionary_entry dictionary_dyn::lookup(unsigned short gid, unsigned short eid)
 {
    BOOST_SCOPE_EXIT(&dictionary_file) {
+      dictionary_file.clear();
       dictionary_file.seekg(0, std::ios_base::beg);
    } BOOST_SCOPE_EXIT_END; // move the get pointer to the beginning of the
                            // dictionary file
@@ -55,16 +56,16 @@ dictionary_entry dictionary_dyn::lookup(short gid, short eid)
    }
 }
 
-bool dictionary_dyn::comparetag(std::string tag, short gid, short eid) const
+bool dictionary_dyn::comparetag(std::string tag, unsigned short gid, unsigned short eid) const
 {
    std::string gidstr {&tag[1], &tag[7]};
    std::string eidstr {&tag[8], &tag[14]};
-   short taggid = static_cast<short>(std::stoul(gidstr, 0, 16));
-   short tageid = static_cast<short>(std::stoul(eidstr, 0, 16));
+   unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
+   unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
    return taggid == gid && tageid == eid;
 }
 
-dictionary_entry dictionary_dyn::lazylookup(short gid, short eid)
+dictionary_entry dictionary_dyn::lazylookup(unsigned short gid, unsigned short eid)
 {
    const int num_fields = 6;
    std::string line;
@@ -91,7 +92,7 @@ dictionary_entry dictionary_dyn::lazylookup(short gid, short eid)
    throw std::runtime_error {"Tag not found"};
 }
 
-dictionary_entry dictionary_dyn::greedylookup(short gid, short eid)
+dictionary_entry dictionary_dyn::greedylookup(unsigned short gid, unsigned short eid)
 {
    using namespace dicom::data::attribute;
    const int num_fields = 6;
@@ -108,8 +109,8 @@ dictionary_entry dictionary_dyn::greedylookup(short gid, short eid)
          std::getline(entry, tag, ';');
          std::string gidstr {&tag[1], &tag[7]};
          std::string eidstr {&tag[8], &tag[14]};
-         short taggid = static_cast<short>(std::stoul(gidstr, 0, 16));
-         short tageid = static_cast<short>(std::stoul(eidstr, 0, 16));
+         unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
+         unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
 
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
