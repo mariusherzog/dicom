@@ -6,11 +6,22 @@
 #include <functional>
 #include <iostream>
 
-#include "../upperlayer/upperlayer_properties.hpp"
-#include "../upperlayer/upperlayer.hpp"
+#include "network/upperlayer/upperlayer_properties.hpp"
+#include "network/upperlayer/upperlayer.hpp"
 
-using namespace upperlayer;
 
+namespace dicom
+{
+
+namespace network
+{
+
+namespace dimse
+{
+
+using namespace data::attribute;
+using namespace data::dictionary;
+using namespace data::dataset;
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_):
    state {CONN_STATE::IDLE},
@@ -37,6 +48,7 @@ dimse_pm::~dimse_pm()
 
 void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 {
+   using namespace upperlayer;
    a_associate_rq* arq = dynamic_cast<a_associate_rq*>(rq.get());
    assert(arq);
 
@@ -89,7 +101,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    state = CONN_STATE::CONNECTED;
 }
 
-void dimse_pm::data_handler(scx* sc, std::unique_ptr<property> da)
+void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
 {
    // mock
    using namespace upperlayer;
@@ -139,7 +151,7 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
    connection_properties = boost::none;
 }
 
-void dimse_pm::abort_handler(scx* sc, std::unique_ptr<property> r)
+void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
 {
 }
 
@@ -158,3 +170,9 @@ std::string dimse_pm::trans_synt_from_mid(unsigned char cid)
    return pos->transfer_syntax;
 }
 
+
+}
+
+}
+
+}

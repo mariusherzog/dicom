@@ -8,6 +8,11 @@
 #include "upperlayer_properties.hpp"
 #include "upperlayer.hpp"
 
+namespace dicom
+{
+
+namespace network
+{
 
 namespace upperlayer
 {
@@ -348,6 +353,9 @@ std::map<std::pair<statemachine::EVENT, statemachine::CONN_STATE>, std::function
    {{statemachine::EVENT::UNRECOG_PDU, statemachine::CONN_STATE::STA13}, std::mem_fn(&statemachine::aa7)},
 };
 
+}
+
+}
 
 }
 

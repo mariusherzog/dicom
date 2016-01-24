@@ -1,7 +1,18 @@
 #include "transfer_processor.hpp"
 
-#include "attribute_field_coder.hpp"
-#include "../attributedata/dataset_iterator.hpp"
+#include "data/attribute/attribute_field_coder.hpp"
+#include "dataset_iterator.hpp"
+
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dataset
+{
+
+using namespace attribute;
 
 Itransfer_processor::~Itransfer_processor()
 {
@@ -15,7 +26,7 @@ Itransfer_processor::~Itransfer_processor()
  * @param dict dictionary for the tag lookup
  * @return size of the nested set
  */
-static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg, dictionary_dyn& dict)
+static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg, dictionary::dictionary_dyn& dict)
 {
    std::size_t pos = beg;
    int nested_sets = 0;
@@ -42,7 +53,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
    return pos-beg;
 }
 
-commandset_processor::commandset_processor(dictionary_dyn& dict):
+commandset_processor::commandset_processor(dictionary::dictionary_dyn& dict):
    dict(dict)
 {
 }
@@ -98,4 +109,10 @@ commandset_data commandset_processor::deserialize(std::vector<unsigned char> dat
       }
    }
    return cmd;
+}
+
+}
+
+}
+
 }

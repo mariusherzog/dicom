@@ -1,5 +1,16 @@
 #include "dictionary_entry.hpp"
 
+using namespace dicom::data::attribute;
+
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dictionary
+{
+
 dictionary_entry::dictionary_entry(VR vr, std::string mf, std::string kw
                                    , std::string vm, bool ret):
    vr {vr}, message_field {mf}, keyword {kw}, vm {vm}, retired {ret}
@@ -37,3 +48,10 @@ const std::map<std::string, VR> dictionary_entry::vr_of_string
    {"US", VR::US},
    {"UT", VR::UT}
 };
+
+}
+
+}
+
+}
+

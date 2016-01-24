@@ -1,20 +1,23 @@
 #include <iostream>
 #include <chrono>
 
-#include "dimse/dimse_pm.hpp"
-#include "upperlayer/upperlayer.hpp"
+#include "network/dimse/dimse_pm.hpp"
+#include "network/upperlayer/upperlayer.hpp"
 
-#include "dictionary/dictionary_dyn.hpp"
-#include "dictionary/datadictionary.hpp"
-#include "attributedata/dataset_iterator.hpp"
+#include "data/dataset/dataset_iterator.hpp"
+#include "data/dictionary/dictionary_dyn.hpp"
+#include "data/dictionary/datadictionary.hpp"
+
 
 
 
 int main()
 {
-   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
-   commandset_data dat, dat2;
-   commandset_processor cpr(dic);
+   using namespace dicom::data;
+   using namespace dicom::data::attribute;
+   dictionary::dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
+   dataset::commandset_data dat, dat2;
+   dataset::commandset_processor cpr(dic);
 
    std::vector<unsigned char> echo_rsp {
       0x04, 0x00, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x50, 0x01, 0x03,
@@ -48,8 +51,8 @@ int main()
    }
 
 
-   commandset_data cs = cpr.deserialize(boog);
-   for (dataset_iterator it = cs.begin(); it != cs.end(); ++it) {
+   dataset::commandset_data cs = cpr.deserialize(boog);
+   for (dataset::dataset_iterator it = cs.begin(); it != cs.end(); ++it) {
       std::cout << it->tag.element_id << " ";
    }
 
@@ -60,9 +63,9 @@ int main()
 //   }
    std::cout << std::flush;
 
-   SOP_class echo("1.2.840.10008.1.1",
-      { {DIMSE_SERVICE_GROUP::C_ECHO_RQ,
-        [](std::unique_ptr<iod> data) {
+   dicom::network::dimse::SOP_class echo("1.2.840.10008.1.1",
+      { {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
+        [](std::unique_ptr<dataset::iod> data) {
            assert(data == nullptr);
            std::cout << "Received C_ECHO_RQ\n";
         }}}
@@ -71,8 +74,8 @@ int main()
 
    try
    {
-      upperlayer::scp sc(11112);
-      dimse_pm dpm(sc, {{echo, {"1.2.840.10008.1.2"}}});
+      dicom::network::upperlayer::scp sc(11112);
+      dicom::network::dimse::dimse_pm dpm(sc, {{echo, {"1.2.840.10008.1.2"}}});
       sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();

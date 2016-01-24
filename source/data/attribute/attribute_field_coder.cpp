@@ -4,6 +4,14 @@
 
 #include <cstdio>
 
+namespace dicom
+{
+
+namespace data
+{
+
+namespace attribute
+{
 
 namespace convhelper
 {
@@ -471,5 +479,11 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
          assert(false);
          break;
    }
+
+}
+
+}
+
+}
 
 }

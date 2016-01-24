@@ -2,9 +2,20 @@
 
 #include <stack>
 
-dictionary_dyn dataset_iterator::commanddic =
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dataset
+{
+
+using namespace attribute;
+
+dictionary::dictionary_dyn dataset_iterator::commanddic =
 {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
-dictionary_dyn dataset_iterator::datadic =
+dictionary::dictionary_dyn dataset_iterator::datadic =
 {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
 
 dataset_iterator::dataset_iterator(typename std::set<elementfield>::iterator it):
@@ -155,4 +166,9 @@ bool dataset_iterator::is_in_nested() const
    return parent_its.size() > 0;
 }
 
+}
+
+}
+
+}
 

@@ -8,8 +8,17 @@
 #include <memory>
 #include <functional>
 
-#include "../attributedata/commandset_data.hpp"
-#include "../attributedata/iod.hpp"
+#include "data/dataset/commandset_data.hpp"
+#include "data/dataset/iod.hpp"
+
+namespace dicom
+{
+
+namespace network
+{
+
+namespace dimse
+{
 
 /**
  * @brief The SOP_class class represents a Service-Object-Pair and respective
@@ -24,7 +33,7 @@
 class SOP_class
 {
    public:
-      SOP_class(std::string SOP_class_UID, std::map<DIMSE_SERVICE_GROUP, std::function<void(std::unique_ptr<iod> data)>> handler);
+      SOP_class(std::string SOP_class_UID, std::map<data::dataset::DIMSE_SERVICE_GROUP, std::function<void(std::unique_ptr<data::dataset::iod> data)>> handler);
 
       /**
        * @brief operator() is called by the DIMSE protocol machine to notify the
@@ -32,14 +41,20 @@ class SOP_class
        * @param op DSG of the operation
        * @param data data received by the protocol machine
        */
-      void operator()(DIMSE_SERVICE_GROUP op, std::unique_ptr<iod> data) const;
+      void operator()(data::dataset::DIMSE_SERVICE_GROUP op, std::unique_ptr<data::dataset::iod> data) const;
 
       const char* get_SOP_class_UID() const;
 
    private:
       const std::string sop_uid;
-      const std::map<DIMSE_SERVICE_GROUP, std::function<void(std::unique_ptr<iod> data)>> operations;
+      const std::map<data::dataset::DIMSE_SERVICE_GROUP, std::function<void(std::unique_ptr<data::dataset::iod> data)>> operations;
 
 };
+
+}
+
+}
+
+}
 
 #endif // SOP_CLASS_HPP

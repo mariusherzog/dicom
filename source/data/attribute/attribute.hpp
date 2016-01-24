@@ -9,6 +9,23 @@
 
 #include <boost/optional.hpp>
 
+namespace dicom
+{
+
+/**
+ * The data namespace contains all functionality related to DICOM datasets.
+ */
+namespace data
+{
+
+/**
+ * The attribute namespace contains functionality to create and modify DICOM
+ * dataset attributes.
+ */
+namespace attribute
+{
+
+
 /**
  * @brief The VR enum defines the value representations of an attribute
  * a Value Representation can be described as a data type.
@@ -358,6 +375,7 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
    return el;
 }
 
+
 /**
  * @brief make_elementfield overload for attributes that do not have a value
  *        field (like the sequence delimitation item)
@@ -377,6 +395,10 @@ elementfield make_elementfield(short gid, short eid)
    return el;
 }
 
+
+bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+
+
 /**
  * @brief operator < is necessary for the storage in the set
  * @param lhs
@@ -388,8 +410,13 @@ elementfield make_elementfield(short gid, short eid)
  */
 bool operator<(const elementfield& lhs, const elementfield& rhs);
 
-bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
-
 bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
 
-#endif // IOD_HPP
+}
+
+}
+
+}
+
+
+#endif // ATTRIBUTE_HPP

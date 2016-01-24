@@ -3,8 +3,16 @@
 
 #include <vector>
 
-#include "../attributedata/iod.hpp"
+#include "data/dataset/iod.hpp"
 
+namespace dicom
+{
+
+namespace data
+{
+
+namespace attribute
+{
 
 /**
  * @brief encode_little_endian converts the attribute into a serialized little
@@ -67,5 +75,11 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
  * @return length specified in the serialized stream data
  */
 std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, int begin);
+
+}
+
+}
+
+}
 
 #endif // ATTRIBUTE_FIELD_CODER_HPP

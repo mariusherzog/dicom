@@ -1,10 +1,19 @@
 #ifndef COMMANDSET_DATA_HPP
 #define COMMANDSET_DATA_HPP
 
-#include "attribute.hpp"
+#include "data/attribute/attribute.hpp"
+
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dataset
+{
 
 
-using commandset_data = std::set<elementfield>;
+using commandset_data = std::set<attribute::elementfield>;
 
 
 enum class DIMSE_SERVICE_GROUP : unsigned
@@ -43,6 +52,11 @@ enum class DIMSE_PRIORITY : unsigned
    HIGH     = 0x0001
 };
 
+}
+
+}
+
+}
 
 
 #endif // COMMANDSET_DATA_HPP
