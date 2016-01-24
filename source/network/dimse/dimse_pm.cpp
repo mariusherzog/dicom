@@ -66,12 +66,14 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
       rj.reason_ = a_associate_rj::REASON::APPL_CONT_NOT_SUPP;
       sc->queue_for_write(std::unique_ptr<property>(new a_associate_rj {rj}));
       state = CONN_STATE::IDLE;
+      BOOST_LOG_TRIVIAL(error) << "Could not negotiate application context!";
       return;
    }
 
    // check the support of each presentation context and populate own a_associate_ac
    // accordingly
    for (const auto pc : arq->pres_contexts) {
+
       auto as_pos = operations.end();
       if ((as_pos = operations.find(pc.abstract_syntax)) != operations.end()) {
 
@@ -87,6 +89,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
          }
          if (!have_common_ts) {
             ac.pres_contexts.push_back({pc.id, RESULT::TRANSF_SYNT_NOT_SUPP, pc.abstract_syntax});
+            BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << pc.id << "\n";
          }
 
       } else {
@@ -136,10 +139,29 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       }
    }
 
+   commandset_data resp;
+   resp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 0x38));
+   resp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+   resp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(DIMSE_SERVICE_GROUP::C_ECHO_RSP)));
+   resp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, d->message_id));
+   resp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
+   resp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, STATUS{0x0000}));
+
+   std::vector<unsigned char> echo_rsp_preamble {
+      0x04, 0x00, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x50, 0x01, 0x03
+   };
+
+   std::cout << "####\n";
+   auto boog = proc.serialize(resp);
+   boog.insert(boog.begin(), echo_rsp_preamble.begin(), echo_rsp_preamble.end());
+   for (const auto e : boog) {
+      std::cout << std::to_string(e) << " ";
+   }
+
    this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
 
    p_data_tf data;
-   data.from_pdu(echo_rsp);
+   data.from_pdu(boog);
 
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }

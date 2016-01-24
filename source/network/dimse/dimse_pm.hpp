@@ -28,7 +28,6 @@ namespace dimse
 
 /**
  * @brief The dimse_pm class
- * @todo - implement (de)serialization methods <BR>
  */
 class dimse_pm
 {

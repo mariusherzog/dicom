@@ -1,6 +1,8 @@
 #ifndef COMMANDSET_DATA_HPP
 #define COMMANDSET_DATA_HPP
 
+#include <exception>
+
 #include "data/attribute/attribute.hpp"
 
 namespace dicom
@@ -50,6 +52,44 @@ enum class DIMSE_PRIORITY : unsigned
    LOW      = 0x0002,
    MEDIUM   = 0x0000,
    HIGH     = 0x0001
+};
+
+struct STATUS
+{
+      enum STAT
+      {
+         SUCCESS, WARNING, FAILURE, CANCEL, PENDING
+      };
+
+      operator int() const
+      {
+         return code;
+      }
+
+      bool operator==(STAT status)
+      {
+         return stat == status;
+      }
+
+      STATUS(int s): code {s}
+      {
+         if (s == 0x0000)
+            stat = SUCCESS;
+         else if (s == 0x0001 || (s & 0xf000) == 0xb000)
+            stat = WARNING;
+         else if ((s & 0xf000) == 0xa000 || (s & 0xf000) == 0xc000)
+            stat = FAILURE;
+         else if (s == 0xfe00)
+            stat = CANCEL;
+         else if (s == 0xff00 || s == 0xff01)
+            stat = PENDING;
+         else
+            throw std::runtime_error("Invalid status code " + stat);
+      }
+
+   private:
+      STAT stat;
+      int code;
 };
 
 }

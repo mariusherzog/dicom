@@ -72,6 +72,9 @@ int main()
       );
 
 
+   dicom::data::dataset::STATUS stat {0x000};
+   assert(stat == dicom::data::dataset::STATUS::SUCCESS);
+
    try
    {
       dicom::network::upperlayer::scp sc(11112);
