@@ -61,8 +61,7 @@ commandset_processor::commandset_processor(dictionary::dictionary_dyn& dict):
 std::vector<unsigned char> commandset_processor::serialize(commandset_data data) const
 {
    std::vector<unsigned char> stream;
-   for (dataset_iterator it = data.begin(); it != data.end(); ++it) {
-      auto attr = *it;
+   for (const auto attr : dataset_iterator_adaptor(data)) {
       VR repr;
       if (attr.value_rep.is_initialized()) {
          repr = attr.value_rep.get();

@@ -9,6 +9,8 @@
 #include "network/upperlayer/upperlayer_properties.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 
+#include "data/dataset/dataset_iterator.hpp"
+
 
 namespace dicom
 {
@@ -108,19 +110,20 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
 {
    // mock
    using namespace upperlayer;
+   using namespace dicom::data::dataset;
    p_data_tf* d = dynamic_cast<p_data_tf*>(da.get());
 
    for (const auto& c : d->command_set) {
       std::cout << c << std::flush;
    }
 
-   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
+   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.csv"};
    commandset_processor proc{dic};
    commandset_data b = proc.deserialize(d->command_set);
 
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
-   for (elementfield e : b) {
+   for (auto e : dataset_iterator_adaptor(b)) {
       if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
          get_value_field<VR::UI>(e, SOP_UID);
       } else if (e.tag == elementfield::tag_type {0x0000, 0x0100}) {
@@ -166,6 +169,7 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
 void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
 {
 }
+
 
 
 }

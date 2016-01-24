@@ -351,7 +351,6 @@ class set_visitor : public attribute_visitor<vr>
       }
 };
 
-
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute
  *        / element field.

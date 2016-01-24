@@ -112,6 +112,23 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, at
 bool operator==(const dataset_iterator& lhs, const dataset_iterator& rhs);
 bool operator!=(const dataset_iterator& lhs, const dataset_iterator& rhs);
 
+/**
+ * @brief The dataset_iterator_adaptor class is used as a wrapper for IODs or
+ *        command data such that range-based for loops will select the
+ *        dataset_iterator instead of the normal set iterator.
+ */
+class dataset_iterator_adaptor
+{
+   public:
+      dataset_iterator_adaptor(std::set<attribute::elementfield> ds);
+
+      dataset_iterator begin();
+      dataset_iterator end();
+
+   private:
+      std::set<attribute::elementfield> dataset;
+};
+
 }
 
 }

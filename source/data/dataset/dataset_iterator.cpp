@@ -166,6 +166,21 @@ bool dataset_iterator::is_in_nested() const
    return parent_its.size() > 0;
 }
 
+dataset_iterator_adaptor::dataset_iterator_adaptor(std::set<elementfield> ds):
+   dataset {ds}
+{
+}
+
+dataset_iterator dataset_iterator_adaptor::begin()
+{
+   return dataset.begin();
+}
+
+dataset_iterator dataset_iterator_adaptor::end()
+{
+   return dataset.end();
+}
+
 }
 
 }
