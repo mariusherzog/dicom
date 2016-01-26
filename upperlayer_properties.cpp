@@ -409,7 +409,7 @@ std::vector<uchar> a_associate_rj::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_RJ));
-   pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01});
+   pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01});
    pack.push_back(static_cast<uchar>(source_));
    pack.push_back(static_cast<uchar>(reason_));
    return pack;
