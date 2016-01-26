@@ -237,12 +237,13 @@ std::vector<uchar> a_associate_rq::make_pdu() const
 
          // Calculating size of presentation context
          std::size_t pcl = 0;
-         pcl += pc.abstract_syntax.size(); // size of underlying type?
+         pcl += pc.abstract_syntax.size()+4; //+4 <=> preamble of abstract syntax item
          for (const auto ts : pc.transfer_syntaxes) {
-            pcl += ts.size();
+            pcl += ts.size()+4; //+4 <=> preamble of transfer syntax item
          }
+         pcl += 4; //size of presentation context id info
 
-         std::vector<uchar> pc_len = ui_to_16b_be(pcl +4); // 4 bytes padding
+         std::vector<uchar> pc_len = ui_to_16b_be(pcl);
          pack.insert(pack.end(), pc_len.begin(), pc_len.end());
          pack.insert(pack.end(), {pc.id, 0x00, 0x00, 0x00});
 
@@ -304,7 +305,7 @@ void a_associate_ac::from_pdu(std::vector<unsigned char> pdu)
       pos += (4+appl_cont_len);
 
       // read presentation contexts
-      while (pdu[pos] == 0x20) {
+      while (pdu[pos] == 0x21) {
          unsigned char id;
          presentation_context::RESULT res;
          std::string trans_synt;
@@ -412,7 +413,7 @@ std::vector<uchar> a_associate_rj::make_pdu() const
 {
    std::vector<uchar> pack;
    pack.push_back(static_cast<uchar>(TYPE::A_ASSOCIATE_RJ));
-   pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01});
+   pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01});
    pack.push_back(static_cast<uchar>(source_));
    pack.push_back(static_cast<uchar>(reason_));
    return pack;
