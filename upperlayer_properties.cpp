@@ -301,7 +301,7 @@ void a_associate_ac::from_pdu(std::vector<unsigned char> pdu)
       pos += (4+appl_cont_len);
 
       // read presentation contexts
-      while (pdu[pos] == 0x20) {
+      while (pdu[pos] == 0x21) {
          unsigned char id;
          presentation_context::RESULT res;
          std::string trans_synt;
