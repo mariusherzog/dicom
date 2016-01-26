@@ -233,12 +233,13 @@ std::vector<uchar> a_associate_rq::make_pdu() const
 
          // Calculating size of presentation context
          std::size_t pcl = 0;
-         pcl += pc.abstract_syntax.size(); // size of underlying type?
+         pcl += pc.abstract_syntax.size()+4; //+4 <=> preamble of abstract syntax item
          for (const auto ts : pc.transfer_syntaxes) {
-            pcl += ts.size();
+            pcl += ts.size()+4; //+4 <=> preamble of transfer syntax item
          }
+         pcl += 4; //size of presentation context id info
 
-         std::vector<uchar> pc_len = ui_to_16b_be(pcl +4); // 4 bytes padding
+         std::vector<uchar> pc_len = ui_to_16b_be(pcl);
          pack.insert(pack.end(), pc_len.begin(), pc_len.end());
          pack.insert(pack.end(), {pc.id, 0x00, 0x00, 0x00});
 
