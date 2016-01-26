@@ -43,7 +43,7 @@ enum class VR
  */
 struct empty_t
 {
-      empty_t& operator=(const empty_t&) = delete;
+//      empty_t& operator=(const empty_t&) = delete;
 };
 
 
@@ -91,6 +91,8 @@ struct elementfield_base
          op.accept(ef);
       }
 
+      virtual std::unique_ptr<elementfield_base> deep_copy() = 0;
+
       virtual ~elementfield_base() = 0;
 };
 
@@ -107,14 +109,22 @@ struct elementfield
       {
             unsigned short group_id;
             unsigned short element_id;
+
+            tag_type(unsigned short gid = 0, unsigned short eid = 0);
       };
       tag_type tag;
       boost::optional<VR> value_rep;
       std::size_t value_len;
-      std::shared_ptr<elementfield_base> value_field;
+      std::unique_ptr<elementfield_base> value_field;
 
+      elementfield() = default;
+      elementfield(const elementfield& other);
+      elementfield& operator=(const elementfield other);
+
+      friend void swap(elementfield& lhs, elementfield& rhs) noexcept;
 };
 
+void swap(elementfield& lhs, elementfield& rhs) noexcept;
 
 /**
  * construct a type mapping VR -> T using specialized templates
@@ -293,6 +303,13 @@ struct element_field: elementfield_base
 {
       using vrtype = typename type_of<vr>::type;
       vrtype value_field;
+
+      std::unique_ptr<elementfield_base> deep_copy() override
+      {
+         element_field<vr>* ef = new element_field<vr> {};
+         ef->value_field = value_field;
+         return std::unique_ptr<elementfield_base> {ef};
+      }
 
       virtual ~element_field() {}
 };
