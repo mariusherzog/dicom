@@ -14,6 +14,7 @@
 
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
+#include "data/dictionary/dictionary.hpp"
 #include "sop_class.hpp"
 
 
@@ -39,7 +40,9 @@ class dimse_pm
       };
 
 
-      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations);
+      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
+               std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
+               data::dictionary::dictionary& dict);
       ~dimse_pm();
 
    private:
@@ -76,10 +79,10 @@ class dimse_pm
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_ac> connection_properties;
-
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
-
       std::vector<std::string> application_contexts;
+
+      data::dictionary::dictionary& dict;
 };
 
 

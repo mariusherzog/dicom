@@ -17,6 +17,17 @@ dictionary::dictionary(std::string cmddic_path,
 {
 }
 
+dictionary_dyn& dictionary::get_dyn_commanddic()
+{
+   return commanddic;
+}
+
+dictionary_dyn& dictionary::get_dyn_datadic()
+{
+   return datadic;
+}
+
+
 dictionary_entry dictionary::lookup_datadic(unsigned short gid,
                                             unsigned short eid)
 {

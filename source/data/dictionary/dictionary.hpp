@@ -88,6 +88,9 @@ class dictionary
          return datadictionary<g, e> {};
       }
 
+      dictionary_dyn& get_dyn_commanddic();
+      dictionary_dyn& get_dyn_datadic();
+
    private:
       dictionary_dyn commanddic;
       dictionary_dyn datadic;
