@@ -15,6 +15,11 @@
 #include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
+<<<<<<< HEAD
+=======
+#include "data/dictionary/dictionary.hpp"
+#include "sop_class.hpp"
+>>>>>>> devel
 
 
 namespace dicom
@@ -38,9 +43,9 @@ class dimse_pm
          IDLE, CONNECTED
       };
 
-
-
-      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations);
+      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
+               std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
+               data::dictionary::dictionary& dict);
       ~dimse_pm();
 
    private:
@@ -77,13 +82,12 @@ class dimse_pm
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_ac> connection_properties;
-
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
-
       std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(response r, int mid)>> assemble_response;
+      data::dictionary::dictionary& dict;
 };
 
 

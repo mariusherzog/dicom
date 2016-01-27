@@ -25,11 +25,12 @@ using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
 
-dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_):
+dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_, dictionary& dict):
    state {CONN_STATE::IDLE},
    connection_properties {boost::none},
    operations {},
-   application_contexts {"1.2.840.10008.3.1.1.1"}
+   application_contexts {"1.2.840.10008.3.1.1.1"},
+   dict(dict)
 {
    using namespace std::placeholders;
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
@@ -119,8 +120,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       std::cout << c << std::flush;
    }
 
-   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.csv"};
-   commandset_processor proc{dic};
+   commandset_processor proc {dict.get_dyn_commanddic()};
    commandset_data b = proc.deserialize(d->command_set);
    /** @todo dataset deserialization */
 
