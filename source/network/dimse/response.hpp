@@ -1,7 +1,7 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-#include <memory>
+#include "boost/optional.hpp"
 
 #include "data/dataset/iod.hpp"
 #include "data/dataset/commandset_data.hpp"
@@ -31,20 +31,20 @@ class response
        * @param prio optional; priority of the response, MEDIUM by default
        */
       response(data::dataset::DIMSE_SERVICE_GROUP dsg,
-               std::unique_ptr<data::dataset::iod> data = nullptr,
+               boost::optional<data::dataset::iod> data = boost::none,
                data::dataset::STATUS status = data::dataset::STATUS::SUCCESS,
                data::dataset::DIMSE_PRIORITY prio = data::dataset::DIMSE_PRIORITY::MEDIUM
                );
 
       data::dataset::DIMSE_SERVICE_GROUP get_response_type();
-      std::unique_ptr<data::dataset::iod>& get_data();
+      boost::optional<data::dataset::iod>& get_data();
       data::dataset::STATUS get_status();
       data::dataset::DIMSE_PRIORITY get_priority();
 
 
    private:
       data::dataset::DIMSE_SERVICE_GROUP response_type;
-      std::unique_ptr<data::dataset::iod> data;
+      boost::optional<data::dataset::iod> data;
       data::dataset::STATUS status;
       data::dataset::DIMSE_PRIORITY prio;
 };
