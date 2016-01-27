@@ -11,10 +11,10 @@
 
 #include <boost/optional.hpp>
 
-
+#include "response.hpp"
+#include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
-#include "sop_class.hpp"
 
 
 namespace dicom
@@ -37,6 +37,7 @@ class dimse_pm
       {
          IDLE, CONNECTED
       };
+
 
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations);

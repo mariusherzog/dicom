@@ -18,9 +18,10 @@ int main()
 
    dicom::network::dimse::SOP_class echo("1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
-      [](std::unique_ptr<dataset::iod> data) {
+      [](std::unique_ptr<dataset::iod> data) -> dicom::network::dimse::response {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RQ\n";
+         return dicom::network::dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
       }}}
    );
 

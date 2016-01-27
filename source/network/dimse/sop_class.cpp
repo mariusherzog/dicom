@@ -11,8 +11,7 @@ namespace dimse
 
 using namespace data::dataset;
 
-SOP_class::SOP_class(std::string SOP_class_UID, std::map<DIMSE_SERVICE_GROUP
-                     , std::function<void(std::unique_ptr<iod> data)>> handler):
+SOP_class::SOP_class(std::string SOP_class_UID, std::map<DIMSE_SERVICE_GROUP, std::function<response(std::unique_ptr<iod>)> > handler):
    sop_uid {SOP_class_UID}, operations {handler}
 {
 }
