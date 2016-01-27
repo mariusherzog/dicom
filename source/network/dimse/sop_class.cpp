@@ -16,9 +16,9 @@ SOP_class::SOP_class(std::string SOP_class_UID, std::map<DIMSE_SERVICE_GROUP, st
 {
 }
 
-void SOP_class::operator()(DIMSE_SERVICE_GROUP op, std::unique_ptr<iod> data) const
+response SOP_class::operator()(DIMSE_SERVICE_GROUP op, std::unique_ptr<iod> data) const
 {
-   operations.at(op)(std::move(data));
+   return operations.at(op)(std::move(data));
 }
 
 const char* SOP_class::get_SOP_class_UID() const

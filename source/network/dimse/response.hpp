@@ -36,17 +36,17 @@ class response
                data::dataset::DIMSE_PRIORITY prio = data::dataset::DIMSE_PRIORITY::MEDIUM
                );
 
-      data::dataset::DIMSE_SERVICE_GROUP get_response_type();
-      boost::optional<data::dataset::iod>& get_data();
-      data::dataset::STATUS get_status();
-      data::dataset::DIMSE_PRIORITY get_priority();
+      data::dataset::DIMSE_SERVICE_GROUP get_response_type() const;
+      const boost::optional<data::dataset::iod>& get_data() const;
+      data::dataset::STATUS get_status() const;
+      data::dataset::DIMSE_PRIORITY get_priority() const;
 
 
    private:
-      data::dataset::DIMSE_SERVICE_GROUP response_type;
-      boost::optional<data::dataset::iod> data;
-      data::dataset::STATUS status;
-      data::dataset::DIMSE_PRIORITY prio;
+      const data::dataset::DIMSE_SERVICE_GROUP response_type;
+      const boost::optional<data::dataset::iod> data;
+      const data::dataset::STATUS status;
+      const data::dataset::DIMSE_PRIORITY prio;
 };
 
 }

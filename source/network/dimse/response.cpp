@@ -21,22 +21,22 @@ response::response(data::dataset::DIMSE_SERVICE_GROUP dsg,
 {
 }
 
-data::dataset::DIMSE_SERVICE_GROUP response::get_response_type()
+data::dataset::DIMSE_SERVICE_GROUP response::get_response_type() const
 {
    return response_type;
 }
 
-boost::optional<data::dataset::iod>& response::get_data()
+const boost::optional<data::dataset::iod>& response::get_data() const
 {
    return data;
 }
 
-data::dataset::STATUS response::get_status()
+data::dataset::STATUS response::get_status() const
 {
    return status;
 }
 
-data::dataset::DIMSE_PRIORITY response::get_priority()
+data::dataset::DIMSE_PRIORITY response::get_priority() const
 {
    return prio;
 }

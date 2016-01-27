@@ -81,6 +81,9 @@ class dimse_pm
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
 
       std::vector<std::string> application_contexts;
+
+      static std::map<data::dataset::DIMSE_SERVICE_GROUP
+         , std::function<upperlayer::p_data_tf(response r, int mid)>> assemble_response;
 };
 
 

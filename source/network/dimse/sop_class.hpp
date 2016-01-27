@@ -44,7 +44,7 @@ class SOP_class
        * @param op DSG of the operation
        * @param data data received by the protocol machine
        */
-      void operator()(data::dataset::DIMSE_SERVICE_GROUP op,
+      response operator()(data::dataset::DIMSE_SERVICE_GROUP op,
                       std::unique_ptr<data::dataset::iod> data) const;
 
       const char* get_SOP_class_UID() const;

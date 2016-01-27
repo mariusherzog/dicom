@@ -112,6 +112,8 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    using namespace upperlayer;
    using namespace dicom::data::dataset;
    p_data_tf* d = dynamic_cast<p_data_tf*>(da.get());
+   assert(d != nullptr); // d == nullptr would imply that this function is bound
+                         // to the wrong message type.
 
    for (const auto& c : d->command_set) {
       std::cout << c << std::flush;
@@ -120,9 +122,11 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.csv"};
    commandset_processor proc{dic};
    commandset_data b = proc.deserialize(d->command_set);
+   /** @todo dataset deserialization */
 
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
+   unsigned short message_id;
    for (auto e : dataset_iterator_adaptor(b)) {
       if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
          get_value_field<VR::UI>(e, SOP_UID);
@@ -130,32 +134,14 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
          short unsigned dsgint;
          get_value_field<VR::US>(e, dsgint);
          dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
+      } else if (e.tag == elementfield::tag_type {0x0000, 0x0110}) {
+         get_value_field<VR::US>(e, message_id);
       }
    }
 
-   commandset_data resp;
-   resp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   resp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
-   resp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(DIMSE_SERVICE_GROUP::C_ECHO_RSP)));
-   resp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, d->message_id));
-   resp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
-   resp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, STATUS{0x0000}));
+   response resp = this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
 
-   std::vector<unsigned char> echo_rsp_preamble {
-      0x04, 0x00, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x50, 0x01, 0x03
-   };
-
-   auto boog = proc.serialize(resp);
-   boog.insert(boog.begin(), echo_rsp_preamble.begin(), echo_rsp_preamble.end());
-   for (const auto e : boog) {
-      std::cout << std::to_string(e) << " ";
-   }
-
-   this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
-
-   p_data_tf data;
-   data.from_pdu(boog);
-
+   auto data = assemble_response[resp.get_response_type()](resp, message_id);
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
@@ -170,6 +156,37 @@ void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pr
 {
 }
 
+
+static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id)
+{
+   using namespace upperlayer;
+   commandset_data cresp;
+   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, message_id));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+
+
+   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.csv"};
+   commandset_processor proc{dic};
+   auto serdata = proc.serialize(cresp);
+
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.message_id = message_id;
+
+   return presp;
+}
+
+
+std::map<data::dataset::DIMSE_SERVICE_GROUP
+   , std::function<upperlayer::p_data_tf(response r, int m_id)>> dimse_pm::assemble_response
+{
+   {DIMSE_SERVICE_GROUP::C_ECHO_RSP, assemble_cecho_rsp}
+};
 
 
 }
