@@ -18,12 +18,16 @@ will initialize the dictionary necessary for the DIMSE protocol machine to get t
 
 ```c++
 dicom::network::dimse::SOP_class echo {"1.2.840.10008.1.1",
-{ { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
-   [](std::unique_ptr<dataset::iod> data)  {
-      assert(data == nullptr);
-      std::cout << "Received C_ECHO_RQ\n";
-      return dicom::network::dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
-   }}}
+{ 
+    { 
+       dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
+       [](std::unique_ptr<dataset::iod> data)  {
+            assert(data == nullptr);
+            std::cout << "Received C_ECHO_RQ\n";
+            return dicom::network::dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
+        }
+    }
+}
 };
 ```
 defines the functionality of the SOP class. Each SOP class  consists of one or more Service Groups which operate on an optional IOD.  The first string parameter is the UID of the SOP class. The second parameter consists of a set of pairs of the Service Group, and a corresponding handler function which will be invoked by the protocl machine if  a indication of the respective Service Group was received. It returns a response object with the response Service Group type, and may additionally contain an IOD, status and priority information.
@@ -33,7 +37,9 @@ try
 {
    dicom::network::upperlayer::scp sc(11112);
    dicom::network::dimse::dimse_pm dpm(sc,
-      {{echo, {"1.2.840.10008.1.2"}}},
+      {
+            {echo, {"1.2.840.10008.1.2"}}
+      },
       dict
    );
    sc.run();
@@ -41,7 +47,7 @@ try
    std::cout << ec.what();
 }
 ```
-The first line creates an upperlayer SCP which will be used by the DIMSE PM to communicate over the network. The second line an instance of the DIMSE PM is created, taking the upperlayer-object, a list of SOP classes with their supported transfer syntax UIDs, and the dictionary as arguments.
+The first line creates an upperlayer SCP which will be used by the DIMSE PM to communicate over the network. In the second one an instance of the DIMSE PM is created, taking the upperlayer-object, a list of SOP classes with their supported transfer syntax UIDs, and the dictionary as arguments. The member function call run() instructs the upper layer to wait for and handle incoming connections.
 
 
 ## Dependencies
@@ -50,7 +56,7 @@ The first line creates an upperlayer SCP which will be used by the DIMSE PM to c
 ## Supported Compilers
 Tested on:
 
-* gcc 5.85
+* gcc 4.8.5
 * clang 3.7.0
 * msvc12 (master branch)
 
