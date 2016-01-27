@@ -7,6 +7,7 @@
 #include "data/dataset/dataset_iterator.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 #include "data/dictionary/datadictionary.hpp"
+#include "data/dictionary/dictionary.hpp"
 
 
 
