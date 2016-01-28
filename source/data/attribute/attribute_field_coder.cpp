@@ -122,13 +122,11 @@ std::vector<unsigned char> encode_len_little_endian(std::size_t len)
 
 elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int begin)
 {
-   short gid, eid;
+   unsigned short gid, eid;
    convhelper::little_endian_to_integral(data, begin, 2, gid);
    convhelper::little_endian_to_integral(data, begin+2, 2, eid);
 
-   elementfield::tag_type tag;
-   tag.element_id = eid;
-   tag.group_id = gid;
+   elementfield::tag_type tag {gid, eid};
    return tag;
 }
 
@@ -479,7 +477,7 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
          assert(false);
          break;
    }
-
+   assert(false);
 }
 
 }
