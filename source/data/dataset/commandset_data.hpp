@@ -84,7 +84,7 @@ struct STATUS
          else if (s == 0xff00 || s == 0xff01)
             stat = PENDING;
          else
-            throw std::runtime_error("Invalid status code " + stat);
+            throw std::runtime_error("Invalid status code " + std::to_string(stat));
       }
 
    private:

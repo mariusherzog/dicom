@@ -11,7 +11,8 @@
 
 #include <boost/optional.hpp>
 
-
+#include "response.hpp"
+#include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
 #include "data/dictionary/dictionary.hpp"
@@ -38,7 +39,6 @@ class dimse_pm
       {
          IDLE, CONNECTED
       };
-
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
@@ -82,6 +82,8 @@ class dimse_pm
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
       std::vector<std::string> application_contexts;
 
+      static std::map<data::dataset::DIMSE_SERVICE_GROUP
+         , std::function<upperlayer::p_data_tf(response r, int mid, data::dictionary::dictionary&)>> assemble_response;
       data::dictionary::dictionary& dict;
 };
 
