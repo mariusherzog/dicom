@@ -141,7 +141,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
 
    response resp = this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
 
-   auto data = assemble_response[resp.get_response_type()](resp, message_id);
+   auto data = assemble_response[resp.get_response_type()](resp, message_id, dict);
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
@@ -157,7 +157,7 @@ void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pr
 }
 
 
-static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id)
+static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dictionary& dict)
 {
    using namespace upperlayer;
    commandset_data cresp;
@@ -168,9 +168,7 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id)
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
 
-
-   dictionary_dyn dic {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.csv"};
-   commandset_processor proc{dic};
+   commandset_processor proc{dict.get_dyn_commanddic()};
    auto serdata = proc.serialize(cresp);
 
 
@@ -183,7 +181,7 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id)
 
 
 std::map<data::dataset::DIMSE_SERVICE_GROUP
-   , std::function<upperlayer::p_data_tf(response r, int m_id)>> dimse_pm::assemble_response
+   , std::function<upperlayer::p_data_tf(response r, int m_id, dictionary&)>> dimse_pm::assemble_response
 {
    {DIMSE_SERVICE_GROUP::C_ECHO_RSP, assemble_cecho_rsp}
 };

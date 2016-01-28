@@ -15,11 +15,8 @@
 #include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
-<<<<<<< HEAD
-=======
 #include "data/dictionary/dictionary.hpp"
 #include "sop_class.hpp"
->>>>>>> devel
 
 
 namespace dicom
@@ -86,7 +83,7 @@ class dimse_pm
       std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
-         , std::function<upperlayer::p_data_tf(response r, int mid)>> assemble_response;
+         , std::function<upperlayer::p_data_tf(response r, int mid, data::dictionary::dictionary&)>> assemble_response;
       data::dictionary::dictionary& dict;
 };
 

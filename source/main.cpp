@@ -20,14 +20,14 @@ int main()
 
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv"};
 
-   dicom::network::dimse::SOP_class echo("1.2.840.10008.1.1",
+   dicom::network::dimse::SOP_class echo {"1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
       [](std::unique_ptr<dataset::iod> data) -> dicom::network::dimse::response {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RQ\n";
          return dicom::network::dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
       }}}
-   );
+   };
 
    try
    {
