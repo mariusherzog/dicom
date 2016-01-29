@@ -40,7 +40,7 @@ struct Istate_trans_ops
       virtual void stop_artim() = 0;
       virtual void start_artim() = 0;
       virtual void ignore_next() = 0;
-      virtual void queue_for_write_w_prio(std::unique_ptr<const property> p) = 0;
+      virtual void queue_for_write_w_prio(std::unique_ptr<property> p) = 0;
       virtual void close_connection() = 0;
       virtual ~Istate_trans_ops() = 0;
 };
@@ -51,8 +51,9 @@ struct Istate_trans_ops
  */
 struct Iupperlayer_comm_ops
 {
-      virtual void queue_for_write(std::unique_ptr<const property> p) = 0;
+      virtual void queue_for_write(std::unique_ptr<property> p) = 0;
       virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
+      virtual void inject_conf(TYPE t, std::function<void(scx*, property* f)>) = 0;
       virtual ~Iupperlayer_comm_ops() = 0;
 };
 
@@ -99,7 +100,14 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] t
        * @param[in] f
        */
-      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f);
+      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) override;
+
+      /**
+       * @brief inject_conf sets a handler for a sent property type t.
+       * @param[in] t
+       * @param[in] f
+       */
+      void inject_conf(TYPE t, std::function<void(scx*, property*)> f) override;
 
       /**
        * @brief queue_for_write takes ownership of a property and queues it for
@@ -109,7 +117,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * A write queue is necessary to prevent multiple writes to the socket, which
        * may result in interleaving
        */
-      void queue_for_write(std::unique_ptr<const property> p);
+      void queue_for_write(std::unique_ptr<property> p);
 
       /**
        * @brief queue_for_write_w_prio queues a property for writing, but moves it
@@ -117,7 +125,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] p
        * @see queue_for_write();
        */
-      void queue_for_write_w_prio(std::unique_ptr<const property> p);
+      void queue_for_write_w_prio(std::unique_ptr<property> p);
 
       /**
        * @brief reset_artim resets the artim timer
@@ -172,6 +180,8 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        */
       void artim_expired(const boost::system::error_code& error);
 
+      std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
+
 
    private:
       /**
@@ -180,7 +190,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        *        the socket.
        * @param[in] p
        */
-      void send(const property* p);
+      void send(property* p);
 
       /**
        * @brief sock is used by send() and receive() to access the socket of the
@@ -207,7 +217,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        */
       virtual boost::asio::steady_timer& artim_timer() = 0;
 
-      std::deque<std::unique_ptr<const property>> send_queue;
+      std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
