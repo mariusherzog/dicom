@@ -110,25 +110,34 @@ void release_rp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 void conf_handler(upperlayer::scx* sc, upperlayer::property* rq)
 {
    using namespace upperlayer;
-   const a_associate_ac* d = dynamic_cast<a_associate_ac*>(rq);
+   const a_associate_rq* d = dynamic_cast<a_associate_rq*>(rq);
    assert(d);
    std::cout << "sent associate confirmation\n" << std::flush;
 }
 
 int main()
 {
-//   dimse_pm dpm;
-//   dpm.inject(1, print);
-//   dpm.receive();
 
+   upperlayer::a_associate_rq request;
+   request.application_context = "1.2.840.10008.3.1.1.1";
+   request.called_ae = "STORESCP        ";
+   request.calling_ae = "ANY-SCU         ";
+   request.max_message_length = 0xFFFE;
+   upperlayer::a_associate_rq::presentation_context p;
+   p.id = 1;
+   p.abstract_syntax = "1.2.840.10008.1.1";
+   p.transfer_syntaxes = {"1.2.840.10008.1.2"};
+   request.pres_contexts = {p};
 
 
    try
    {
-   upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
-                               {upperlayer::TYPE::P_DATA_TF, printall},
-                               {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
-   sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_AC, conf_handler);
+//   upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
+//                               {upperlayer::TYPE::P_DATA_TF, printall},
+//                               {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
+   upperlayer::scu sc("192.168.2.103", "11112", request);
+
+   sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ, conf_handler);
    sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();

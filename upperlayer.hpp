@@ -180,6 +180,8 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        */
       void artim_expired(const boost::system::error_code& error);
 
+      std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
+
 
    private:
       /**
@@ -218,7 +220,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
-      std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
 };
 
 /**

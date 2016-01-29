@@ -335,8 +335,12 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
 
    auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
    boost::asio::async_write(socket, boost::asio::buffer(*pdu),
-      [this, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
+      [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
          if (!error) {
+            auto type = TYPE::A_ASSOCIATE_RQ;
+            if (handlers_conf.find(type) != handlers_conf.end()) {
+               handlers_conf[type](this, &rq);
+            }
             do_read();
          } else {
             throw boost::system::system_error(error);
