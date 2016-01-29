@@ -70,7 +70,7 @@ scx::~scx()
 }
 
 
-void scx::send(const property* p)
+void scx::send(property* p)
 {
    auto pdu = std::make_shared<std::vector<unsigned char>>(p->make_pdu());
    auto ptype = get_type(*pdu);
@@ -106,9 +106,12 @@ void scx::send(const property* p)
       // call async_write after each sent property until the queue is
       // empty
       boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-         [this, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
+         [this, p, ptype](const boost::system::error_code& error, std::size_t /*bytes*/) {
             if (error) {
                throw boost::system::system_error(error);
+            }
+            if (handlers_conf.find(ptype) != handlers_conf.end()) {
+               handlers_conf[ptype](this, p);
             }
             send_queue.pop_front();
             if (!send_queue.empty()) {
@@ -202,7 +205,7 @@ void scx::do_read()
 }
 
 
-void scx::queue_for_write(std::unique_ptr<const property> p)
+void scx::queue_for_write(std::unique_ptr<property> p)
 {
    // when send_queue.size() is greater than 1, there are still properties being
    // written by scx::send(). To prevent interleaving, we do not call send here
@@ -214,7 +217,7 @@ void scx::queue_for_write(std::unique_ptr<const property> p)
    send(send_queue.front().get());
 }
 
-void scx::queue_for_write_w_prio(std::unique_ptr<const property> p)
+void scx::queue_for_write_w_prio(std::unique_ptr<property> p)
 {
    // see scx::queue_for_write for explanation
    send_queue.emplace_front(std::move(p));
@@ -273,6 +276,11 @@ void scx::artim_expired(const boost::system::error_code& error)
 void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
 {
    handlers[t] = f;
+}
+
+void scx::inject_conf(TYPE t, std::function<void(scx*, property*)> f)
+{
+   handlers_conf[t] = f;
 }
 
 statemachine::CONN_STATE scx::get_state()

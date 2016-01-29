@@ -107,6 +107,14 @@ void release_rp(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
 }
 
+void conf_handler(upperlayer::scx* sc, upperlayer::property* rq)
+{
+   using namespace upperlayer;
+   const a_associate_ac* d = dynamic_cast<a_associate_ac*>(rq);
+   assert(d);
+   std::cout << "sent associate confirmation\n" << std::flush;
+}
+
 int main()
 {
 //   dimse_pm dpm;
@@ -120,6 +128,7 @@ int main()
    upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
                                {upperlayer::TYPE::P_DATA_TF, printall},
                                {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
+   sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_AC, conf_handler);
    sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
