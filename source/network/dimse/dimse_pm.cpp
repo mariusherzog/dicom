@@ -27,18 +27,24 @@ using namespace data::dataset;
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_, dictionary& dict):
    state {CONN_STATE::IDLE},
+   connection_request {boost::none},
    connection_properties {boost::none},
    operations {},
    application_contexts {"1.2.840.10008.3.1.1.1"},
    dict(dict)
 {
    using namespace std::placeholders;
+   sc.inject(upperlayer::TYPE::A_ASSOCIATE_AC,
+             std::bind(&dimse_pm::association_ac_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
              std::bind(&dimse_pm::association_rq_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::P_DATA_TF,
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
              std::bind(&dimse_pm::release_rq_handler, this, _1, _2));
+
+   sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ,
+             std::bind(&dimse_pm::sent_release_rq, this, _1, _2));
 
    for (const auto op_and_ts : operations_) {
       this->operations.insert({op_and_ts.first.get_SOP_class_UID(), op_and_ts});
@@ -48,6 +54,7 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<S
 dimse_pm::~dimse_pm()
 {
 }
+
 
 void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 {
@@ -107,6 +114,28 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    state = CONN_STATE::CONNECTED;
 }
 
+void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> ac)
+{
+   using namespace upperlayer;
+   a_associate_ac* asc = dynamic_cast<a_associate_ac*>(ac.get());
+   assert(asc);
+   assert(connection_request.is_initialized());
+
+
+   a_associate_rq& crq = connection_request.get();
+   for (const a_associate_ac::presentation_context pc : asc->pres_contexts) {
+      if (pc.result_ != a_associate_ac::presentation_context::RESULT::ACCEPTANCE) {
+         auto rqit = crq.pres_contexts.begin();
+         for (; rqit->id != pc.id; rqit++) ;
+         std::string rej_abstract_syntax = rqit->abstract_syntax;
+
+         operations.erase(rej_abstract_syntax);
+      }
+   }
+
+   connection_properties = *asc;
+}
+
 void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
 {
    // mock
@@ -139,7 +168,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       }
    }
 
-   response resp = this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
+   auto resp = this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
 
    auto data = assemble_response[resp.get_response_type()](resp, message_id, dict);
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
@@ -154,6 +183,13 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
 
 void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
 {
+}
+
+void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property* r)
+{
+   upperlayer::a_associate_rq* rq = dynamic_cast<upperlayer::a_associate_rq*>(r);
+   assert(rq != nullptr);
+   connection_request = *rq;
 }
 
 
@@ -181,7 +217,7 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
 
 
 std::map<data::dataset::DIMSE_SERVICE_GROUP
-   , std::function<upperlayer::p_data_tf(response r, int m_id, dictionary&)>> dimse_pm::assemble_response
+   , std::function<upperlayer::p_data_tf(response r, int message_id, dictionary&)>> dimse_pm::assemble_response
 {
    {DIMSE_SERVICE_GROUP::C_ECHO_RSP, assemble_cecho_rsp}
 };

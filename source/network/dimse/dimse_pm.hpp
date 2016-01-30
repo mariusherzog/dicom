@@ -16,7 +16,6 @@
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
 #include "data/dictionary/dictionary.hpp"
-#include "sop_class.hpp"
 
 
 namespace dicom
@@ -55,6 +54,13 @@ class dimse_pm
       void association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq);
 
       /**
+       * @brief association_ac_handler is called upon reception of an a-associate-ac property.
+       * @param[in, out] sc upperlayer service received from
+       * @param[in] rq associate request data
+       */
+      void association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> ac);
+
+      /**
        * @brief data_handler is called when a p-data-tf property is received.
        * @param[in, out] sc upperlayer service received from
        * @param[in] d data
@@ -76,14 +82,19 @@ class dimse_pm
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
 
+      void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
+
+
       CONN_STATE state;
 
+      boost::optional<upperlayer::a_associate_rq> connection_request;
       boost::optional<upperlayer::a_associate_ac> connection_properties;
+
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
       std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
-         , std::function<upperlayer::p_data_tf(response r, int mid, data::dictionary::dictionary&)>> assemble_response;
+         , std::function<upperlayer::p_data_tf(response r, int message_id, data::dictionary::dictionary&)>> assemble_response;
       data::dictionary::dictionary& dict;
 };
 
