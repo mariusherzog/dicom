@@ -41,6 +41,7 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
+               std::pair<SOP_class_request, std::string> request,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
@@ -84,6 +85,7 @@ class dimse_pm
 
       void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
 
+      std::pair<SOP_class_request, std::string> initial_request;
 
       CONN_STATE state;
 

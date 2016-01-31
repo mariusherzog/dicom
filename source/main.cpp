@@ -22,12 +22,20 @@ int main()
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv"};
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
-   { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
+   { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP,
       [](std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
-         std::cout << "Received C_ECHO_RQ\n";
+         std::cout << "Received C_ECHO_RSP\n";
          return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
       }}}
+   };
+
+   dimse::SOP_class_request echorq {"1.2.840.10008.1.1", dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
+      [](std::unique_ptr<dataset::iod> data) {
+         assert(data == nullptr);
+         std::cout << "Send C_ECHO_RQ\n";
+         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ};
+      }
    };
 
    dicom::network::upperlayer::a_associate_rq request;
@@ -48,6 +56,7 @@ int main()
       //dicom::network::upperlayer::scp sc(11112);
       dicom::network::dimse::dimse_pm dpm(sc,
          {{echo, {"1.2.840.10008.1.2"}}},
+         {echorq, "1.2.840.10008.1.2"},
          dict
       );
       sc.run();

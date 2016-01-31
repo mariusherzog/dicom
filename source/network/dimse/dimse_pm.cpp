@@ -25,7 +25,11 @@ using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
 
-dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_, dictionary& dict):
+dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
+                   std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_,
+                   std::pair<SOP_class_request, std::string> request,
+                   dictionary& dict):
+   initial_request {request},
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
@@ -134,6 +138,15 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
    }
 
    connection_properties = *asc;
+
+   /** @todo dataset */
+
+//   auto resp = this->operations.at(initial_request.first.get_SOP_class_UID())
+//         .first(initial_request.first.SOP_class, nullptr);
+   auto resp = initial_request.first();
+
+   auto data = assemble_response[resp.get_response_type()](resp, 1, dict);
+   sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
 void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
@@ -151,7 +164,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
 
    commandset_processor proc {dict.get_dyn_commanddic()};
    commandset_data b = proc.deserialize(d->command_set);
-   /** @todo dataset deserialization */
+   /** @todo dataset deserialization (use first accepted ts) */
 
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
@@ -215,10 +228,32 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
    return presp;
 }
 
+static upperlayer::p_data_tf assemble_cecho_rq(response r, int message_id, dictionary& dict)
+{
+   using namespace upperlayer;
+   commandset_data cresp;
+   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+
+   commandset_processor proc{dict.get_dyn_commanddic()};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.message_id = message_id;
+
+   return presp;
+}
+
 
 std::map<data::dataset::DIMSE_SERVICE_GROUP
    , std::function<upperlayer::p_data_tf(response r, int message_id, dictionary&)>> dimse_pm::assemble_response
 {
+   {DIMSE_SERVICE_GROUP::C_ECHO_RQ, assemble_cecho_rq},
    {DIMSE_SERVICE_GROUP::C_ECHO_RSP, assemble_cecho_rsp}
 };
 
