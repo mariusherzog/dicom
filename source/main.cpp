@@ -23,9 +23,10 @@ int main()
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP,
-      [](std::unique_ptr<dataset::iod> data) {
+      [](dimse::dimse_pm* pm, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RSP\n";
+         pm->release_association();
          return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
       }}}
    };

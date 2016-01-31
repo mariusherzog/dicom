@@ -45,6 +45,23 @@ class dimse_pm
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
+      /**
+       * @brief send_response sends a response to the peer.
+       * @param r response data
+       */
+      void send_response(response r);
+
+      /**
+       * @brief abort_associations aborts the current association by sending an
+       *        a_abort package to the peer.
+       */
+      void abort_association();
+
+      /**
+       * @brief release_association
+       */
+      void release_association();
+
    private:
       /**
        * @brief association_rq_handler is called upon reception of an a-associate-rq property. It negotiates the supported
@@ -69,11 +86,20 @@ class dimse_pm
       void data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> d);
 
       /**
-       * @brief release_rq_handler is called when an a-associate-rq property is received. An a-associate-rp is transmitted.
+       * @brief release_rq_handler is called when an a-associate-rq property is
+       *        received. An a-associate-rp is transmitted.
        * @param[in, out] sc upperlayer service received from
        * @param[in] r release
        */
       void release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+
+      /**
+       * @brief release_rp_handler is called when an a-associate-rp property is
+       *        received. This handler will confirm the release to the user.
+       * @param[in, out] sc upperlayer service received from
+       * @param[in] r release
+       */
+      void release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
       /**
        * @brief abort_handler is called upon reception of an a-abort pdu
@@ -85,6 +111,8 @@ class dimse_pm
 
       void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
 
+      upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
+
       std::pair<SOP_class_request, std::string> initial_request;
 
       CONN_STATE state;
@@ -94,6 +122,8 @@ class dimse_pm
 
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
       std::vector<std::string> application_contexts;
+
+      int current_message_id;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(response r, int message_id, data::dictionary::dictionary&)>> assemble_response;
