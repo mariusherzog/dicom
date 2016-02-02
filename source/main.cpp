@@ -23,11 +23,11 @@ int main()
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP,
-      [](dimse::dimse_pm* pm, std::unique_ptr<dataset::iod> data) {
+      [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RSP\n";
          pm->release_association();
-         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP};
+         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP, command};
       }}}
    };
 
@@ -35,7 +35,8 @@ int main()
       [](std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Send C_ECHO_RQ\n";
-         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ};
+         dataset::commandset_data cmd;
+         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, cmd};
       }
    };
 

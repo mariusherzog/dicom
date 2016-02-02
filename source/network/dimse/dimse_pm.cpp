@@ -65,7 +65,15 @@ dimse_pm::~dimse_pm()
 void dimse_pm::send_response(response r)
 {
    using namespace upperlayer;
-   auto data = assemble_response[r.get_response_type()](r, current_message_id, dict);
+
+   unsigned short message_id;
+   for (auto e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag == elementfield::tag_type {0x0000, 0x0110}) {
+         get_value_field<VR::US>(e, message_id);
+      }
+   }
+
+   auto data = assemble_response[r.get_response_type()](r, message_id, dict);
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
@@ -199,11 +207,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       }
    }
 
-   current_message_id = message_id;
- /*  auto resp =*/ this->operations.at(SOP_UID.c_str()).first(this, dsg, nullptr);
-
-//   auto data = assemble_response[resp.get_response_type()](resp, message_id, dict);
-//   sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
+   this->operations.at(SOP_UID.c_str()).first(this, dsg, std::move(b), nullptr);
 }
 
 void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
