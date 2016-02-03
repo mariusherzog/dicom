@@ -52,6 +52,12 @@ class dimse_pm
       void send_response(response r);
 
       /**
+       * @brief send_request sends a new request to the peer.
+       * @param r request data
+       */
+      void send_request(response r);
+
+      /**
        * @brief abort_associations aborts the current association by sending an
        *        a_abort package to the peer.
        */
@@ -108,8 +114,19 @@ class dimse_pm
        */
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
-
+      /**
+       * @brief sent_release_rq is set as a handler for the upperlayer when an
+       *        association request is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
       void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
+
+      /**
+       * @brief next_message_id returns a free message id
+       * @return next free message id
+       */
+      int next_message_id();
 
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
 
@@ -122,8 +139,6 @@ class dimse_pm
 
       std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
       std::vector<std::string> application_contexts;
-
-      int current_message_id;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(response r, int message_id, data::dictionary::dictionary&)>> assemble_response;

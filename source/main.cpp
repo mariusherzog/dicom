@@ -26,7 +26,8 @@ int main()
       [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RSP\n";
-         pm->release_association();
+         //pm->release_association();
+         pm->send_request({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, command});
       }}}
    };
 

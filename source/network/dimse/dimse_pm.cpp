@@ -77,6 +77,21 @@ void dimse_pm::send_response(response r)
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
+void dimse_pm::send_request(response r)
+{
+   using namespace upperlayer;
+
+   unsigned short message_id;
+   for (auto e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag == elementfield::tag_type {0x0000, 0x0120}) {
+         get_value_field<VR::US>(e, message_id);
+      }
+   }
+
+   auto data = assemble_response[r.get_response_type()](r, message_id, dict);
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
+}
+
 void dimse_pm::abort_association()
 {
    using namespace upperlayer;
@@ -175,7 +190,7 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
 //         .first(initial_request.first.SOP_class, nullptr);
    auto resp = initial_request.first();
 
-   auto data = assemble_response[resp.get_response_type()](resp, 1, dict);
+   auto data = assemble_response[resp.get_response_type()](resp, next_message_id(), dict);
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
@@ -230,6 +245,12 @@ void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property* r)
    upperlayer::a_associate_rq* rq = dynamic_cast<upperlayer::a_associate_rq*>(r);
    assert(rq != nullptr);
    connection_request = *rq;
+}
+
+int dimse_pm::next_message_id()
+{
+   static int mid = 1;
+   return mid++;
 }
 
 
