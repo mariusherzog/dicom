@@ -259,7 +259,14 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
    using namespace upperlayer;
    commandset_data cresp;
    cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+
+   std::string SOP_uid;
+   for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag.element_id == 0x0000 && e.tag.group_id == 0x0002) {
+         get_value_field<VR::UI>(e, SOP_uid);
+      }
+   }
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, message_id));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
@@ -267,7 +274,6 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
 
    commandset_processor proc{dict.get_dyn_commanddic()};
    auto serdata = proc.serialize(cresp);
-
 
    p_data_tf presp;
    presp.command_set = serdata;
@@ -280,8 +286,15 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int message_id, dicti
 {
    using namespace upperlayer;
    commandset_data cresp;
+
+   std::string SOP_uid;
+   for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag.element_id == 0x0000 && e.tag.group_id == 0x0002) {
+         get_value_field<VR::UI>(e, SOP_uid);
+      }
+   }
    cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
