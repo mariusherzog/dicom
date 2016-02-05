@@ -36,28 +36,6 @@ std::set<DIMSE_SERVICE_GROUP> SOP_class::get_service_groups() const
    return dsgs;
 }
 
-//SOP_class_request::SOP_class_request(std::string SOP_class_UID,
-//                                     DIMSE_SERVICE_GROUP dsg,
-//                                     std::function<response(std::unique_ptr<iod>)> handler):
-//   sop_uid {SOP_class_UID}, dsg {dsg}, handler {handler}
-//{
-//}
-
-//response SOP_class_request::operator()() const
-//{
-//   return handler(nullptr);
-//}
-
-//const char*SOP_class_request::get_SOP_class_UID() const
-//{
-//   return sop_uid.c_str();
-//}
-
-//DIMSE_SERVICE_GROUP SOP_class_request::get_service_group() const
-//{
-//   return dsg;
-//}
-
 
 }
 

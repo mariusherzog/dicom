@@ -41,8 +41,8 @@ class dimse_pm
       };
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
-               std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
-               SOP_class request,
+               initial_request operations,
+//               SOP_class request,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
@@ -131,14 +131,14 @@ class dimse_pm
 
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
 
-      SOP_class request;
+      //SOP_class request;
 
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_rq> connection_request;
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
-      std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
+      initial_request operations;
       std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP

@@ -26,15 +26,13 @@ using namespace data::dictionary;
 using namespace data::dataset;
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
-                   std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_,
-                   SOP_class request,
+                   initial_request operations,
                    dictionary& dict):
    upperlayer_impl(sc),
-   request {request},
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
-   operations {},
+   operations {operations},
    application_contexts {"1.2.840.10008.3.1.1.1"},
    dict(dict)
 {
@@ -52,10 +50,6 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
 
    sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ,
              std::bind(&dimse_pm::sent_release_rq, this, _1, _2));
-
-   for (const auto op_and_ts : operations_) {
-      this->operations.insert({op_and_ts.first.get_SOP_class_UID(), op_and_ts});
-   }
 }
 
 dimse_pm::~dimse_pm()
@@ -133,13 +127,12 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    // accordingly
    for (const auto pc : arq->pres_contexts) {
 
-      /** todo: use initial request for dimse scp to check if abstract snytax is supported*/
-      auto as_pos = operations.end();
-      if ((as_pos = operations.find(pc.abstract_syntax)) != operations.end()) {
+      if (!operations.get_SOP_class(pc.abstract_syntax).empty()) {
 
          bool have_common_ts = false;
-         auto transfer_syntaxes = as_pos->second.second;
-         for (const auto ts : pc.transfer_syntaxes) {
+         auto sop_tuple = operations.get_SOP_class(pc.abstract_syntax)[0];
+         auto transfer_syntaxes = std::get<1>(sop_tuple);
+         for (const auto ts : transfer_syntaxes) {
             if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
                 != transfer_syntaxes.end()) {
                ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
@@ -179,7 +172,7 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
          for (; rqit->id != pc.id; rqit++) ;
          std::string rej_abstract_syntax = rqit->abstract_syntax;
 
-         operations.erase(rej_abstract_syntax);
+//         operations.erase(rej_abstract_syntax);
       }
    }
 
@@ -187,13 +180,16 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
    /** @todo dataset */
 
-
-   for (auto sg : request.get_service_groups()) {
-      commandset_data header;
-      header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
-      header.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id()));
-      request(this, sg, header, nullptr);
-
+   for (auto sop : operations.get_all_SOP()) {
+      if (std::get<2>(sop) == dimse::initial_request::DIMSE_MSG_TYPE::INITIATOR) {
+         auto request = std::get<0>(sop);
+         for (auto sg : request.get_service_groups()) {
+            commandset_data header;
+            header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
+            header.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id()));
+            request(this, sg, header, nullptr);
+         }
+      }
    }
 }
 
@@ -225,7 +221,13 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       }
    }
 
-   this->operations.at(SOP_UID.c_str()).first(this, dsg, std::move(b), nullptr);
+   auto pcontexts = operations.get_SOP_class(SOP_UID);
+   for (auto pc : pcontexts) {
+      if (std::get<2>(pc) == initial_request::DIMSE_MSG_TYPE::RESPONSE) {
+         auto request = std::get<0>(pc);
+         request(this, dsg, std::move(b), nullptr);
+      }
+   }
 }
 
 void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
