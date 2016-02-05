@@ -27,27 +27,36 @@ const char* SOP_class::get_SOP_class_UID() const
    return sop_uid.c_str();
 }
 
-SOP_class_request::SOP_class_request(std::string SOP_class_UID,
-                                     DIMSE_SERVICE_GROUP dsg,
-                                     std::function<response(std::unique_ptr<iod>)> handler):
-   sop_uid {SOP_class_UID}, dsg {dsg}, handler {handler}
+std::set<DIMSE_SERVICE_GROUP> SOP_class::get_service_groups() const
 {
+   std::set<DIMSE_SERVICE_GROUP> dsgs;
+   for (auto kv : operations) {
+      dsgs.insert(kv.first);
+   }
+   return dsgs;
 }
 
-response SOP_class_request::operator()() const
-{
-   return handler(nullptr);
-}
+//SOP_class_request::SOP_class_request(std::string SOP_class_UID,
+//                                     DIMSE_SERVICE_GROUP dsg,
+//                                     std::function<response(std::unique_ptr<iod>)> handler):
+//   sop_uid {SOP_class_UID}, dsg {dsg}, handler {handler}
+//{
+//}
 
-const char*SOP_class_request::get_SOP_class_UID() const
-{
-   return sop_uid.c_str();
-}
+//response SOP_class_request::operator()() const
+//{
+//   return handler(nullptr);
+//}
 
-DIMSE_SERVICE_GROUP SOP_class_request::get_service_group() const
-{
-   return dsg;
-}
+//const char*SOP_class_request::get_SOP_class_UID() const
+//{
+//   return sop_uid.c_str();
+//}
+
+//DIMSE_SERVICE_GROUP SOP_class_request::get_service_group() const
+//{
+//   return dsg;
+//}
 
 
 }

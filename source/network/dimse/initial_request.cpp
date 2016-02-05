@@ -28,7 +28,7 @@ static std::string pad_to_16(std::string s)
 
 initial_request::initial_request(std::string calling_ae,
                                  std::string called_ae,
-                                 std::initializer_list<std::pair<SOP_class_request, std::vector<std::string>>> pcs)
+                                 std::initializer_list<std::pair<SOP_class, std::vector<std::string>>> pcs)
 {
    request.application_context = "1.2.840.10008.3.1.1.1";
    request.called_ae = pad_to_16(called_ae);
@@ -52,7 +52,7 @@ initial_request::initial_request(std::string calling_ae,
    }
 }
 
-SOP_class_request initial_request::get_SOP_class(int pc_id) const
+SOP_class initial_request::get_SOP_class(int pc_id) const
 {
    return supported_sops[(pc_id-1)/2];
 }

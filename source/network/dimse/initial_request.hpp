@@ -27,7 +27,7 @@ class initial_request
    public:
       initial_request(std::string calling_ae,
                       std::string called_ae,
-                      std::initializer_list<std::pair<SOP_class_request, std::vector<std::string>>> pcs);
+                      std::initializer_list<std::pair<SOP_class, std::vector<std::string>>> pcs);
 
       /**
        * @brief get_SOP_class returns the SOP_class_request instance with the
@@ -35,7 +35,7 @@ class initial_request
        * @param pc_id presentation context id
        * @return SOP_class_request instance corresponding to the PC id
        */
-      SOP_class_request get_SOP_class(int pc_id) const;
+      SOP_class get_SOP_class(int pc_id) const;
 
       /**
        * @brief get_initial_request generates a a_associate_rq property
@@ -45,7 +45,7 @@ class initial_request
 
    private:
       upperlayer::a_associate_rq request;
-      std::vector<SOP_class_request> supported_sops;
+      std::vector<SOP_class> supported_sops;
 };
 
 }

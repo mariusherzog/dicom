@@ -42,7 +42,7 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
-               SOP_class_request request,
+               SOP_class request,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
@@ -131,7 +131,7 @@ class dimse_pm
 
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
 
-      SOP_class_request request;
+      SOP_class request;
 
       CONN_STATE state;
 

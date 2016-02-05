@@ -31,25 +31,16 @@ int main()
       }}}
    };
 
-   dimse::SOP_class_request echorq {"1.2.840.10008.1.1", dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
-      [](std::unique_ptr<dataset::iod> data) {
+   dimse::SOP_class echorq {"1.2.840.10008.1.1",
+   { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
+      [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Send C_ECHO_RQ\n";
          dataset::commandset_data cmd;
-         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, cmd};
-      }
+         pm->send_request({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, command});
+//         return dimse::response {dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, cmd};
+      }}}
    };
-
-   dicom::network::upperlayer::a_associate_rq request;
-   request.application_context = "1.2.840.10008.3.1.1.1";
-   request.called_ae = "STORESCP        ";
-   request.calling_ae = "ANY-SCU         ";
-   request.max_message_length = 0xFFFE;
-   dicom::network::upperlayer::a_associate_rq::presentation_context p;
-   p.id = 1;
-   p.abstract_syntax = "1.2.840.10008.1.1";
-   p.transfer_syntaxes = {"1.2.840.10008.1.2"};
-   request.pres_contexts = {p};
 
    dimse::initial_request irq {"STORESCP", "ANY-SCU",
       {

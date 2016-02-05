@@ -52,6 +52,13 @@ class SOP_class
 
       const char* get_SOP_class_UID() const;
 
+      /**
+       * @brief get_service_groups retrieves the service groups defined for this
+       *        instance's SOP.
+       * @return set of service groups associated to the SOP
+       */
+      std::set<data::dataset::DIMSE_SERVICE_GROUP> get_service_groups() const;
+
    private:
       const std::string sop_uid;
       const std::map<data::dataset::DIMSE_SERVICE_GROUP,
@@ -59,31 +66,31 @@ class SOP_class
 
 };
 
-class SOP_class_request
-{
-   public:
-      SOP_class_request(std::string SOP_class_UID,
-                        data::dataset::DIMSE_SERVICE_GROUP dsg,
-                        std::function<response(std::unique_ptr<data::dataset::iod> data)> handler);
+//class SOP_class_request
+//{
+//   public:
+//      SOP_class_request(std::string SOP_class_UID,
+//                        data::dataset::DIMSE_SERVICE_GROUP dsg,
+//                        std::function<response(std::unique_ptr<data::dataset::iod> data)> handler);
 
-      /**
-       * @brief operator() is called by the DIMSE protocol machine to notify the
-       *        performing DIMSE service user.
-       * @param op DSG of the operation
-       * @param data data received by the protocol machine
-       */
-      response operator()() const;
+//      /**
+//       * @brief operator() is called by the DIMSE protocol machine to notify the
+//       *        performing DIMSE service user.
+//       * @param op DSG of the operation
+//       * @param data data received by the protocol machine
+//       */
+//      response operator()() const;
 
-      const char* get_SOP_class_UID() const;
+//      const char* get_SOP_class_UID() const;
 
-      data::dataset::DIMSE_SERVICE_GROUP get_service_group() const;
+//      data::dataset::DIMSE_SERVICE_GROUP get_service_group() const;
 
-   private:
-      const std::string sop_uid;
-      const data::dataset::DIMSE_SERVICE_GROUP dsg;
-      const std::function<response(std::unique_ptr<data::dataset::iod> data)> handler;
+//   private:
+//      const std::string sop_uid;
+//      const data::dataset::DIMSE_SERVICE_GROUP dsg;
+//      const std::function<response(std::unique_ptr<data::dataset::iod> data)> handler;
 
-};
+//};
 
 }
 
