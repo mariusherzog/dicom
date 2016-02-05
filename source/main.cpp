@@ -2,13 +2,13 @@
 #include <chrono>
 
 #include "network/dimse/dimse_pm.hpp"
+#include "network/dimse/initial_request.hpp" // remove
 #include "network/upperlayer/upperlayer.hpp"
 
 #include "data/dataset/dataset_iterator.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary.hpp"
-
 
 
 
@@ -51,14 +51,21 @@ int main()
    p.transfer_syntaxes = {"1.2.840.10008.1.2"};
    request.pres_contexts = {p};
 
+   dimse::initial_request irq {"STORESCP", "ANY-SCU",
+      {
+         {echorq, {"1.2.840.10008.1.2"}}
+      }
+   };
+
 
    try
    {
-      dicom::network::upperlayer::scu sc("192.168.2.103", "11112", request);
+      auto request_property = irq.get_initial_request();
+      dicom::network::upperlayer::scu sc("192.168.2.103", "11112", request_property);
       //dicom::network::upperlayer::scp sc(11112);
       dicom::network::dimse::dimse_pm dpm(sc,
          {{echo, {"1.2.840.10008.1.2"}}},
-         {echorq, "1.2.840.10008.1.2"},
+         irq.get_SOP_class(1),
          dict
       );
       sc.run();

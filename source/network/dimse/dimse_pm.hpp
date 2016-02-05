@@ -12,6 +12,7 @@
 #include <boost/optional.hpp>
 
 #include "response.hpp"
+#include "initial_request.hpp"
 #include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
@@ -41,7 +42,7 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
-               std::pair<SOP_class_request, std::string> request,
+               SOP_class_request request,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
@@ -130,7 +131,7 @@ class dimse_pm
 
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
 
-      std::pair<SOP_class_request, std::string> initial_request;
+      SOP_class_request request;
 
       CONN_STATE state;
 

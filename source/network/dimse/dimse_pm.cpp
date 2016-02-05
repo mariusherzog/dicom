@@ -27,10 +27,10 @@ using namespace data::dataset;
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_,
-                   std::pair<SOP_class_request, std::string> request,
+                   SOP_class_request request,
                    dictionary& dict):
    upperlayer_impl(sc),
-   initial_request {request},
+   request {request},
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
@@ -133,6 +133,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    // accordingly
    for (const auto pc : arq->pres_contexts) {
 
+      /** todo: use initial request for dimse scp to check if abstract snytax is supported*/
       auto as_pos = operations.end();
       if ((as_pos = operations.find(pc.abstract_syntax)) != operations.end()) {
 
@@ -188,7 +189,8 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
 //   auto resp = this->operations.at(initial_request.first.get_SOP_class_UID())
 //         .first(initial_request.first.SOP_class, nullptr);
-   auto resp = initial_request.first();
+//   auto resp = request.first();
+   auto resp = request();
 
    auto data = assemble_response[resp.get_response_type()](resp, next_message_id(), dict);
    sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
@@ -294,7 +296,7 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int message_id, dicti
       }
    }
    cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
