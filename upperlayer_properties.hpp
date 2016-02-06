@@ -49,11 +49,11 @@ std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu);
 struct p_data_tf: property
 {
       p_data_tf() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 
-      unsigned char message_id;
+      unsigned char pres_context_id;
       std::vector<unsigned char> command_set;
       std::vector<unsigned char> data_set;
 };
@@ -68,7 +68,7 @@ struct p_data_tf: property
 struct a_associate_rq: property
 {
       a_associate_rq() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 
@@ -92,7 +92,7 @@ struct a_associate_rq: property
 struct a_associate_ac: property
 {
       a_associate_ac() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 
@@ -124,7 +124,7 @@ struct a_associate_ac: property
 struct a_associate_rj: property
 {
       a_associate_rj() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 
@@ -146,7 +146,7 @@ struct a_associate_rj: property
 struct a_release_rq: property
 {
       a_release_rq() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 };
@@ -154,7 +154,7 @@ struct a_release_rq: property
 struct a_release_rp: property
 {
       a_release_rp() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 };
@@ -162,7 +162,7 @@ struct a_release_rp: property
 struct a_abort: property
 {
       a_abort() = default;
-      void from_pdu(std::vector<unsigned char> pdu);
+      void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 

@@ -132,12 +132,12 @@ int main()
 
    try
    {
-//   upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
-//                               {upperlayer::TYPE::P_DATA_TF, printall},
-//                               {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
-   upperlayer::scu sc("192.168.2.103", "11112", request);
+   upperlayer::scp sc(11112, { {upperlayer::TYPE::A_ASSOCIATE_RQ, request_handler},
+                               {upperlayer::TYPE::P_DATA_TF, printall},
+                               {upperlayer::TYPE::A_RELEASE_RQ, release_rp } });
+//   upperlayer::scu sc("192.168.2.103", "11112", request);
 
-   sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ, conf_handler);
+//   sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ, conf_handler);
    sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
