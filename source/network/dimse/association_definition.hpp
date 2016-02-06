@@ -1,5 +1,5 @@
-#ifndef INITIAL_REQUEST_HPP
-#define INITIAL_REQUEST_HPP
+#ifndef ASSOCIATION_DEFINITION_HPP
+#define ASSOCIATION_DEFINITION_HPP
 
 #include <string>
 #include <vector>
@@ -23,7 +23,7 @@ namespace dimse
  * @brief The initial_request class is used to notify the dimse pm of the
  *        available presentation contexts.
  */
-class initial_request
+class association_definition
 {
    public:
       /**
@@ -51,7 +51,7 @@ class initial_request
             DIMSE_MSG_TYPE msg_type;
       };
 
-      initial_request(std::string calling_ae,
+      association_definition(std::string calling_ae,
                       std::string called_ae,
                       std::initializer_list<presentation_context> pcs,
                       std::string application_context = "1.2.840.10008.3.1.1.1",
@@ -89,4 +89,4 @@ class initial_request
 
 }
 
-#endif // INITIAL_REQUEST_HPP
+#endif // ASSOCIATION_DEFINITION_HPP

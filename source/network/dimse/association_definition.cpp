@@ -1,4 +1,4 @@
-#include "initial_request.hpp"
+#include "association_definition.hpp"
 
 #include <algorithm>
 
@@ -26,7 +26,7 @@ static std::string pad_to_16(std::string s)
 }
 
 
-initial_request::initial_request(std::string calling_ae,
+association_definition::association_definition(std::string calling_ae,
                                  std::string called_ae,
                                  std::initializer_list<presentation_context> pcs,
                                  std::string application_context,
@@ -56,8 +56,8 @@ initial_request::initial_request(std::string calling_ae,
    }
 }
 
-std::vector<initial_request::presentation_context>
-   initial_request::get_SOP_class(std::string abstract_syntax) const
+std::vector<association_definition::presentation_context>
+   association_definition::get_SOP_class(std::string abstract_syntax) const
 {
    std::vector<presentation_context> result_set;
    for (auto pc : supported_sops) {
@@ -69,13 +69,13 @@ std::vector<initial_request::presentation_context>
    return result_set;
 }
 
-std::vector<initial_request::presentation_context>
-   initial_request::get_all_SOP() const
+std::vector<association_definition::presentation_context>
+   association_definition::get_all_SOP() const
 {
    return supported_sops;
 }
 
-upperlayer::a_associate_rq initial_request::get_initial_request() const
+upperlayer::a_associate_rq association_definition::get_initial_request() const
 {
    return request;
 }

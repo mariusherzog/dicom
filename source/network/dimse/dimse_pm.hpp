@@ -12,7 +12,7 @@
 #include <boost/optional.hpp>
 
 #include "response.hpp"
-#include "initial_request.hpp"
+#include "association_definition.hpp"
 #include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
@@ -41,7 +41,7 @@ class dimse_pm
       };
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
-               initial_request operations,
+               association_definition operations,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
@@ -128,7 +128,7 @@ class dimse_pm
       boost::optional<upperlayer::a_associate_rq> connection_request;
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
-      initial_request operations;
+      association_definition operations;
       std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP

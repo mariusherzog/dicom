@@ -3,7 +3,6 @@
 #include <tuple>
 
 #include "network/dimse/dimse_pm.hpp"
-#include "network/dimse/initial_request.hpp" // remove
 #include "network/upperlayer/upperlayer.hpp"
 
 #include "data/dataset/dataset_iterator.hpp"
@@ -35,7 +34,7 @@ int main()
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ,
       [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
-         std::cout << "Received C_ECHO_RSP\n";
+         std::cout << "Received C_ECHO_RQ\n";
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP, command});
       }}}
    };
@@ -49,11 +48,11 @@ int main()
       }}}
    };
 
-   dimse::initial_request irq {"STORESCP", "ANY-SCU",
+   dimse::association_definition ascdef {"STORESCP", "ANY-SCU",
       {
-          {echorq, {"1.2.840.10008.1.2"}, dimse::initial_request::DIMSE_MSG_TYPE::INITIATOR},
-          {echo, {"1.2.840.10008.1.2"}, dimse::initial_request::DIMSE_MSG_TYPE::RESPONSE},
-          {echorsp, {"1.2.840.10008.1.2"}, dimse::initial_request::DIMSE_MSG_TYPE::RESPONSE}
+          {echorq, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
+          {echo, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
+          {echorsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
       }
    };
 
@@ -63,7 +62,7 @@ int main()
       //dicom::network::upperlayer::scu sc("192.168.2.103", "11112", request_property);
       dicom::network::upperlayer::scp sc(11112);
       dicom::network::dimse::dimse_pm dpm(sc,
-         irq,
+         ascdef,
          dict
       );
       sc.run();

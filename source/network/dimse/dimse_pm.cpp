@@ -26,7 +26,7 @@ using namespace data::dictionary;
 using namespace data::dataset;
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
-                   initial_request operations,
+                   association_definition operations,
                    dictionary& dict):
    upperlayer_impl(sc),
    state {CONN_STATE::IDLE},
@@ -195,7 +195,7 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
    /** @todo dataset */
 
    for (auto sop : operations.get_all_SOP()) {
-      if (sop.msg_type == dimse::initial_request::DIMSE_MSG_TYPE::INITIATOR) {
+      if (sop.msg_type == dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR) {
          auto request = sop.sop_class;
          for (auto sg : request.get_service_groups()) {
             commandset_data header;
@@ -237,7 +237,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
 
    auto pcontexts = operations.get_SOP_class(SOP_UID);
    for (auto pc : pcontexts) {
-      if (pc.msg_type == initial_request::DIMSE_MSG_TYPE::RESPONSE) {
+      if (pc.msg_type == association_definition::DIMSE_MSG_TYPE::RESPONSE) {
          auto request = pc.sop_class;
          auto sop_service_groups = request.get_service_groups();
          if (sop_service_groups.find(dsg) != sop_service_groups.end()) {
