@@ -42,7 +42,6 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                initial_request operations,
-//               SOP_class request,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
 
@@ -51,12 +50,6 @@ class dimse_pm
        * @param r response data
        */
       void send_response(response r);
-
-      /**
-       * @brief send_request sends a new request to the peer.
-       * @param r request data
-       */
-      void send_request(response r);
 
       /**
        * @brief abort_associations aborts the current association by sending an

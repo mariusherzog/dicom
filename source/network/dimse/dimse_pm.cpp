@@ -60,29 +60,28 @@ void dimse_pm::send_response(response r)
 {
    using namespace upperlayer;
 
-   unsigned short message_id;
+   std::string sop_uid;
    for (auto e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.tag == elementfield::tag_type {0x0000, 0x0110}) {
-         get_value_field<VR::US>(e, message_id);
+      if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
+         get_value_field<VR::UI>(e, sop_uid);
       }
    }
 
-   auto data = assemble_response[r.get_response_type()](r, message_id, dict);
-   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
-}
+   auto pres_contexts = connection_request.get().pres_contexts;
+   auto pres_context = std::find_if(pres_contexts.begin(), pres_contexts.end(),
+                                    [sop_uid](upperlayer::a_associate_rq::presentation_context p) {
+         return p.abstract_syntax == std::string {sop_uid.c_str()};
+   });
+   /** @todo check if presentation context was rejected */
 
-void dimse_pm::send_request(response r)
-{
-   using namespace upperlayer;
-
-   unsigned short message_id;
-   for (auto e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.tag == elementfield::tag_type {0x0000, 0x0120}) {
-         get_value_field<VR::US>(e, message_id);
-      }
+   if (pres_context == pres_contexts.end()) {
+      std::string errormsg {"No presentation context id found corresponding "
+                            "to abstract syntax / SOP uid: " + sop_uid};
+      BOOST_LOG_TRIVIAL(error) << errormsg;
+      throw std::runtime_error(errormsg);
    }
 
-   auto data = assemble_response[r.get_response_type()](r, message_id, dict);
+   auto data = assemble_response[r.get_response_type()](r, pres_context->id, dict);
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
@@ -259,16 +258,19 @@ int dimse_pm::next_message_id()
 }
 
 
-static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dictionary& dict)
+static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id, dictionary& dict)
 {
    using namespace upperlayer;
    commandset_data cresp;
    cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
 
    std::string SOP_uid;
+   unsigned short message_id;
    for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
       if (e.tag.element_id == 0x0000 && e.tag.group_id == 0x0002) {
          get_value_field<VR::UI>(e, SOP_uid);
+      } else if (e.tag.element_id == 0x0110 && e.tag.group_id == 0x0002) {
+         get_value_field<VR::US>(e, message_id);
       }
    }
    cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
@@ -282,20 +284,23 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
 
    p_data_tf presp;
    presp.command_set = serdata;
-   presp.message_id = message_id;
+   presp.pres_context_id = pres_context_id;
 
    return presp;
 }
 
-static upperlayer::p_data_tf assemble_cecho_rq(response r, int message_id, dictionary& dict)
+static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, dictionary& dict)
 {
    using namespace upperlayer;
    commandset_data cresp;
 
    std::string SOP_uid;
+   unsigned short message_id;
    for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
       if (e.tag.group_id == 0x0000 && e.tag.element_id == 0x0002) {
          get_value_field<VR::UI>(e, SOP_uid);
+      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0002) {
+         get_value_field<VR::US>(e, message_id);
       }
    }
    cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
@@ -310,7 +315,7 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int message_id, dicti
 
    p_data_tf presp;
    presp.command_set = serdata;
-   presp.message_id = message_id;
+   presp.pres_context_id = pres_context_id;
 
    return presp;
 }
