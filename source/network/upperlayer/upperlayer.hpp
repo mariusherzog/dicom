@@ -130,7 +130,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * A write queue is necessary to prevent multiple writes to the socket, which
        * may result in interleaving
        */
-      void queue_for_write(std::unique_ptr<property> p);
+      void queue_for_write(std::unique_ptr<property> p) override;
 
       /**
        * @brief queue_for_write_w_prio queues a property for writing, but moves it
@@ -138,34 +138,34 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] p
        * @see queue_for_write();
        */
-      void queue_for_write_w_prio(std::unique_ptr<property> p);
+      void queue_for_write_w_prio(std::unique_ptr<property> p) override;
 
       /**
        * @brief reset_artim resets the artim timer
        */
-      void reset_artim();
+      void reset_artim() override;
 
       /**
        * @brief stop_artim stops the artim timer
        */
-      void stop_artim();
+      void stop_artim() override;
 
       /**
        * @brief start_artim starts the artim timer
        */
-      void start_artim();
+      void start_artim() override;
 
       /**
        * @brief ignore_next indicates whether a received pdu shall be ignored by
        *        not invoking the respective handler
        */
-      void ignore_next();
+      void ignore_next() override;
 
       /**
        * @brief close_connection aborts all async operations on the io_service object,
        *        making io_service::run() terminate
        */
-      void close_connection();
+      void close_connection() override;
 
 
 
