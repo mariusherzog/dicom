@@ -53,7 +53,7 @@ struct p_data_tf: property
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
 
-      unsigned char message_id;
+      unsigned char pres_context_id;
       std::vector<unsigned char> command_set;
       std::vector<unsigned char> data_set;
 };
