@@ -81,6 +81,19 @@ void dimse_pm::send_response(response r)
       throw std::runtime_error(errormsg);
    }
 
+
+   auto accepted = std::find_if(connection_properties.get().pres_contexts.begin(),
+                connection_properties.get().pres_contexts.end(),
+                [pres_context](upperlayer::a_associate_ac::presentation_context p) {
+         return p.id == pres_context->id;
+   });
+   if (!(accepted->result_ == upperlayer::a_associate_ac::presentation_context::RESULT::ACCEPTANCE)) {
+      std::string errormsg {"Sending data on rejected Presentation Context "
+                            "with id" + std::to_string(accepted->id)};
+      BOOST_LOG_TRIVIAL(error) << errormsg;
+      throw std::runtime_error(errormsg);
+   }
+
    auto data = assemble_response[r.get_response_type()](r, pres_context->id, dict);
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
