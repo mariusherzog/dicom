@@ -75,7 +75,7 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
    while (pdvs_left) {
       std::size_t pdv_len = be_char_to_32b({pdu.begin()+pos, pdu.begin()+pos+4});
       pos += 4;
-      message_id = pdu[pos];
+      pres_context_id = pdu[pos];
 
       unsigned char msg_control = pdu[pos+1];
 
@@ -106,7 +106,7 @@ std::vector<uchar> p_data_tf::make_pdu() const
       if (!command_set.empty()) {
          pdv_len = ui_to_32b_be(command_set.size()+2);
          pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-         pack.push_back(message_id);
+         pack.push_back(pres_context_id);
          if (data_set.empty()) {
             pack.push_back(0x03);
          } else {
@@ -118,7 +118,7 @@ std::vector<uchar> p_data_tf::make_pdu() const
       if (!data_set.empty()) {
          pdv_len = ui_to_32b_be(data_set.size()+2);
          pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-         pack.push_back(message_id);
+         pack.push_back(pres_context_id);
          pack.push_back(0x02);
          pack.insert(pack.end(), data_set.begin(), data_set.end());
       }
