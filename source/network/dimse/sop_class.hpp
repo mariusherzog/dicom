@@ -21,6 +21,8 @@ namespace network
 namespace dimse
 {
 
+class dimse_pm;
+
 /**
  * @brief The SOP_class class represents a Service-Object-Pair and respective
  *        operations to be performed upon them.
@@ -33,10 +35,10 @@ namespace dimse
  */
 class SOP_class
 {
-   public:
+   public:      
       SOP_class(std::string SOP_class_UID,
                 std::map<data::dataset::DIMSE_SERVICE_GROUP,
-                std::function<response(std::unique_ptr<data::dataset::iod> data)>> handler);
+                  std::function<void(dimse_pm* pm, data::dataset::commandset_data cdata, std::unique_ptr<data::dataset::iod> data)>> handler);
 
       /**
        * @brief operator() is called by the DIMSE protocol machine to notify the
@@ -44,15 +46,23 @@ class SOP_class
        * @param op DSG of the operation
        * @param data data received by the protocol machine
        */
-      response operator()(data::dataset::DIMSE_SERVICE_GROUP op,
-                      std::unique_ptr<data::dataset::iod> data) const;
+      void operator()(dimse_pm* pm, data::dataset::DIMSE_SERVICE_GROUP op,
+                          data::dataset::commandset_data cdata,
+                          std::unique_ptr<data::dataset::iod> data) const;
 
       const char* get_SOP_class_UID() const;
+
+      /**
+       * @brief get_service_groups retrieves the service groups defined for this
+       *        instance's SOP.
+       * @return set of service groups associated to the SOP
+       */
+      std::set<data::dataset::DIMSE_SERVICE_GROUP> get_service_groups() const;
 
    private:
       const std::string sop_uid;
       const std::map<data::dataset::DIMSE_SERVICE_GROUP,
-         std::function<response(std::unique_ptr<data::dataset::iod> data)>> operations;
+         std::function<void(dimse_pm* pm, data::dataset::commandset_data cdata, std::unique_ptr<data::dataset::iod> data)>> operations;
 
 };
 

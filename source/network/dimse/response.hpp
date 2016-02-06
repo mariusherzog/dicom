@@ -31,12 +31,14 @@ class response
        * @param prio optional; priority of the response, MEDIUM by default
        */
       response(data::dataset::DIMSE_SERVICE_GROUP dsg,
+               data::dataset::commandset_data last_command,
                boost::optional<data::dataset::iod> data = boost::none,
                data::dataset::STATUS status = data::dataset::STATUS::SUCCESS,
                data::dataset::DIMSE_PRIORITY prio = data::dataset::DIMSE_PRIORITY::MEDIUM
                );
 
       data::dataset::DIMSE_SERVICE_GROUP get_response_type() const;
+      const data::dataset::commandset_data& get_command() const;
       const boost::optional<data::dataset::iod>& get_data() const;
       data::dataset::STATUS get_status() const;
       data::dataset::DIMSE_PRIORITY get_priority() const;
@@ -44,6 +46,7 @@ class response
 
    private:
       const data::dataset::DIMSE_SERVICE_GROUP response_type;
+      const data::dataset::commandset_data last_command;
       const boost::optional<data::dataset::iod> data;
       const data::dataset::STATUS status;
       const data::dataset::DIMSE_PRIORITY prio;

@@ -12,6 +12,7 @@
 #include <boost/optional.hpp>
 
 #include "response.hpp"
+#include "association_definition.hpp"
 #include "sop_class.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
@@ -40,9 +41,26 @@ class dimse_pm
       };
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
-               std::vector<std::pair<SOP_class, std::vector<std::string>>> operations,
+               association_definition operations,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
+
+      /**
+       * @brief send_response sends a response to the peer.
+       * @param r response data
+       */
+      void send_response(response r);
+
+      /**
+       * @brief abort_associations aborts the current association by sending an
+       *        a_abort package to the peer.
+       */
+      void abort_association();
+
+      /**
+       * @brief release_association
+       */
+      void release_association();
 
    private:
       /**
@@ -68,11 +86,20 @@ class dimse_pm
       void data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> d);
 
       /**
-       * @brief release_rq_handler is called when an a-associate-rq property is received. An a-associate-rp is transmitted.
+       * @brief release_rq_handler is called when an a-associate-rq property is
+       *        received. An a-associate-rp is transmitted.
        * @param[in, out] sc upperlayer service received from
        * @param[in] r release
        */
       void release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+
+      /**
+       * @brief release_rp_handler is called when an a-associate-rp property is
+       *        received. This handler will confirm the release to the user.
+       * @param[in, out] sc upperlayer service received from
+       * @param[in] r release
+       */
+      void release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
       /**
        * @brief abort_handler is called upon reception of an a-abort pdu
@@ -81,16 +108,27 @@ class dimse_pm
        */
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
-
+      /**
+       * @brief sent_release_rq is set as a handler for the upperlayer when an
+       *        association request is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
       void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
 
+      /**
+       * @brief next_message_id returns a free message id
+       * @return next free message id
+       */
+      int next_message_id();
 
+      upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_rq> connection_request;
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
-      std::map<std::string, std::pair<SOP_class, std::vector<std::string>>> operations;
+      association_definition operations;
       std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP

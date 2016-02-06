@@ -25,11 +25,14 @@ using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
 
-dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<SOP_class, std::vector<std::string>>> operations_, dictionary& dict):
+dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
+                   association_definition operations,
+                   dictionary& dict):
+   upperlayer_impl(sc),
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
-   operations {},
+   operations {operations},
    application_contexts {"1.2.840.10008.3.1.1.1"},
    dict(dict)
 {
@@ -42,17 +45,69 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc, std::vector<std::pair<S
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
              std::bind(&dimse_pm::release_rq_handler, this, _1, _2));
+   sc.inject(upperlayer::TYPE::A_RELEASE_RP,
+             std::bind(&dimse_pm::release_rp_handler, this, _1, _2));
 
    sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ,
              std::bind(&dimse_pm::sent_release_rq, this, _1, _2));
-
-   for (const auto op_and_ts : operations_) {
-      this->operations.insert({op_and_ts.first.get_SOP_class_UID(), op_and_ts});
-   }
 }
 
 dimse_pm::~dimse_pm()
 {
+}
+
+void dimse_pm::send_response(response r)
+{
+   using namespace upperlayer;
+
+   std::string sop_uid;
+   for (auto e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
+         get_value_field<VR::UI>(e, sop_uid);
+      }
+   }
+
+   auto pres_contexts = connection_request.get().pres_contexts;
+   auto pres_context = std::find_if(pres_contexts.begin(), pres_contexts.end(),
+                                    [sop_uid](upperlayer::a_associate_rq::presentation_context p) {
+         return p.abstract_syntax == std::string {sop_uid.c_str()};
+   });
+   /** @todo check if presentation context was rejected */
+
+   if (pres_context == pres_contexts.end()) {
+      std::string errormsg {"No presentation context id found corresponding "
+                            "to abstract syntax / SOP uid: " + sop_uid};
+      BOOST_LOG_TRIVIAL(error) << errormsg;
+      throw std::runtime_error(errormsg);
+   }
+
+
+   auto accepted = std::find_if(connection_properties.get().pres_contexts.begin(),
+                connection_properties.get().pres_contexts.end(),
+                [pres_context](upperlayer::a_associate_ac::presentation_context p) {
+         return p.id == pres_context->id;
+   });
+   if (!(accepted->result_ == upperlayer::a_associate_ac::presentation_context::RESULT::ACCEPTANCE)) {
+      std::string errormsg {"Sending data on rejected Presentation Context "
+                            "with id" + std::to_string(accepted->id)};
+      BOOST_LOG_TRIVIAL(error) << errormsg;
+      throw std::runtime_error(errormsg);
+   }
+
+   auto data = assemble_response[r.get_response_type()](r, pres_context->id, dict);
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
+}
+
+void dimse_pm::abort_association()
+{
+   using namespace upperlayer;
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_abort {}));
+}
+
+void dimse_pm::release_association()
+{
+   using namespace upperlayer;
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_release_rq {}));
 }
 
 
@@ -84,12 +139,12 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    // accordingly
    for (const auto pc : arq->pres_contexts) {
 
-      auto as_pos = operations.end();
-      if ((as_pos = operations.find(pc.abstract_syntax)) != operations.end()) {
+      if (!operations.get_SOP_class(pc.abstract_syntax).empty()) {
 
          bool have_common_ts = false;
-         auto transfer_syntaxes = as_pos->second.second;
-         for (const auto ts : pc.transfer_syntaxes) {
+         auto pres_cont = operations.get_SOP_class(pc.abstract_syntax)[0];
+         auto transfer_syntaxes = pres_cont.transfer_syntaxes;
+         for (const auto ts : transfer_syntaxes) {
             if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
                 != transfer_syntaxes.end()) {
                ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
@@ -111,6 +166,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
    sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
    connection_properties = ac;
+   connection_request = *arq;
    state = CONN_STATE::CONNECTED;
 }
 
@@ -129,29 +185,40 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
          for (; rqit->id != pc.id; rqit++) ;
          std::string rej_abstract_syntax = rqit->abstract_syntax;
 
-         operations.erase(rej_abstract_syntax);
+//         operations.erase(rej_abstract_syntax);
       }
    }
 
    connection_properties = *asc;
+   state = CONN_STATE::CONNECTED;
+
+   /** @todo dataset */
+
+   for (auto sop : operations.get_all_SOP()) {
+      if (sop.msg_type == dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR) {
+         auto request = sop.sop_class;
+         for (auto sg : request.get_service_groups()) {
+            commandset_data header;
+            header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
+            header.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id()));
+            request(this, sg, header, nullptr);
+         }
+      }
+   }
 }
 
 void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
 {
-   // mock
    using namespace upperlayer;
    using namespace dicom::data::dataset;
    p_data_tf* d = dynamic_cast<p_data_tf*>(da.get());
    assert(d != nullptr); // d == nullptr would imply that this function is bound
                          // to the wrong message type.
 
-   for (const auto& c : d->command_set) {
-      std::cout << c << std::flush;
-   }
 
    commandset_processor proc {dict.get_dyn_commanddic()};
    commandset_data b = proc.deserialize(d->command_set);
-   /** @todo dataset deserialization */
+   /** @todo dataset deserialization (use first accepted ts) */
 
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
@@ -168,10 +235,16 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
       }
    }
 
-   auto resp = this->operations.at(SOP_UID.c_str()).first(dsg, nullptr);
-
-   auto data = assemble_response[resp.get_response_type()](resp, message_id, dict);
-   sc->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
+   auto pcontexts = operations.get_SOP_class(SOP_UID);
+   for (auto pc : pcontexts) {
+      if (pc.msg_type == association_definition::DIMSE_MSG_TYPE::RESPONSE) {
+         auto request = pc.sop_class;
+         auto sop_service_groups = request.get_service_groups();
+         if (sop_service_groups.find(dsg) != sop_service_groups.end()) {
+            request(this, dsg, std::move(b), nullptr);
+         }
+      }
+   }
 }
 
 void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
@@ -179,6 +252,10 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
    state = CONN_STATE::IDLE;
    connection_properties = boost::none;
+}
+
+void dimse_pm::release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
+{
 }
 
 void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r)
@@ -192,13 +269,29 @@ void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property* r)
    connection_request = *rq;
 }
 
+int dimse_pm::next_message_id()
+{
+   static int mid = 1;
+   return mid++;
+}
 
-static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dictionary& dict)
+
+static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id, dictionary& dict)
 {
    using namespace upperlayer;
    commandset_data cresp;
    cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, "1.2.840.10008.1.1"));
+
+   std::string SOP_uid;
+   unsigned short message_id;
+   for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag.element_id == 0x0002 && e.tag.group_id == 0x0000) {
+         get_value_field<VR::UI>(e, SOP_uid);
+      } else if (e.tag.element_id == 0x0110 && e.tag.group_id == 0x0000) {
+         get_value_field<VR::US>(e, message_id);
+      }
+   }
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, message_id));
    cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
@@ -207,10 +300,40 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
    commandset_processor proc{dict.get_dyn_commanddic()};
    auto serdata = proc.serialize(cresp);
 
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+
+   return presp;
+}
+
+static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, dictionary& dict)
+{
+   using namespace upperlayer;
+   commandset_data cresp;
+
+   std::string SOP_uid;
+   unsigned short message_id;
+   for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
+      if (e.tag.group_id == 0x0000 && e.tag.element_id == 0x0002) {
+         get_value_field<VR::UI>(e, SOP_uid);
+      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0002) {
+         get_value_field<VR::US>(e, message_id);
+      }
+   }
+   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
+   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
+   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+
+   commandset_processor proc{dict.get_dyn_commanddic()};
+   auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
    presp.command_set = serdata;
-   presp.message_id = message_id;
+   presp.pres_context_id = pres_context_id;
 
    return presp;
 }
@@ -219,6 +342,7 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int message_id, dict
 std::map<data::dataset::DIMSE_SERVICE_GROUP
    , std::function<upperlayer::p_data_tf(response r, int message_id, dictionary&)>> dimse_pm::assemble_response
 {
+   {DIMSE_SERVICE_GROUP::C_ECHO_RQ, assemble_cecho_rq},
    {DIMSE_SERVICE_GROUP::C_ECHO_RSP, assemble_cecho_rsp}
 };
 
