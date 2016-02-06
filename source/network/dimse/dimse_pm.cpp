@@ -129,8 +129,8 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
       if (!operations.get_SOP_class(pc.abstract_syntax).empty()) {
 
          bool have_common_ts = false;
-         auto sop_tuple = operations.get_SOP_class(pc.abstract_syntax)[0];
-         auto transfer_syntaxes = std::get<1>(sop_tuple);
+         auto pres_cont = operations.get_SOP_class(pc.abstract_syntax)[0];
+         auto transfer_syntaxes = pres_cont.transfer_syntaxes;
          for (const auto ts : transfer_syntaxes) {
             if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
                 != transfer_syntaxes.end()) {
@@ -153,6 +153,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
    sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
    connection_properties = ac;
+   connection_request = *arq;
    state = CONN_STATE::CONNECTED;
 }
 
@@ -176,12 +177,13 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
    }
 
    connection_properties = *asc;
+   state = CONN_STATE::CONNECTED;
 
    /** @todo dataset */
 
    for (auto sop : operations.get_all_SOP()) {
-      if (std::get<2>(sop) == dimse::initial_request::DIMSE_MSG_TYPE::INITIATOR) {
-         auto request = std::get<0>(sop);
+      if (sop.msg_type == dimse::initial_request::DIMSE_MSG_TYPE::INITIATOR) {
+         auto request = sop.sop_class;
          for (auto sg : request.get_service_groups()) {
             commandset_data header;
             header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
@@ -222,9 +224,12 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
 
    auto pcontexts = operations.get_SOP_class(SOP_UID);
    for (auto pc : pcontexts) {
-      if (std::get<2>(pc) == initial_request::DIMSE_MSG_TYPE::RESPONSE) {
-         auto request = std::get<0>(pc);
-         request(this, dsg, std::move(b), nullptr);
+      if (pc.msg_type == initial_request::DIMSE_MSG_TYPE::RESPONSE) {
+         auto request = pc.sop_class;
+         auto sop_service_groups = request.get_service_groups();
+         if (sop_service_groups.find(dsg) != sop_service_groups.end()) {
+            request(this, dsg, std::move(b), nullptr);
+         }
       }
    }
 }
@@ -267,9 +272,9 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
    std::string SOP_uid;
    unsigned short message_id;
    for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.tag.element_id == 0x0000 && e.tag.group_id == 0x0002) {
+      if (e.tag.element_id == 0x0002 && e.tag.group_id == 0x0000) {
          get_value_field<VR::UI>(e, SOP_uid);
-      } else if (e.tag.element_id == 0x0110 && e.tag.group_id == 0x0002) {
+      } else if (e.tag.element_id == 0x0110 && e.tag.group_id == 0x0000) {
          get_value_field<VR::US>(e, message_id);
       }
    }

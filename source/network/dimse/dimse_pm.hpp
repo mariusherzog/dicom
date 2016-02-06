@@ -123,9 +123,6 @@ class dimse_pm
       int next_message_id();
 
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
-
-      //SOP_class request;
-
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_rq> connection_request;

@@ -28,28 +28,25 @@ static std::string pad_to_16(std::string s)
 
 initial_request::initial_request(std::string calling_ae,
                                  std::string called_ae,
-                                 std::initializer_list<std::tuple<
-                                    SOP_class,
-                                    std::vector<std::string>,
-                                    DIMSE_MSG_TYPE
-                                 >> pcs)
+                                 std::initializer_list<presentation_context> pcs,
+                                 std::string application_context,
+                                 int max_message_len)
 {
-   request.application_context = "1.2.840.10008.3.1.1.1";
+   request.application_context = application_context;
    request.called_ae = pad_to_16(called_ae);
    request.calling_ae = pad_to_16(calling_ae);
-   request.max_message_length = 0xFFFE;
+   request.max_message_length = max_message_len;
 
    supported_sops.reserve(255);
    int pc_id = 1;
    for (auto pc : pcs) {
-      if (get_SOP_class(std::get<0>(pc).get_SOP_class_UID()).empty()) {
+      if (get_SOP_class(pc.sop_class.get_SOP_class_UID()).empty()) {
          dicom::network::upperlayer::a_associate_rq::presentation_context p;
          p.id = pc_id;
-         p.abstract_syntax = std::get<0>(pc).get_SOP_class_UID();
-         p.transfer_syntaxes = std::get<1>(pc);
+         p.abstract_syntax = pc.sop_class.get_SOP_class_UID();
+         p.transfer_syntaxes = pc.transfer_syntaxes;
          request.pres_contexts = {p};
          pc_id += 2;
-
 
          if (pc_id > 255) {
             break;
@@ -59,13 +56,12 @@ initial_request::initial_request(std::string calling_ae,
    }
 }
 
-std::vector<std::tuple<SOP_class, std::vector<std::string>, initial_request::DIMSE_MSG_TYPE>>
+std::vector<initial_request::presentation_context>
    initial_request::get_SOP_class(std::string abstract_syntax) const
 {
-//   return supported_sops[(pc_id-1)/2];
-   std::vector<std::tuple<SOP_class, std::vector<std::string>, DIMSE_MSG_TYPE>> result_set;
+   std::vector<presentation_context> result_set;
    for (auto pc : supported_sops) {
-      std::string s = std::get<0>(pc).get_SOP_class_UID();
+      std::string s = pc.sop_class.get_SOP_class_UID();
       if (s == std::string(abstract_syntax.c_str())) {
          result_set.push_back(pc);
       }
@@ -73,7 +69,7 @@ std::vector<std::tuple<SOP_class, std::vector<std::string>, initial_request::DIM
    return result_set;
 }
 
-std::vector<std::tuple<SOP_class, std::vector<std::string>, initial_request::DIMSE_MSG_TYPE>>
+std::vector<initial_request::presentation_context>
    initial_request::get_all_SOP() const
 {
    return supported_sops;
