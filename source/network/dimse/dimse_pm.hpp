@@ -129,7 +129,6 @@ class dimse_pm
       boost::optional<upperlayer::a_associate_ac> connection_properties;
 
       association_definition operations;
-      std::vector<std::string> application_contexts;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(response r, int message_id, data::dictionary::dictionary&)>> assemble_response;

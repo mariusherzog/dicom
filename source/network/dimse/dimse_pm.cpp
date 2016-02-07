@@ -33,7 +33,6 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    connection_request {boost::none},
    connection_properties {boost::none},
    operations {operations},
-   application_contexts {"1.2.840.10008.3.1.1.1"},
    dict(dict)
 {
    using namespace std::placeholders;
@@ -125,8 +124,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
    ac.application_context = arq->application_context;
 
-   if (std::find(application_contexts.begin(), application_contexts.end(), arq->application_context)
-       == application_contexts.end()) {
+   if (operations.get_initial_request().application_context != arq->application_context) {
       a_associate_rj rj;
       rj.reason_ = a_associate_rj::REASON::APPL_CONT_NOT_SUPP;
       sc->queue_for_write(std::unique_ptr<property>(new a_associate_rj {rj}));
