@@ -45,7 +45,7 @@ association_definition::association_definition(std::string calling_ae,
          p.id = pc_id;
          p.abstract_syntax = pc.sop_class.get_SOP_class_UID();
          p.transfer_syntaxes = pc.transfer_syntaxes;
-         request.pres_contexts = {p};
+         request.pres_contexts.push_back(p);
          pc_id += 2;
 
          if (pc_id > 255) {
