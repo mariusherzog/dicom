@@ -219,7 +219,7 @@ struct type_of<VR::OF>
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
-struct type_of<VR::OW> { using type = std::string; };
+struct type_of<VR::OW> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::PN>
 {

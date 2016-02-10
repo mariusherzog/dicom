@@ -59,10 +59,7 @@ static void little_endian_to_float(const std::vector<unsigned char>& data
    static_assert(std::is_floating_point<T>::value, "Integral type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
    out = 0;
-//   unsigned char floatbuf[sizeof(T)];
    unsigned char floatbufout[sizeof(T)];
-//   unsigned char* floatbufin = floatbuf;
-//   floatbufin = reinterpret_cast<unsigned char*>(&out);
    for (int i=0; i<size; ++i) {
       floatbufout[i] |= ((data[begin+i] & 0xff));
    }
@@ -81,6 +78,18 @@ static std::vector<unsigned char> encode_byte_string(std::string str)
    return buf;
 }
 
+static std::vector<unsigned char> encode_byte_array(const std::vector<unsigned char>& strdata)
+{
+   return std::vector<unsigned char> {strdata};
+}
+
+static std::vector<unsigned char> encode_word_array_le(const std::vector<unsigned char>& strdata)
+{
+   // encoding a stream in little endian does not require byte swapping as it
+   // matches the local machine's layout
+   return std::vector<unsigned char> {strdata};
+}
+
 static std::string decode_byte_string(const std::vector<unsigned char>& strdata, int begin, int len)
 {
    std::vector<unsigned char> buf(len);
@@ -88,6 +97,28 @@ static std::string decode_byte_string(const std::vector<unsigned char>& strdata,
       buf[i-begin] = static_cast<unsigned char>(strdata[i]);
    }
    return std::string {buf.begin(), buf.end()};
+}
+
+static std::vector<unsigned char> decode_byte_array(const std::vector<unsigned char>& strdata, int begin, int len)
+{
+   std::vector<unsigned char> str {strdata.begin()+begin, strdata.begin()+begin+len};
+   if (len % 2 != 0) {
+      str.push_back(0x00);
+   }
+   assert(len % 2 == 0);
+   return str;
+}
+
+static std::vector<unsigned char> decode_word_array_le(const std::vector<unsigned char>& strdata, int begin, int len)
+{
+   // decoding a stream in little endian does not require byte swapping as it
+   // matches the local machine's layout
+   std::vector<unsigned char> str {strdata.begin()+begin, strdata.begin()+begin+len};
+   if (len % 2 != 0) {
+      str.push_back(0x00);
+   }
+   assert(len % 2 == 0);
+   return str;
 }
 
 }
@@ -217,7 +248,10 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
          data = convhelper::encode_byte_string(lt);
          break;
       }
-      case VR::OB: { /** @todo */
+      case VR::OB: {
+         std::vector<unsigned char> ob;
+         get_value_field<VR::OB>(attr, ob);
+         data = convhelper::encode_byte_array(ob);
          break;
       }
       case VR::OD: {
@@ -232,7 +266,10 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
          data = convhelper::encode_byte_string(of);
          break;
       }
-      case VR::OW: { /** @todo */
+      case VR::OW: {
+         std::vector<unsigned char> ow;
+         get_value_field<VR::OW>(attr, ow);
+         data = convhelper::encode_word_array_le(ow);
          break;
       }
       case VR::PN: {
@@ -397,7 +434,10 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
          lt = convhelper::decode_byte_string(data, begin, len);
          return make_elementfield<VR::LT>(tag.group_id, tag.element_id, len, lt);
       }
-      case VR::OB: { /** @todo: */
+      case VR::OB: {
+         std::vector<unsigned char> ob;
+         ob = convhelper::decode_byte_array(data, begin, len);
+         return make_elementfield<VR::OB>(tag.group_id, tag.element_id, len, ob);
          break;
       }
       case VR::OD: {
@@ -410,7 +450,10 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
          of = convhelper::decode_byte_string(data, begin, len);
          return make_elementfield<VR::OF>(tag.group_id, tag.element_id, len, of);
       }
-      case VR::OW: { /** @todo: */
+      case VR::OW: {
+         std::vector<unsigned char> ow;
+         ow = convhelper::decode_word_array_le(data, begin, len);
+         return make_elementfield<VR::OW>(tag.group_id, tag.element_id, len, ow);
          break;
       }
       case VR::PN: {
@@ -429,9 +472,7 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
          return make_elementfield<VR::SL>(tag.group_id, tag.element_id, len, val);
       }
       case VR::SQ: {
-//         std::set<elementfield> nestedset;
-//         convhelper::little_endian_to_integral(data, begin, 2, val);
-//         return make_elementfield<VR::SL>(tag.group_id, tag.element_id, len, val);
+
       }
       case VR::SS: {
          short val;
