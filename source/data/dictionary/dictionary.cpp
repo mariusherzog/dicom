@@ -34,6 +34,15 @@ dictionary_entry dictionary::lookup_datadic(unsigned short gid,
    return datadic.lookup(gid, eid);
 }
 
+dictionary_entry dictionary::lookup(unsigned short gid, unsigned short eid)
+{
+   try {
+      return commanddic.lookup(gid, eid);
+   } catch (std::exception&) {
+      return datadic.lookup(gid, eid);
+   }
+}
+
 dictionary_entry dictionary::lookup_commanddic(unsigned short gid,
                                                unsigned short eid)
 {
