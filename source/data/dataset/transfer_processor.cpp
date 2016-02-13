@@ -154,9 +154,29 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary_dy
    }
 }
 
+little_endian_implicit::little_endian_implicit(dictionary::dictionary_dyn& dict):
+   transfer_processor {boost::optional<dictionary::dictionary_dyn&> {dict},
+                       "1.2.840.10008.1.2",
+                       VR_TYPE::IMPLICIT}
+{
 }
+
+std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, attribute::VR vr) const
+{
+   return encode_little_endian(e, vr);
+}
+
+elementfield little_endian_implicit::deserialize_attribute(std::vector<unsigned char>& data,
+                                                           elementfield::tag_type tag,
+                                                           std::size_t len, attribute::VR vr,
+                                                           std::size_t pos) const
+{
+   return decode_little_endian(data, tag, len, vr, pos);
+}
+
 
 }
 
 }
 
+}

@@ -111,7 +111,7 @@ class transfer_processor
  *        set of the DICOM message, which is always encoded in little endian
  *        with implicit vr.
  */
-struct commandset_processor: transfer_processor
+class commandset_processor: public transfer_processor
 {
    public:
       explicit commandset_processor(dictionary::dictionary_dyn& dict);
@@ -122,9 +122,29 @@ struct commandset_processor: transfer_processor
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
-                                                    attribute::elementfield::tag_type tag,
-                                                    std::size_t len, attribute::VR vr,
-                                                    std::size_t pos) const override;
+                            attribute::elementfield::tag_type tag,
+                            std::size_t len, attribute::VR vr,
+                            std::size_t pos) const override;
+};
+
+/**
+ * @brief The little_endian_implicit class implements the little endian implicit
+ *        transfer syntax.
+ */
+class little_endian_implicit: public transfer_processor
+{
+   public:
+      explicit little_endian_implicit(dictionary::dictionary_dyn& dict);
+
+   private:
+      virtual std::vector<unsigned char>
+      serialize_attribute(attribute::elementfield e, attribute::VR vr) const;
+
+      virtual attribute::elementfield
+      deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::elementfield::tag_type tag,
+                            std::size_t len, attribute::VR vr,
+                            std::size_t pos) const;
 };
 
 }
