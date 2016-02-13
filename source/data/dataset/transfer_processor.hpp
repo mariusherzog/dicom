@@ -31,20 +31,34 @@ namespace dataset
  */
 class transfer_processor
 {
+   protected:
+      enum class VR_TYPE
+      {
+         IMPLICIT, EXPLICIT
+      };
+
    public:
-      explicit transfer_processor(dictionary::dictionary_dyn& dict);
+      transfer_processor(boost::optional<dictionary::dictionary_dyn&> dict, std::string tfs, VR_TYPE vrtype);
 
       std::vector<unsigned char> serialize(iod data) const;
-      virtual iod deserialize(std::vector<unsigned char> data) const = 0;
-      virtual std::string get_transfer_syntax() const = 0;
-      virtual ~transfer_processor() = 0;
+      iod deserialize(std::vector<unsigned char> data) const;
+      std::string get_transfer_syntax() const;
+
+      virtual ~transfer_processor();
 
    private:
       virtual std::vector<unsigned char>
-      serialize_data(attribute::elementfield e, attribute::VR vr) const = 0;
+      serialize_attribute(attribute::elementfield e, attribute::VR vr) const = 0;
 
-   protected:
-      dictionary::dictionary_dyn& dict;
+      virtual attribute::elementfield
+      deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::elementfield::tag_type tag,
+                            std::size_t len, attribute::VR vr,
+                            std::size_t pos) const = 0;
+
+      boost::optional<dictionary::dictionary_dyn&> dict;
+      std::string transfer_syntax;
+      VR_TYPE vrtype;
 };
 
 /**
@@ -57,14 +71,15 @@ struct commandset_processor: transfer_processor
    public:
       explicit commandset_processor(dictionary::dictionary_dyn& dict);
 
-//      std::vector<unsigned char> serialize(commandset_data data) const override;
-      commandset_data deserialize(std::vector<unsigned char> data) const override;
-
-      std::string get_transfer_syntax() const override;
-
    private:
       virtual std::vector<unsigned char>
-      serialize_data(attribute::elementfield e, attribute::VR vr) const override;
+      serialize_attribute(attribute::elementfield e, attribute::VR vr) const override;
+
+      virtual attribute::elementfield
+      deserialize_attribute(std::vector<unsigned char>& data,
+                                                    attribute::elementfield::tag_type tag,
+                                                    std::size_t len, attribute::VR vr,
+                                                    std::size_t pos) const override;
 };
 
 }
