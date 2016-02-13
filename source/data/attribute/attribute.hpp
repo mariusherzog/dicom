@@ -428,6 +428,8 @@ bool operator<(const elementfield& lhs, const elementfield& rhs);
 
 bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
 
+bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+
 }
 
 }

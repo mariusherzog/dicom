@@ -63,6 +63,11 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
+bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
+{
+   return !(lhs == rhs);
+}
+
 }
 
 }

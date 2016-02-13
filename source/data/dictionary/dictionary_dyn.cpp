@@ -41,7 +41,7 @@ dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
 }
 
 
-dictionary_entry dictionary_dyn::lookup(unsigned short gid, unsigned short eid)
+dictionary_entry dictionary_dyn::lookup(attribute::elementfield::tag_type tag)
 {
    BOOST_SCOPE_EXIT(&dictionary_file) {
       dictionary_file.clear();
@@ -50,22 +50,22 @@ dictionary_entry dictionary_dyn::lookup(unsigned short gid, unsigned short eid)
                            // dictionary file
 
    if (buffermode == MODE::LAZY) {
-      return lazylookup(gid, eid);
+      return lazylookup(tag);
    } else {
-      return greedylookup(gid, eid);
+      return greedylookup(tag);
    }
 }
 
-bool dictionary_dyn::comparetag(std::string tag, unsigned short gid, unsigned short eid) const
+bool dictionary_dyn::comparetag(std::string strtag, attribute::elementfield::tag_type tag) const
 {
-   std::string gidstr {&tag[1], &tag[7]};
-   std::string eidstr {&tag[8], &tag[14]};
+   std::string gidstr {&strtag[1], &strtag[7]};
+   std::string eidstr {&strtag[8], &strtag[14]};
    unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
    unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
-   return taggid == gid && tageid == eid;
+   return taggid == tag.group_id && tageid == tag.element_id;
 }
 
-dictionary_entry dictionary_dyn::lazylookup(unsigned short gid, unsigned short eid)
+dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type tag)
 {
    const int num_fields = 6;
    std::string line;
@@ -76,9 +76,9 @@ dictionary_entry dictionary_dyn::lazylookup(unsigned short gid, unsigned short e
 
    while (std::getline(dictionary_file, line)) {
       std::stringstream entry {line};
-      std::string tag;
-      std::getline(entry, tag, ';');
-      if (comparetag(tag, gid, eid)) {
+      std::string strtag;
+      std::getline(entry, strtag, ';');
+      if (comparetag(strtag, tag)) {
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
@@ -92,7 +92,7 @@ dictionary_entry dictionary_dyn::lazylookup(unsigned short gid, unsigned short e
    throw std::runtime_error {"Tag not found"};
 }
 
-dictionary_entry dictionary_dyn::greedylookup(unsigned short gid, unsigned short eid)
+dictionary_entry dictionary_dyn::greedylookup(attribute::elementfield::tag_type tag)
 {
    using namespace dicom::data::attribute;
    const int num_fields = 6;
@@ -124,7 +124,7 @@ dictionary_entry dictionary_dyn::greedylookup(unsigned short gid, unsigned short
                , fields[0], fields[1], fields[3], retired});
       }
    }
-   return dict_buffer.at(elementfield::tag_type {gid, eid});
+   return dict_buffer.at(tag);
 }
 
 }

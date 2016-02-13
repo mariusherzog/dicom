@@ -32,7 +32,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
    int nested_sets = 0;
    while (pos < data.size()) {
       elementfield::tag_type tag = decode_tag_little_endian(data, pos);
-      if (tag.group_id == 0xfffe && tag.element_id == 0xe0dd
+      if (tag == elementfield::tag_type {0xfffe, 0xe0dd}
           && nested_sets-- == 0) {
          pos += 8;
          break;
@@ -40,7 +40,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
       pos += 4;
       std::size_t value_len = decode_len_little_endian(data, pos);
       pos += 4;
-      VR repr = dict.lookup(tag.group_id, tag.element_id).vr;
+      VR repr = dict.lookup(tag).vr;
 
       if (repr == VR::SQ) {
          nested_sets++;
@@ -66,7 +66,7 @@ std::vector<unsigned char> commandset_processor::serialize(commandset_data data)
       if (attr.value_rep.is_initialized()) {
          repr = attr.value_rep.get();
       } else {
-         repr = dict.lookup(attr.tag.group_id, attr.tag.element_id).vr;
+         repr = dict.lookup(attr.tag).vr;
       }
       auto data = encode_little_endian(attr, repr);
       auto tag = encode_tag_little_endian(attr.tag);
@@ -89,24 +89,20 @@ commandset_data commandset_processor::deserialize(std::vector<unsigned char> dat
       std::size_t value_len = decode_len_little_endian(data, pos);
       pos += 4;
 
-      if (!(tag.group_id == 0xfffe && tag.element_id == 0xe0dd)) {
-         VR repr = dict.lookup(tag.group_id, tag.element_id).vr;
-
+      if (tag != elementfield::tag_type {0xfffe, 0xe0dd}) {
+         VR repr = dict.lookup(tag).vr;
 
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict) : value_len;
             commandset_data nested = deserialize({data.begin()+pos, data.begin()+pos+value_len});
-            //cmd.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
             cmd[tag] = make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested);
          }
 
          elementfield e = decode_little_endian(data, tag, value_len, repr, pos);
          pos += value_len;
-//         cmd.insert(e);
          cmd[tag] = e;
       } else {
          pos += value_len;
-//         cmd.insert(make_elementfield<VR::NN>(tag.group_id, tag.element_id));
          cmd[tag] = make_elementfield<VR::NN>(tag.group_id, tag.element_id);
       }
    }
