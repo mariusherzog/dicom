@@ -2,6 +2,7 @@
 #define COMMANDSET_DATA_HPP
 
 #include <exception>
+#include <map>
 
 #include "data/attribute/attribute.hpp"
 
@@ -15,7 +16,7 @@ namespace dataset
 {
 
 
-using commandset_data = std::set<attribute::elementfield>;
+using commandset_data = std::map<attribute::elementfield::tag_type, attribute::elementfield>;
 
 
 enum class DIMSE_SERVICE_GROUP : unsigned

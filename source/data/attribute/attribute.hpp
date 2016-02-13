@@ -1,7 +1,7 @@
 #ifndef ATTRIBUTE_HPP
 #define ATTRIBUTE_HPP
 
-#include <set>
+#include <map>
 #include <vector>
 #include <chrono>
 #include <memory>
@@ -239,7 +239,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = std::set<elementfield>; };
+struct type_of<VR::SQ> { using type = std::map<elementfield::tag_type, elementfield>; };
 template<>
 struct type_of<VR::SS>
 {

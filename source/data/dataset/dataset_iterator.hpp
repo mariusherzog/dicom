@@ -26,10 +26,10 @@ namespace dataset
  * the top of the stack, and will pop it off if the sequence is finished to
  * continue to traverse the sequence-containing set.
  */
-class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, attribute::elementfield>
+class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, std::pair<attribute::elementfield::tag_type, attribute::elementfield>>
 {
    public:
-      dataset_iterator(std::set<attribute::elementfield>::iterator it);
+      dataset_iterator(std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator it);
 
       dataset_iterator operator++();
       dataset_iterator operator++(int);
@@ -44,10 +44,10 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, at
       friend bool operator==(const dataset_iterator& lhs, const dataset_iterator& rhs);
 
    private:
-      std::set<attribute::elementfield>::iterator cit;
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator cit;
 
-      std::stack<std::set<attribute::elementfield>> nested_sets;
-      std::stack<std::set<attribute::elementfield>::iterator> parent_its;
+      std::stack<std::map<attribute::elementfield::tag_type, attribute::elementfield>> nested_sets;
+      std::stack<std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator> parent_its;
 
       /**
        * @brief The set_size struct is a pod to hold data of the accumulated
@@ -70,7 +70,8 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, at
        * @param curr set-iterator pointing to the sequence item.
        * @return iterator to the first element of the nested set.
        */
-      std::set<attribute::elementfield>::iterator step_into_nested(std::set<attribute::elementfield>::iterator curr);
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator
+      step_into_nested(std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator curr);
 
       /**
        * @brief step_outof_nested is called when the nested set is completely
@@ -81,7 +82,7 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, at
        * traversed items is larger than the size specified in the respective SQ
        * item.
        */
-      std::set<attribute::elementfield>::iterator step_outof_nested();
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator step_outof_nested();
 
       /**
        * @brief step_backw_into_nested is called if the previous item is a
@@ -89,7 +90,8 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, at
        * @param prev set-iterator pointing to the sequence item.
        * @return iterator to the last element of the nested set.
        */
-      std::set<attribute::elementfield>::iterator step_backw_into_nested(std::set<attribute::elementfield>::iterator prev);
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator
+      step_backw_into_nested(std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator prev);
 
       /**
        * @brief step_backw_outof_nested is called when the nested set is
@@ -97,10 +99,10 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, at
        *        stack.
        * @return iterator to the element before the sequence.
        */
-      std::set<attribute::elementfield>::iterator step_backw_outof_nested();
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator step_backw_outof_nested();
 
-      std::set<attribute::elementfield>::iterator next();
-      std::set<attribute::elementfield>::iterator previous();
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator next();
+      std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator previous();
 
       /**
        * @brief is_in_nested checks if the iterator points into a sequence item.
@@ -120,13 +122,13 @@ bool operator!=(const dataset_iterator& lhs, const dataset_iterator& rhs);
 class dataset_iterator_adaptor
 {
    public:
-      dataset_iterator_adaptor(std::set<attribute::elementfield> ds);
+      dataset_iterator_adaptor(std::map<attribute::elementfield::tag_type, attribute::elementfield> ds);
 
       dataset_iterator begin();
       dataset_iterator end();
 
    private:
-      std::set<attribute::elementfield> dataset;
+      std::map<attribute::elementfield::tag_type, attribute::elementfield> dataset;
 };
 
 }

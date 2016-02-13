@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <initializer_list>
 #include <memory>
 #include <functional>

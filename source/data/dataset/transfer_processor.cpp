@@ -96,15 +96,18 @@ commandset_data commandset_processor::deserialize(std::vector<unsigned char> dat
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict) : value_len;
             commandset_data nested = deserialize({data.begin()+pos, data.begin()+pos+value_len});
-            cmd.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
+            //cmd.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
+            cmd[tag] = make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested);
          }
 
          elementfield e = decode_little_endian(data, tag, value_len, repr, pos);
          pos += value_len;
-         cmd.insert(e);
+//         cmd.insert(e);
+         cmd[tag] = e;
       } else {
          pos += value_len;
-         cmd.insert(make_elementfield<VR::NN>(tag.group_id, tag.element_id));
+//         cmd.insert(make_elementfield<VR::NN>(tag.group_id, tag.element_id));
+         cmd[tag] = make_elementfield<VR::NN>(tag.group_id, tag.element_id);
       }
    }
    return cmd;

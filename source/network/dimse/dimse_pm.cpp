@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <functional>
 #include <iostream>
+#include <numeric>
 
 #include "network/upperlayer/upperlayer_properties.hpp"
 #include "network/upperlayer/upperlayer.hpp"
@@ -197,8 +198,10 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
          auto request = sop.sop_class;
          for (auto sg : request.get_service_groups()) {
             commandset_data header;
-            header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
-            header.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id()));
+//            header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
+//            header.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id()));
+            header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID());
+            header[{0x0000, 0x0120}] = make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id());
             request(this, sg, header, nullptr);
          }
       }
@@ -278,7 +281,6 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
 {
    using namespace upperlayer;
    commandset_data cresp;
-   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
 
    std::string SOP_uid;
    unsigned short message_id;
@@ -289,14 +291,17 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
          get_value_field<VR::US>(e, message_id);
       }
    }
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, message_id));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+
+   cresp[{0x0000, 0x0000}] = make_elementfield<VR::UL>(0x0000, 0x0000, 4, 66);
+   cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid);
+   cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[{0x0000, 0x0120}] = make_elementfield<VR::US>(0x0000, 0x0120, 2, message_id);
+   cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101);
+   cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status());
 
    commandset_processor proc{dict.get_dyn_commanddic()};
    auto serdata = proc.serialize(cresp);
+
 
    p_data_tf presp;
    presp.command_set = serdata;
@@ -315,16 +320,15 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
    for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
       if (e.tag.group_id == 0x0000 && e.tag.element_id == 0x0002) {
          get_value_field<VR::UI>(e, SOP_uid);
-      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0002) {
+      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0000) {
          get_value_field<VR::US>(e, message_id);
       }
    }
-   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+   cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid);
+   cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[{0x0000, 0x0120}] = make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id);
+   cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101);
+   cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status());
 
    commandset_processor proc{dict.get_dyn_commanddic()};
    auto serdata = proc.serialize(cresp);
