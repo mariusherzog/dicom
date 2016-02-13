@@ -75,7 +75,7 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
          VR repr;
          if (vrtype == VR_TYPE::EXPLICIT) {
             std::string vr {data.begin()+pos, data.begin()+pos+2};
-            repr = dictionary::dictionary_entry::vr_of_string.at(vr);
+            repr = dictionary::dictionary_entry::vr_of_string.left.at(vr);
             pos += 2;
          } else {
             repr = dict.get().lookup(tag.group_id, tag.element_id).vr;
@@ -118,6 +118,10 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
       auto tag = encode_tag_little_endian(attr.tag);
       auto len = encode_len_little_endian(attr.value_len);
       stream.insert(stream.end(), tag.begin(), tag.end());
+      if (vrtype == VR_TYPE::EXPLICIT) {
+         auto vr = dictionary::dictionary_entry::vr_of_string.right.at(repr);
+         stream.insert(stream.end(), vr.begin(), vr.begin()+2);
+      }
       stream.insert(stream.end(), len.begin(), len.end());
       stream.insert(stream.end(), data.begin(), data.end());
    }
