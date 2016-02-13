@@ -1,8 +1,12 @@
 #ifndef DICTIONARY_ENTRY_HPP
 #define DICTIONARY_ENTRY_HPP
 
+#define BOOST_BIND_NO_PLACEHOLDERS //prevent placeholder namespace collisions
+
 #include <string>
 #include <map>
+
+#include <boost/bimap.hpp>
 
 #include "data/attribute/attribute.hpp"
 
@@ -30,7 +34,7 @@ class dictionary_entry
       const std::string vm;
       const bool retired;
 
-      const static std::map<std::string, attribute::VR> vr_of_string;
+      const static boost::bimap<std::string, attribute::VR> vr_of_string;
 };
 
 }

@@ -18,7 +18,15 @@ dictionary_entry::dictionary_entry(VR vr, std::string mf, std::string kw
 
 }
 
-const std::map<std::string, VR> dictionary_entry::vr_of_string
+template <typename L, typename R>
+boost::bimap<L, R>
+make_bimap(std::initializer_list<typename boost::bimap<L, R>::value_type> list)
+{
+    return boost::bimap<L, R>(list.begin(), list.end());
+}
+
+const boost::bimap<std::string, VR> dictionary_entry::vr_of_string
+= make_bimap<std::string, VR>(
 {
    {"AE", VR::AE},
    {"AS", VR::AS},
@@ -47,7 +55,8 @@ const std::map<std::string, VR> dictionary_entry::vr_of_string
    {"UN", VR::UN},
    {"US", VR::US},
    {"UT", VR::UT}
-};
+}
+);
 
 }
 
