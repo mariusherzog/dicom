@@ -29,30 +29,42 @@ namespace dataset
  * This abstraction shall be mapped by the DIMSE layer to each transfer syntax
  * it wants to offer for each presentation context.
  */
-struct Itransfer_processor
+class transfer_processor
 {
-      virtual std::vector<unsigned char> serialize(iod data) const = 0;
+   public:
+      explicit transfer_processor(dictionary::dictionary_dyn& dict);
+
+      std::vector<unsigned char> serialize(iod data) const;
       virtual iod deserialize(std::vector<unsigned char> data) const = 0;
       virtual std::string get_transfer_syntax() const = 0;
-      virtual ~Itransfer_processor() = 0;
+      virtual ~transfer_processor() = 0;
+
+   private:
+      virtual std::vector<unsigned char>
+      serialize_data(attribute::elementfield e, attribute::VR vr) const = 0;
+
+   protected:
+      dictionary::dictionary_dyn& dict;
 };
 
 /**
  * @brief The commandset_processor class is used to (de)serialize the command
  *        set of the DICOM message, which is always encoded in little endian
  *        with implicit vr.
- * @todo implementation
  */
-class commandset_processor
+struct commandset_processor: transfer_processor
 {
    public:
       explicit commandset_processor(dictionary::dictionary_dyn& dict);
 
-      std::vector<unsigned char> serialize(commandset_data data) const;
-      commandset_data deserialize(std::vector<unsigned char> data) const;
+//      std::vector<unsigned char> serialize(commandset_data data) const override;
+      commandset_data deserialize(std::vector<unsigned char> data) const override;
+
+      std::string get_transfer_syntax() const override;
 
    private:
-      dictionary::dictionary_dyn& dict;
+      virtual std::vector<unsigned char>
+      serialize_data(attribute::elementfield e, attribute::VR vr) const override;
 };
 
 }

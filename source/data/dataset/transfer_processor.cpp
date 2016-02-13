@@ -14,7 +14,7 @@ namespace dataset
 
 using namespace attribute;
 
-Itransfer_processor::~Itransfer_processor()
+transfer_processor::~transfer_processor()
 {
 }
 
@@ -54,29 +54,10 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
 }
 
 commandset_processor::commandset_processor(dictionary::dictionary_dyn& dict):
-   dict(dict)
+   transfer_processor {dict}
 {
 }
 
-std::vector<unsigned char> commandset_processor::serialize(commandset_data data) const
-{
-   std::vector<unsigned char> stream;
-   for (const auto attr : dataset_iterator_adaptor(data)) {
-      VR repr;
-      if (attr.value_rep.is_initialized()) {
-         repr = attr.value_rep.get();
-      } else {
-         repr = dict.lookup(attr.tag.group_id, attr.tag.element_id).vr;
-      }
-      auto data = encode_little_endian(attr, repr);
-      auto tag = encode_tag_little_endian(attr.tag);
-      auto len = encode_len_little_endian(attr.value_len);
-      stream.insert(stream.end(), tag.begin(), tag.end());
-      stream.insert(stream.end(), len.begin(), len.end());
-      stream.insert(stream.end(), data.begin(), data.end());
-   }
-   return stream;
-}
 
 commandset_data commandset_processor::deserialize(std::vector<unsigned char> data) const
 {
@@ -108,6 +89,43 @@ commandset_data commandset_processor::deserialize(std::vector<unsigned char> dat
       }
    }
    return cmd;
+}
+
+std::string commandset_processor::get_transfer_syntax() const
+{
+   return "";
+}
+
+std::vector<unsigned char> commandset_processor::serialize_data(elementfield e, VR vr) const
+{
+   return encode_little_endian(e, vr);
+}
+
+std::vector<unsigned char> transfer_processor::serialize(iod data) const
+{
+   std::vector<unsigned char> stream;
+   for (const auto attr : dataset_iterator_adaptor(data)) {
+      VR repr;
+      if (attr.value_rep.is_initialized()) {
+         repr = attr.value_rep.get();
+      } else {
+         repr = dict.lookup(attr.tag.group_id, attr.tag.element_id).vr;
+      }
+//      auto data = encode_little_endian(attr, repr);
+      auto data = serialize_data(attr, repr);
+      auto tag = encode_tag_little_endian(attr.tag);
+      auto len = encode_len_little_endian(attr.value_len);
+      stream.insert(stream.end(), tag.begin(), tag.end());
+      stream.insert(stream.end(), len.begin(), len.end());
+      stream.insert(stream.end(), data.begin(), data.end());
+   }
+   return stream;
+}
+
+transfer_processor::transfer_processor(dictionary::dictionary_dyn& dict):
+   dict(dict)
+{
+
 }
 
 }
