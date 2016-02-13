@@ -27,7 +27,7 @@ transfer_processor::~transfer_processor()
  * @param dict dictionary for the tag lookup
  * @return size of the nested set
  */
-static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg, dictionary::dictionary_dyn& dict)
+static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg, dictionary::dictionary& dict)
 {
    std::size_t pos = beg;
    int nested_sets = 0;
@@ -54,8 +54,8 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
    return pos-beg;
 }
 
-commandset_processor::commandset_processor(dictionary::dictionary_dyn& dict):
-   transfer_processor {boost::optional<dictionary::dictionary_dyn&> {dict}, "", VR_TYPE::IMPLICIT}
+commandset_processor::commandset_processor(dictionary::dictionary& dict):
+   transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT}
 {
 }
 
@@ -142,7 +142,7 @@ elementfield commandset_processor::deserialize_attribute(std::vector<unsigned ch
    return decode_little_endian(data, tag, len, vr, pos);
 }
 
-transfer_processor::transfer_processor(boost::optional<dictionary::dictionary_dyn&> dict,
+transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> dict,
                                        std::string tfs, VR_TYPE vrtype):
    dict(dict),
    transfer_syntax {tfs},
@@ -154,10 +154,22 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary_dy
    }
 }
 
-little_endian_implicit::little_endian_implicit(dictionary::dictionary_dyn& dict):
-   transfer_processor {boost::optional<dictionary::dictionary_dyn&> {dict},
+transfer_processor::transfer_processor(const transfer_processor& other):
+   dict(other.dict),
+   transfer_syntax {other.transfer_syntax},
+   vrtype (other.vrtype)
+{
+}
+
+little_endian_implicit::little_endian_implicit(dictionary::dictionary& dict):
+   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
                        "1.2.840.10008.1.2",
                        VR_TYPE::IMPLICIT}
+{
+}
+
+little_endian_implicit::little_endian_implicit(const little_endian_implicit& other):
+   transfer_processor {other}
 {
 }
 

@@ -6,6 +6,7 @@
 
 #include "iod.hpp"
 #include "commandset_data.hpp"
+#include "data/dictionary/dictionary.hpp"
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 
@@ -47,9 +48,12 @@ class transfer_processor
        * @param tfs transfer syntax UID
        * @param vrtype enum instance defining if the ts is [ex|im]plicit VR.
        */
-      transfer_processor(boost::optional<dictionary::dictionary_dyn&> dict, std::string tfs, VR_TYPE vrtype);
+      transfer_processor(boost::optional<dictionary::dictionary&> dict, std::string tfs, VR_TYPE vrtype);
+
+      transfer_processor(const transfer_processor& other);
 
    public:
+
       /**
        * @brief serialize is used to serialize an iod / command set
        * @param data structured dataset to be serialized
@@ -101,7 +105,7 @@ class transfer_processor
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
 
-      boost::optional<dictionary::dictionary_dyn&> dict;
+      boost::optional<dictionary::dictionary&> dict;
       std::string transfer_syntax;
       VR_TYPE vrtype;
 };
@@ -114,7 +118,7 @@ class transfer_processor
 class commandset_processor: public transfer_processor
 {
    public:
-      explicit commandset_processor(dictionary::dictionary_dyn& dict);
+      explicit commandset_processor(dictionary::dictionary& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -134,7 +138,9 @@ class commandset_processor: public transfer_processor
 class little_endian_implicit: public transfer_processor
 {
    public:
-      explicit little_endian_implicit(dictionary::dictionary_dyn& dict);
+      explicit little_endian_implicit(dictionary::dictionary& dict);
+
+      little_endian_implicit(const little_endian_implicit& other);
 
    private:
       virtual std::vector<unsigned char>
