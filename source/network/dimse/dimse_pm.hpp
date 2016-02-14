@@ -19,6 +19,8 @@
 #include "data/dataset/transfer_processor.hpp"
 #include "data/dictionary/dictionary.hpp"
 
+#include "util/channel_sev_logger.hpp"
+
 
 namespace dicom
 {
@@ -145,6 +147,8 @@ class dimse_pm
       data::dictionary::dictionary& dict;
 
       std::map<std::string, std::unique_ptr<data::dataset::transfer_processor>> transfer_processors;
+
+      util::log::channel_sev_logger logger;
 };
 
 

@@ -34,7 +34,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    connection_properties {boost::none},
    operations {operations},
    dict(dict),
-   transfer_processors {  }
+   transfer_processors {  },
+   logger {"dimse pm"}
 {
    using namespace std::placeholders;
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_AC,
@@ -62,6 +63,8 @@ dimse_pm::~dimse_pm()
 void dimse_pm::send_response(response r)
 {
    using namespace upperlayer;
+   using namespace util::log;
+   BOOST_LOG_SEV(logger, info) << "User requested response";
 
    std::string sop_uid;
    for (auto e : dataset_iterator_adaptor(r.get_command())) {
@@ -80,7 +83,7 @@ void dimse_pm::send_response(response r)
    if (pres_context == pres_contexts.end()) {
       std::string errormsg {"No presentation context id found corresponding "
                             "to abstract syntax / SOP uid: " + sop_uid};
-      BOOST_LOG_TRIVIAL(error) << errormsg;
+      BOOST_LOG_SEV(logger, warning) << errormsg;
       throw std::runtime_error(errormsg);
    }
 
@@ -93,7 +96,7 @@ void dimse_pm::send_response(response r)
    if (!(accepted->result_ == upperlayer::a_associate_ac::presentation_context::RESULT::ACCEPTANCE)) {
       std::string errormsg {"Sending data on rejected Presentation Context "
                             "with id" + std::to_string(accepted->id)};
-      BOOST_LOG_TRIVIAL(error) << errormsg;
+      BOOST_LOG_SEV(logger, warning) << errormsg;
       throw std::runtime_error(errormsg);
    }
 
@@ -104,12 +107,16 @@ void dimse_pm::send_response(response r)
 void dimse_pm::abort_association()
 {
    using namespace upperlayer;
+   using namespace util::log;
+   BOOST_LOG_SEV(logger, info) << "User requested association abortion";
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_abort {}));
 }
 
 void dimse_pm::release_association()
 {
    using namespace upperlayer;
+   using namespace util::log;
+   BOOST_LOG_SEV(logger, info) << "User requested association release";
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_release_rq {}));
 }
 
