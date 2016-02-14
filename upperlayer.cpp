@@ -51,14 +51,15 @@ Iupperlayer_comm_ops::~Iupperlayer_comm_ops()
 {
 }
 
-
+using namespace dicom::util::log;
 
 
 
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
    received_pdu {boost::none},
-   handlers {}
+   handlers {},
+   logger {"upperlayer"}
 {
    for (const auto p : l) {
       handlers[p.first] = p.second;
@@ -267,7 +268,7 @@ void scx::run()
 void scx::artim_expired(const boost::system::error_code& error)
 {
    if (error != boost::asio::error::operation_aborted) {
-      BOOST_LOG_TRIVIAL(warning) << "ARTIM timer expired";
+      BOOST_LOG_SEV(this->logger, info) << "ARTIM timer expired";
       statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
    }
 }
