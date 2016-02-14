@@ -428,7 +428,7 @@ std::ostream& a_associate_ac::print(std::ostream& os) const
       << "Proposed presentation contexts:\n";
    for (const auto pc : pres_contexts) {
       os << "\tContext id: " << static_cast<unsigned>(pc.id);
-      os << " Result: " << static_cast<unsigned>(pc.result_) << "\n";
+      os << "\tResult: " << pc.result_ << "\n";
       os << "\t\tTransfer Syntax: " << pc.transfer_syntax << "\n";
    }
    return os;
@@ -458,8 +458,9 @@ TYPE a_associate_rj::type() const
 
 std::ostream& a_associate_rj::print(std::ostream& os) const
 {
-   os << "Source: " << static_cast<unsigned>(source_) << "\n"
-      << "Reason: " << static_cast<unsigned>(reason_) << "\n";
+   auto sr = std::pair<SOURCE, REASON> {source_, reason_};
+   os << "Source: " << source_ << "\n"
+      << "Reason: " << sr << "\n";
    return os;
 }
 
@@ -585,6 +586,98 @@ std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
 std::ostream& operator<<(std::ostream& os, const property& p)
 {
    return p.print(os);
+}
+
+std::ostream& operator<<(std::ostream& os, TYPE t)
+{
+   switch (t) {
+      case TYPE::A_ABORT:
+         return os << "a_abort";
+      case TYPE::A_ASSOCIATE_AC:
+         return os << "a_associate_ac";
+      case TYPE::A_ASSOCIATE_RQ:
+         return os << "a_associate_rq";
+      case TYPE::A_ASSOCIATE_RJ:
+         return os << "a_associate_rj";
+      case TYPE::A_RELEASE_RQ:
+         return os << "a_release_rq";
+      case TYPE::A_RELEASE_RP:
+         return os << "a_release_rp";
+      case TYPE::P_DATA_TF:
+         return os << "p_data_tf";
+      default:
+         assert(false);
+   }
+}
+
+std::ostream& operator<<(std::ostream& os, a_associate_ac::presentation_context::RESULT r)
+{
+   using pc = a_associate_ac::presentation_context;
+   switch (r) {
+      case pc::RESULT::ACCEPTANCE:
+         return os << "Acceptance";
+      case pc::RESULT::ABSTR_CONT_NOT_SUPP:
+         return os << "Abstract Syntax not supported";
+      case pc::RESULT::PROV_REJEC_NO_REASON:
+         return os << "Provider rejection, no reason";
+      case pc::RESULT::TRANSF_SYNT_NOT_SUPP:
+         return os << "Transfer Syntax not supported";
+      case pc::RESULT::USER_REJEC:
+         return os << "User rejection";
+      default:
+         assert(false);
+   }
+}
+
+std::ostream& operator<<(std::ostream& os, a_associate_rj::SOURCE s)
+{
+   using rj = a_associate_rj;
+   switch (s) {
+      case rj::SOURCE::UL_SERVICE_USER:
+         return os << "DICOM UL service-user";
+      case rj::SOURCE::UL_SERVICE_PROV_ACSE:
+         return os << "DICOM UL service-provider (ACSE related function)";
+      case rj::SOURCE::UL_SERVICE_PROV_PRESREL:
+         return os << "DICOM UL service-provider (Presentation related function)";
+      default:
+         assert(false);
+   }
+}
+
+std::ostream& operator<<(std::ostream& os, std::pair<a_associate_rj::SOURCE, a_associate_rj::REASON> sr)
+{
+   using rj = a_associate_rj;
+   if (sr.first == rj::SOURCE::UL_SERVICE_USER) {
+      if (static_cast<int>(sr.second) == 1) {
+         return os << "no-reason-given";
+      } else if (static_cast<int>(sr.second) == 2) {
+         return os << "application-context-name-not-supported";
+      } else if (static_cast<int>(sr.second) == 3) {
+         return os << "calling-AE-title-not-recognized";
+      } else if (static_cast<int>(sr.second) == 7) {
+         return os << "called-AE-title-not-recognized";
+      } else {
+         return os << ""; //reserved
+      }
+   } else if (sr.first == rj::SOURCE::UL_SERVICE_PROV_ACSE) {
+      if (static_cast<int>(sr.second) == 1) {
+         return os << "no-reason-given";
+      } else if (static_cast<int>(sr.second) == 2) {
+         return os << "protocol-version-not-supported";
+      } else {
+         return os << "";
+      }
+   } else if (sr.first == rj::SOURCE::UL_SERVICE_PROV_PRESREL) {
+      if (static_cast<int>(sr.second) == 1) {
+         return os << "temporary-congestion";
+      } else if (static_cast<int>(sr.second) == 2) {
+         return os << "local-limit-exceeded";
+      } else {
+         return os << "";
+      }
+   } else {
+      assert(false);
+   }
 }
 
 }

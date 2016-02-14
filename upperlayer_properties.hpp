@@ -22,6 +22,8 @@ enum class TYPE : unsigned char
 
 TYPE get_type(const std::vector<unsigned char>& pdu);
 
+std::ostream& operator<<(std::ostream& out, TYPE t);
+
 
 /**
  * @brief The property struct or rather its subclasses represent the serial pdu data
@@ -126,6 +128,8 @@ struct a_associate_ac: property
       std::size_t max_message_length;
 };
 
+std::ostream& operator<<(std::ostream& os, a_associate_ac::presentation_context::RESULT r);
+
 struct a_associate_rj: property
 {
       a_associate_rj() = default;
@@ -148,6 +152,10 @@ struct a_associate_rj: property
       REASON reason_;
       SOURCE source_;
 };
+
+std::ostream& operator<<(std::ostream& os, a_associate_rj::SOURCE s);
+std::ostream& operator<<(std::ostream& os,
+                         std::pair<a_associate_rj::SOURCE, a_associate_rj::REASON> sr);
 
 struct a_release_rq: property
 {

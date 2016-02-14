@@ -119,10 +119,6 @@ void conf_handler(upperlayer::scx* sc, upperlayer::property* rq)
 int main()
 {
    dicom::util::log::init_log();
-   dicom::util::log::channel_sev_logger logger {"main"};
-   BOOST_LOG_SEV(logger, dicom::util::log::info) << "hoi";
-   dicom::util::log::channel_sev_logger logger2 {"unknwn"};
-   BOOST_LOG_SEV(logger2, dicom::util::log::info) << "hoi";
 
    upperlayer::a_associate_rq request;
    request.application_context = "1.2.840.10008.3.1.1.1";

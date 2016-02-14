@@ -58,8 +58,8 @@ using namespace dicom::util::log;
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
    received_pdu {boost::none},
-   handlers {},
-   logger {"upperlayer"}
+   logger {"upperlayer"},
+   handlers {}
 {
    for (const auto p : l) {
       handlers[p.first] = p.second;
@@ -111,6 +111,8 @@ void scx::send(property* p)
             if (error) {
                throw boost::system::system_error(error);
             }
+            BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
+            BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
             if (handlers_conf.find(ptype) != handlers_conf.end()) {
                handlers_conf[ptype](this, p);
             }
@@ -156,7 +158,7 @@ void scx::do_read()
                received_pdu = compl_data.get();
 
                auto ptype = get_type(*compl_data);
-               BOOST_LOG_SEV(logger, info) << "Received property of type " << static_cast<int>(ptype);
+               BOOST_LOG_SEV(logger, info) << "Received property of type " << ptype;
                statemachine::EVENT e;
                switch (ptype) {
                   case TYPE::A_ABORT:
@@ -189,7 +191,7 @@ void scx::do_read()
                // call appropriate handler
                if (received_pdu != boost::none) {
                   auto property = make_property(*compl_data);
-                  BOOST_LOG_SEV(logger, debug) << "\n" << *property;
+                  BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *property;
                   handlers[ptype](this, std::move(property));
                }
                received_pdu = boost::none;
@@ -342,6 +344,8 @@ scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initialize
       [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
          if (!error) {
             auto type = TYPE::A_ASSOCIATE_RQ;
+            BOOST_LOG_SEV(logger, info) << "Sent property of type " << type;
+            BOOST_LOG_SEV(logger, debug) << "Property info: \n" << rq;
             if (handlers_conf.find(type) != handlers_conf.end()) {
                handlers_conf[type](this, &rq);
             }

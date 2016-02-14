@@ -13,19 +13,19 @@ namespace log
 
 void init_log()
 {
-    logging::add_console_log
-    (
-        std::cout,
-        keywords::format =
-        (
+   logging::add_common_attributes();
+   logging::add_console_log
+         (
+            std::cout,
+            keywords::format =
+         (
             expr::stream
-                << "[" << expr::attr<std::string>("Channel")
-                << "] [" << logging::trivial::severity
-                << "] " << expr::smessage
-        )
-    );
-
-    logging::add_common_attributes();
+            << "[" << expr::attr<std::string>("Channel")
+            << "] [" << logging::trivial::severity
+            << "] [" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
+            << "] " << expr::smessage
+            )
+         );
 }
 
 

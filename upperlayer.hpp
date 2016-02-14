@@ -184,6 +184,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 
       std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
 
+      dicom::util::log::channel_sev_logger logger;
 
    private:
       /**
@@ -222,8 +223,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
-
-      dicom::util::log::channel_sev_logger logger;
 };
 
 /**
