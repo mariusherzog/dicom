@@ -220,11 +220,13 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
 void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
 {
    using namespace upperlayer;
+   using namespace dicom::util::log;
    using namespace dicom::data::dataset;
    p_data_tf* d = dynamic_cast<p_data_tf*>(da.get());
    assert(d != nullptr); // d == nullptr would imply that this function is bound
                          // to the wrong message type.
 
+   BOOST_LOG_SEV(logger, info) << "Received response from remote";
 
    commandset_processor proc {dict};
    commandset_data b = proc.deserialize(d->command_set);
@@ -245,10 +247,14 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
          short unsigned dsgint;
          get_value_field<VR::US>(e, dsgint);
          dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
-      } else if (e.tag == elementfield::tag_type {0x0000, 0x0110}) {
+      } else if (e.tag == elementfield::tag_type {0x0000, 0x0120}) {
          get_value_field<VR::US>(e, message_id);
       }
    }
+
+   BOOST_LOG_SEV(logger, debug) << "SOP UID: \t" << SOP_UID << "\n"
+                                << "Service Group: \t" << dsg << "\n"
+                                << "Message ID: \t" << std::to_string(message_id) << "\n";
 
    auto pcontexts = operations.get_SOP_class(SOP_UID);
    for (auto pc : pcontexts) {
@@ -353,7 +359,7 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
    for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
       if (e.tag.group_id == 0x0000 && e.tag.element_id == 0x0002) {
          get_value_field<VR::UI>(e, SOP_uid);
-      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0002) {
+      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0000) {
          get_value_field<VR::US>(e, message_id);
       }
    }

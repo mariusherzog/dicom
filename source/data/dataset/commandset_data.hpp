@@ -70,7 +70,7 @@ inline std::ostream& operator<<(std::ostream& os, DIMSE_SERVICE_GROUP dsg)
         case DIMSE_SERVICE_GROUP::C_ECHO_RQ:
             return os << "C-ECHO-RQ";
         case DIMSE_SERVICE_GROUP::C_ECHO_RSP:
-            return os << "C-ECHO-RQ";
+            return os << "C-ECHO-RSP";
 
         case DIMSE_SERVICE_GROUP::N_EVENT_REPORT_RQ:
             return os << "N-EVENT-REPORT-RQ";
