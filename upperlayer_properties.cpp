@@ -132,6 +132,12 @@ TYPE p_data_tf::type() const
    return TYPE::P_DATA_TF;
 }
 
+std::ostream& p_data_tf::print(std::ostream& os) const
+{
+   return os << "Presentation Context ID: "
+             << std::to_string(pres_context_id) << "\n";
+}
+
 
 /**
  * @brief This parse function "deserializes" an a-associate-rq
@@ -286,6 +292,22 @@ TYPE a_associate_rq::type() const
    return TYPE::A_ASSOCIATE_RQ;
 }
 
+std::ostream& a_associate_rq::print(std::ostream& os) const
+{
+   os << "Local Application Entity:\t" << called_ae << "\n"
+      << "Remote Application Entity:\t" << calling_ae << "\n"
+      << "Application Context:\t" << application_context << "\n"
+      << "Proposed presentation contexts:\n";
+   for (const auto pc : pres_contexts) {
+      os << "\tContext id: " << static_cast<unsigned>(pc.id) << "\n";
+      os << "\tAbstract Syntax: " << pc.abstract_syntax << "\n";
+      for (const auto ts : pc.transfer_syntaxes) {
+         os << "\t\tTransfer Syntax: " << ts << "\n";
+      }
+   }
+   return os;
+}
+
 
 void a_associate_ac::from_pdu(std::vector<unsigned char> pdu)
 {
@@ -398,6 +420,20 @@ TYPE a_associate_ac::type() const
    return TYPE::A_ASSOCIATE_AC;
 }
 
+std::ostream& a_associate_ac::print(std::ostream& os) const
+{
+   os << "Local Application Entity:\t" << called_ae << "\n"
+      << "Remote Application Entity:\t" << calling_ae << "\n"
+      << "Application Context:\t" << application_context << "\n"
+      << "Proposed presentation contexts:\n";
+   for (const auto pc : pres_contexts) {
+      os << "\tContext id: " << static_cast<unsigned>(pc.id);
+      os << " Result: " << static_cast<unsigned>(pc.result_) << "\n";
+      os << "\t\tTransfer Syntax: " << pc.transfer_syntax << "\n";
+   }
+   return os;
+}
+
 
 void a_associate_rj::from_pdu(std::vector<uchar> pdu)
 {
@@ -420,6 +456,13 @@ TYPE a_associate_rj::type() const
    return TYPE::A_ASSOCIATE_RJ;
 }
 
+std::ostream& a_associate_rj::print(std::ostream& os) const
+{
+   os << "Source: " << static_cast<unsigned>(source_) << "\n"
+      << "Reason: " << static_cast<unsigned>(reason_) << "\n";
+   return os;
+}
+
 
 void a_release_rq::from_pdu(std::vector<unsigned char>)
 {
@@ -438,6 +481,11 @@ TYPE a_release_rq::type() const
    return TYPE::A_RELEASE_RQ;
 }
 
+std::ostream& a_release_rq::print(std::ostream& os) const
+{
+   return os;
+}
+
 
 void a_release_rp::from_pdu(std::vector<unsigned char>)
 {
@@ -454,6 +502,11 @@ std::vector<uchar> a_release_rp::make_pdu() const
 TYPE a_release_rp::type() const
 {
    return TYPE::A_RELEASE_RP;
+}
+
+std::ostream&a_release_rp::print(std::ostream& os) const
+{
+   return os;
 }
 
 
@@ -478,21 +531,10 @@ TYPE a_abort::type() const
    return TYPE::A_ABORT;
 }
 
-
-
-std::ostream& operator<<(std::ostream& os, a_associate_rq t)
+std::ostream& a_abort::print(std::ostream& os) const
 {
-   os << "Called Application Entity:\t" << t.called_ae << "\n"
-      << "Calling Application Entity:\t" << t.calling_ae << "\n"
-      << "Application Context:\t" << t.application_context << "\n"
-      << "Proposed presentation contexts:\n";
-   for (const auto pc : t.pres_contexts) {
-      os << "\tContext id: " << static_cast<unsigned>(pc.id) << "\n";
-      os << "\tAbstract Syntax: " << pc.abstract_syntax << "\n";
-      for (const auto ts : pc.transfer_syntaxes) {
-         os << "\t\tPresentation Context: " << ts << "\n";
-      }
-   }
+   os << "Source: " << static_cast<unsigned>(source_) << "\n"
+      << "Reason: " << static_cast<unsigned>(reason_) << "\n";
    return os;
 }
 
@@ -538,6 +580,11 @@ std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
       }
    }
    return nullptr;
+}
+
+std::ostream& operator<<(std::ostream& os, const property& p)
+{
+   return p.print(os);
 }
 
 }

@@ -156,6 +156,7 @@ void scx::do_read()
                received_pdu = compl_data.get();
 
                auto ptype = get_type(*compl_data);
+               BOOST_LOG_SEV(logger, info) << "Received property of type " << static_cast<int>(ptype);
                statemachine::EVENT e;
                switch (ptype) {
                   case TYPE::A_ABORT:
@@ -187,7 +188,9 @@ void scx::do_read()
 
                // call appropriate handler
                if (received_pdu != boost::none) {
-                  handlers[ptype](this, make_property(*compl_data));
+                  auto property = make_property(*compl_data);
+                  BOOST_LOG_SEV(logger, debug) << "\n" << *property;
+                  handlers[ptype](this, std::move(property));
                }
                received_pdu = boost::none;
 
