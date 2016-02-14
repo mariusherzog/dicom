@@ -18,6 +18,8 @@
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
 
+#include "util/channel_sev_logger.hpp"
+
 
 
 /**
@@ -182,6 +184,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 
       std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
 
+      dicom::util::log::channel_sev_logger logger;
 
    private:
       /**

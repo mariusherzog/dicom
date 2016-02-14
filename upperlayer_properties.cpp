@@ -132,6 +132,12 @@ TYPE p_data_tf::type() const
    return TYPE::P_DATA_TF;
 }
 
+std::ostream& p_data_tf::print(std::ostream& os) const
+{
+   return os << "Presentation Context ID: "
+             << std::to_string(pres_context_id) << "\n";
+}
+
 
 /**
  * @brief This parse function "deserializes" an a-associate-rq
@@ -286,6 +292,22 @@ TYPE a_associate_rq::type() const
    return TYPE::A_ASSOCIATE_RQ;
 }
 
+std::ostream& a_associate_rq::print(std::ostream& os) const
+{
+   os << "Local Application Entity:\t" << called_ae << "\n"
+      << "Remote Application Entity:\t" << calling_ae << "\n"
+      << "Application Context:\t" << application_context << "\n"
+      << "Proposed presentation contexts:\n";
+   for (const auto pc : pres_contexts) {
+      os << "\tContext id: " << static_cast<unsigned>(pc.id) << "\n";
+      os << "\tAbstract Syntax: " << pc.abstract_syntax << "\n";
+      for (const auto ts : pc.transfer_syntaxes) {
+         os << "\t\tTransfer Syntax: " << ts << "\n";
+      }
+   }
+   return os;
+}
+
 
 void a_associate_ac::from_pdu(std::vector<unsigned char> pdu)
 {
@@ -398,6 +420,20 @@ TYPE a_associate_ac::type() const
    return TYPE::A_ASSOCIATE_AC;
 }
 
+std::ostream& a_associate_ac::print(std::ostream& os) const
+{
+   os << "Local Application Entity:\t" << called_ae << "\n"
+      << "Remote Application Entity:\t" << calling_ae << "\n"
+      << "Application Context:\t" << application_context << "\n"
+      << "Proposed presentation contexts:\n";
+   for (const auto pc : pres_contexts) {
+      os << "\tContext id: " << static_cast<unsigned>(pc.id);
+      os << "\tResult: " << pc.result_ << "\n";
+      os << "\t\tTransfer Syntax: " << pc.transfer_syntax << "\n";
+   }
+   return os;
+}
+
 
 void a_associate_rj::from_pdu(std::vector<uchar> pdu)
 {
@@ -420,6 +456,14 @@ TYPE a_associate_rj::type() const
    return TYPE::A_ASSOCIATE_RJ;
 }
 
+std::ostream& a_associate_rj::print(std::ostream& os) const
+{
+   auto sr = std::pair<SOURCE, REASON> {source_, reason_};
+   os << "Source: " << source_ << "\n"
+      << "Reason: " << sr << "\n";
+   return os;
+}
+
 
 void a_release_rq::from_pdu(std::vector<unsigned char>)
 {
@@ -438,6 +482,11 @@ TYPE a_release_rq::type() const
    return TYPE::A_RELEASE_RQ;
 }
 
+std::ostream& a_release_rq::print(std::ostream& os) const
+{
+   return os;
+}
+
 
 void a_release_rp::from_pdu(std::vector<unsigned char>)
 {
@@ -454,6 +503,11 @@ std::vector<uchar> a_release_rp::make_pdu() const
 TYPE a_release_rp::type() const
 {
    return TYPE::A_RELEASE_RP;
+}
+
+std::ostream&a_release_rp::print(std::ostream& os) const
+{
+   return os;
 }
 
 
@@ -478,21 +532,10 @@ TYPE a_abort::type() const
    return TYPE::A_ABORT;
 }
 
-
-
-std::ostream& operator<<(std::ostream& os, a_associate_rq t)
+std::ostream& a_abort::print(std::ostream& os) const
 {
-   os << "Called Application Entity:\t" << t.called_ae << "\n"
-      << "Calling Application Entity:\t" << t.calling_ae << "\n"
-      << "Application Context:\t" << t.application_context << "\n"
-      << "Proposed presentation contexts:\n";
-   for (const auto pc : t.pres_contexts) {
-      os << "\tContext id: " << static_cast<unsigned>(pc.id) << "\n";
-      os << "\tAbstract Syntax: " << pc.abstract_syntax << "\n";
-      for (const auto ts : pc.transfer_syntaxes) {
-         os << "\t\tPresentation Context: " << ts << "\n";
-      }
-   }
+   os << "Source: " << static_cast<unsigned>(source_) << "\n"
+      << "Reason: " << static_cast<unsigned>(reason_) << "\n";
    return os;
 }
 
@@ -538,6 +581,103 @@ std::unique_ptr<property> make_property(const std::vector<unsigned char>& pdu)
       }
    }
    return nullptr;
+}
+
+std::ostream& operator<<(std::ostream& os, const property& p)
+{
+   return p.print(os);
+}
+
+std::ostream& operator<<(std::ostream& os, TYPE t)
+{
+   switch (t) {
+      case TYPE::A_ABORT:
+         return os << "a_abort";
+      case TYPE::A_ASSOCIATE_AC:
+         return os << "a_associate_ac";
+      case TYPE::A_ASSOCIATE_RQ:
+         return os << "a_associate_rq";
+      case TYPE::A_ASSOCIATE_RJ:
+         return os << "a_associate_rj";
+      case TYPE::A_RELEASE_RQ:
+         return os << "a_release_rq";
+      case TYPE::A_RELEASE_RP:
+         return os << "a_release_rp";
+      case TYPE::P_DATA_TF:
+         return os << "p_data_tf";
+      default:
+         assert(false);
+   }
+}
+
+std::ostream& operator<<(std::ostream& os, a_associate_ac::presentation_context::RESULT r)
+{
+   using pc = a_associate_ac::presentation_context;
+   switch (r) {
+      case pc::RESULT::ACCEPTANCE:
+         return os << "Acceptance";
+      case pc::RESULT::ABSTR_CONT_NOT_SUPP:
+         return os << "Abstract Syntax not supported";
+      case pc::RESULT::PROV_REJEC_NO_REASON:
+         return os << "Provider rejection, no reason";
+      case pc::RESULT::TRANSF_SYNT_NOT_SUPP:
+         return os << "Transfer Syntax not supported";
+      case pc::RESULT::USER_REJEC:
+         return os << "User rejection";
+      default:
+         assert(false);
+   }
+}
+
+std::ostream& operator<<(std::ostream& os, a_associate_rj::SOURCE s)
+{
+   using rj = a_associate_rj;
+   switch (s) {
+      case rj::SOURCE::UL_SERVICE_USER:
+         return os << "DICOM UL service-user";
+      case rj::SOURCE::UL_SERVICE_PROV_ACSE:
+         return os << "DICOM UL service-provider (ACSE related function)";
+      case rj::SOURCE::UL_SERVICE_PROV_PRESREL:
+         return os << "DICOM UL service-provider (Presentation related function)";
+      default:
+         assert(false);
+   }
+}
+
+std::ostream& operator<<(std::ostream& os, std::pair<a_associate_rj::SOURCE, a_associate_rj::REASON> sr)
+{
+   using rj = a_associate_rj;
+   if (sr.first == rj::SOURCE::UL_SERVICE_USER) {
+      if (static_cast<int>(sr.second) == 1) {
+         return os << "no-reason-given";
+      } else if (static_cast<int>(sr.second) == 2) {
+         return os << "application-context-name-not-supported";
+      } else if (static_cast<int>(sr.second) == 3) {
+         return os << "calling-AE-title-not-recognized";
+      } else if (static_cast<int>(sr.second) == 7) {
+         return os << "called-AE-title-not-recognized";
+      } else {
+         return os << ""; //reserved
+      }
+   } else if (sr.first == rj::SOURCE::UL_SERVICE_PROV_ACSE) {
+      if (static_cast<int>(sr.second) == 1) {
+         return os << "no-reason-given";
+      } else if (static_cast<int>(sr.second) == 2) {
+         return os << "protocol-version-not-supported";
+      } else {
+         return os << "";
+      }
+   } else if (sr.first == rj::SOURCE::UL_SERVICE_PROV_PRESREL) {
+      if (static_cast<int>(sr.second) == 1) {
+         return os << "temporary-congestion";
+      } else if (static_cast<int>(sr.second) == 2) {
+         return os << "local-limit-exceeded";
+      } else {
+         return os << "";
+      }
+   } else {
+      assert(false);
+   }
 }
 
 }

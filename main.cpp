@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 #include <set>
 
+#include "util/channel_sev_logger.hpp"
 
 
 //#include "dimse_pm.hpp"
@@ -117,6 +118,7 @@ void conf_handler(upperlayer::scx* sc, upperlayer::property* rq)
 
 int main()
 {
+   dicom::util::log::init_log();
 
    upperlayer::a_associate_rq request;
    request.application_context = "1.2.840.10008.3.1.1.1";
