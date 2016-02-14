@@ -43,7 +43,6 @@ class response
       data::dataset::STATUS get_status() const;
       data::dataset::DIMSE_PRIORITY get_priority() const;
 
-
    private:
       const data::dataset::DIMSE_SERVICE_GROUP response_type;
       const data::dataset::commandset_data last_command;
@@ -51,6 +50,10 @@ class response
       const data::dataset::STATUS status;
       const data::dataset::DIMSE_PRIORITY prio;
 };
+
+std::ostream& operator<<(std::ostream& os, const response& r);
+
+
 
 }
 

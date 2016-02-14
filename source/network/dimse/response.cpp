@@ -48,6 +48,16 @@ data::dataset::DIMSE_PRIORITY response::get_priority() const
    return prio;
 }
 
+std::ostream& operator<<(std::ostream& os, const response& r)
+{
+   auto rt = r.get_response_type();
+   auto pr = r.get_priority();
+   auto st = r.get_status();
+   return os << "Service Group: \t" << rt << std::hex << "\t(" << static_cast<unsigned>(rt) << ")\n"
+             << "Priority: \t\t" << pr << "\t(" << static_cast<unsigned>(pr) << ")\n"
+             << "Status: \t\t" << st << "\t(" << static_cast<unsigned>(st) << ")\n";
+}
+
 
 
 }

@@ -73,6 +73,8 @@ void dimse_pm::send_response(response r)
       }
    }
 
+   BOOST_LOG_SEV(logger, debug) << "SOP UID: \t" << sop_uid << "\n" << r;
+
    auto pres_contexts = connection_request.get().pres_contexts;
    auto pres_context = std::find_if(pres_contexts.begin(), pres_contexts.end(),
                                     [sop_uid](upperlayer::a_associate_rq::presentation_context p) {
