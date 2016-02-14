@@ -57,8 +57,8 @@ using namespace dicom::util::log;
 
 scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
-   received_pdu {boost::none},
    logger {"upperlayer"},
+   received_pdu {boost::none},
    handlers {}
 {
    for (const auto p : l) {
