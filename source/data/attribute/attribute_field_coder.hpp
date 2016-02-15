@@ -27,7 +27,6 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr);
  * @brief decode_little_endian converts a serialized attribute into a structured
  *        elementfield representation.
  * @param data stream with serialized data
- * @param tag tag of the field
  * @param len length of the value field
  * @param vr vr of the value field
  * @param begin beginning, as in absolute position from the data stream start,
@@ -38,7 +37,7 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr);
  * as a parameter, parses the respective value field, and returns an instance of
  * elementfield which contains all the data.
  */
-elementfield decode_little_endian(const std::vector<unsigned char>& data, elementfield::tag_type tag, std::size_t len, VR vr, int begin);
+elementfield decode_little_endian(const std::vector<unsigned char>& data, std::size_t len, VR vr, int begin);
 
 /**
  * @brief encode_tag_little_endian converts the element tag into a little endian

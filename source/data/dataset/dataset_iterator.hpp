@@ -37,9 +37,11 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, st
       dataset_iterator operator--();
       dataset_iterator operator--(int);
 
-      attribute::elementfield operator*() const;
+      std::pair<attribute::elementfield::tag_type, attribute::elementfield>
+      operator*() const;
 
-      attribute::elementfield const * operator->() const;
+      std::pair<const attribute::elementfield::tag_type, attribute::elementfield> const*
+      operator->() const;
 
       friend bool operator==(const dataset_iterator& lhs, const dataset_iterator& rhs);
 

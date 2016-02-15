@@ -49,15 +49,17 @@ dataset_iterator dataset_iterator::operator--(int)
 }
 
 
-elementfield dataset_iterator::operator*() const
+std::pair<attribute::elementfield::tag_type, attribute::elementfield>
+dataset_iterator::operator*() const
 {
-   return cit->second;
+   return *cit;
 }
 
 
-const elementfield* dataset_iterator::operator->() const
+std::pair<const attribute::elementfield::tag_type, attribute::elementfield> const*
+dataset_iterator::operator->() const
 {
-   return &(cit->second);
+   return &*cit;
 }
 
 bool operator==(const dataset_iterator& lhs, const dataset_iterator& rhs)
