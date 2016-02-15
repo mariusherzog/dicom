@@ -28,25 +28,23 @@ dictionary_dyn& dictionary::get_dyn_datadic()
 }
 
 
-dictionary_entry dictionary::lookup_datadic(unsigned short gid,
-                                            unsigned short eid)
+dictionary_entry dictionary::lookup_datadic(attribute::elementfield::tag_type tag)
 {
-   return datadic.lookup(gid, eid);
+   return datadic.lookup(tag);
 }
 
-dictionary_entry dictionary::lookup(unsigned short gid, unsigned short eid)
+dictionary_entry dictionary::lookup(attribute::elementfield::tag_type tag)
 {
    try {
-      return commanddic.lookup(gid, eid);
+      return commanddic.lookup(tag);
    } catch (std::exception&) {
-      return datadic.lookup(gid, eid);
+      return datadic.lookup(tag);
    }
 }
 
-dictionary_entry dictionary::lookup_commanddic(unsigned short gid,
-                                               unsigned short eid)
+dictionary_entry dictionary::lookup_commanddic(attribute::elementfield::tag_type tag)
 {
-   return commanddic.lookup(gid, eid);
+   return commanddic.lookup(tag);
 }
 
 

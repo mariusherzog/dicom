@@ -1,7 +1,7 @@
 #ifndef ATTRIBUTE_HPP
 #define ATTRIBUTE_HPP
 
-#include <set>
+#include <map>
 #include <vector>
 #include <chrono>
 #include <memory>
@@ -112,7 +112,7 @@ struct elementfield
 
             tag_type(unsigned short gid = 0, unsigned short eid = 0);
       };
-      tag_type tag;
+
       boost::optional<VR> value_rep;
       std::size_t value_len;
       std::unique_ptr<elementfield_base> value_field;
@@ -239,7 +239,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = std::set<elementfield>; };
+struct type_of<VR::SQ> { using type = std::map<elementfield::tag_type, elementfield>; };
 template<>
 struct type_of<VR::SS>
 {
@@ -371,17 +371,14 @@ class set_visitor : public attribute_visitor<vr>
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute
  *        / element field.
- * @param gid group id
- * @param eid element id
  * @param data data for the value field
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(short gid, short eid, std::size_t data_len, typename type_of<vr>::type data)
+elementfield make_elementfield(std::size_t data_len, typename type_of<vr>::type data)
 {
    static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;
-   el.tag.group_id = gid; el.tag.element_id = eid;
    el.value_rep = vr;
    el.value_len = data_len;
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
@@ -395,16 +392,13 @@ elementfield make_elementfield(short gid, short eid, std::size_t data_len, typen
 /**
  * @brief make_elementfield overload for attributes that do not have a value
  *        field (like the sequence delimitation item)
- * @param gid group id
- * @param eid element id
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(short gid, short eid)
+elementfield make_elementfield()
 {
    static_assert(std::is_same<typename type_of<vr>::type, empty_t>::value, "Expected empty_t type (VR == NN)");
    elementfield el;
-   el.tag.group_id = gid; el.tag.element_id = eid;
    el.value_rep = vr;
    el.value_len = 0;
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
@@ -414,19 +408,9 @@ elementfield make_elementfield(short gid, short eid)
 
 bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
 
-
-/**
- * @brief operator < is necessary for the storage in the set
- * @param lhs
- * @param rhs
- * @return
- * The order is defined by the attribute group and element ids. a < b is true
- * iff the group id of a is lesser than b, or if they are equal, iff the
- * element id of a is lesser than b.
- */
-bool operator<(const elementfield& lhs, const elementfield& rhs);
-
 bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+
+bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
 
 }
 

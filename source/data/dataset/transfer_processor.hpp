@@ -93,7 +93,6 @@ class transfer_processor
        * @brief deserialize_attribute is overriden by a subclass to implement
        *        transfer-syntax specific deserialization of data.
        * @param data array containing serialized bytes
-       * @param tag tag of the attribute
        * @param len length of the attribute's data field
        * @param vr VR of the attribute
        * @param pos starting position of the data field in the serialized array
@@ -101,7 +100,6 @@ class transfer_processor
        */
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
-                            attribute::elementfield::tag_type tag,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
 
@@ -126,7 +124,6 @@ class commandset_processor: public transfer_processor
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
-                            attribute::elementfield::tag_type tag,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const override;
 };
@@ -148,7 +145,6 @@ class little_endian_implicit: public transfer_processor
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
-                            attribute::elementfield::tag_type tag,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const;
 };

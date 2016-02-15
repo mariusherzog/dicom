@@ -33,7 +33,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
    int nested_sets = 0;
    while (pos < data.size()) {
       elementfield::tag_type tag = decode_tag_little_endian(data, pos);
-      if (tag.group_id == 0xfffe && tag.element_id == 0xe0dd
+      if (tag == elementfield::tag_type {0xfffe, 0xe0dd}
           && nested_sets-- == 0) {
          pos += 8;
          break;
@@ -41,7 +41,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
       pos += 4;
       std::size_t value_len = decode_len_little_endian(data, pos);
       pos += 4;
-      VR repr = dict.lookup(tag.group_id, tag.element_id).vr;
+      VR repr = dict.lookup(tag).vr;
 
       if (repr == VR::SQ) {
          nested_sets++;
@@ -71,28 +71,21 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
       std::size_t value_len = decode_len_little_endian(data, pos);
       pos += 4;
 
-      if (!(tag.group_id == 0xfffe && tag.element_id == 0xe0dd)) {
-         VR repr;
-         if (vrtype == VR_TYPE::EXPLICIT) {
-            std::string vr {data.begin()+pos, data.begin()+pos+2};
-            repr = dictionary::dictionary_entry::vr_of_string.left.at(vr);
-            pos += 2;
-         } else {
-            repr = dict.get().lookup(tag.group_id, tag.element_id).vr;
-         }
+      if (tag != elementfield::tag_type {0xfffe, 0xe0dd}) {
+         VR repr = dict.get().lookup(tag).vr;
 
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict.get()) : value_len;
             commandset_data nested = deserialize({data.begin()+pos, data.begin()+pos+value_len});
-            deserialized.insert(make_elementfield<VR::SQ>(tag.group_id, tag.element_id, value_len, nested));
+            deserialized[tag] = make_elementfield<VR::SQ>(value_len, nested);
          }
 
-         elementfield e = deserialize_attribute(data, tag, value_len, repr, pos);
+         elementfield e = deserialize_attribute(data, value_len, repr, pos);
          pos += value_len;
-         deserialized.insert(e);
+         deserialized[tag] = e;
       } else {
          pos += value_len;
-         deserialized.insert(make_elementfield<VR::NN>(tag.group_id, tag.element_id));
+         deserialized[tag] = make_elementfield<VR::NN>();
       }
    }
    return deserialized;
@@ -110,13 +103,13 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
    for (const auto attr : dataset_iterator_adaptor(data)) {
       VR repr;
       if (vrtype == VR_TYPE::EXPLICIT) {
-         repr = attr.value_rep.get();
+         repr = attr.second.value_rep.get();
       } else {
-         repr = dict.get().lookup(attr.tag.group_id, attr.tag.element_id).vr;
+         repr = dict.get().lookup(attr.first).vr;
       }
-      auto data = serialize_attribute(attr, repr);
-      auto tag = encode_tag_little_endian(attr.tag);
-      auto len = encode_len_little_endian(attr.value_len);
+      auto data = serialize_attribute(attr.second, repr);
+      auto tag = encode_tag_little_endian(attr.first);
+      auto len = encode_len_little_endian(attr.second.value_len);
       stream.insert(stream.end(), tag.begin(), tag.end());
       if (vrtype == VR_TYPE::EXPLICIT) {
          auto vr = dictionary::dictionary_entry::vr_of_string.right.at(repr);
@@ -134,13 +127,13 @@ std::string transfer_processor::get_transfer_syntax() const
 }
 
 elementfield commandset_processor::deserialize_attribute(std::vector<unsigned char>& data,
-                                                       elementfield::tag_type tag,
                                                        std::size_t len,
                                                        VR vr,
                                                        std::size_t pos) const
 {
-   return decode_little_endian(data, tag, len, vr, pos);
+   return decode_little_endian(data, len, vr, pos);
 }
+
 
 transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> dict,
                                        std::string tfs, VR_TYPE vrtype):
@@ -171,6 +164,7 @@ little_endian_implicit::little_endian_implicit(dictionary::dictionary& dict):
 little_endian_implicit::little_endian_implicit(const little_endian_implicit& other):
    transfer_processor {other}
 {
+
 }
 
 std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, attribute::VR vr) const
@@ -179,11 +173,10 @@ std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfi
 }
 
 elementfield little_endian_implicit::deserialize_attribute(std::vector<unsigned char>& data,
-                                                           elementfield::tag_type tag,
                                                            std::size_t len, attribute::VR vr,
                                                            std::size_t pos) const
 {
-   return decode_little_endian(data, tag, len, vr, pos);
+   return decode_little_endian(data, len, vr, pos);
 }
 
 

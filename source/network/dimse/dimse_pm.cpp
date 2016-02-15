@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <functional>
 #include <iostream>
+#include <numeric>
 
 #include "network/upperlayer/upperlayer_properties.hpp"
 #include "network/upperlayer/upperlayer.hpp"
@@ -68,8 +69,8 @@ void dimse_pm::send_response(response r)
 
    std::string sop_uid;
    for (auto e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
-         get_value_field<VR::UI>(e, sop_uid);
+      if (e.first == elementfield::tag_type {0x0000, 0x0002}) {
+         get_value_field<VR::UI>(e.second, sop_uid);
       }
    }
 
@@ -209,8 +210,8 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
          auto request = sop.sop_class;
          for (auto sg : request.get_service_groups()) {
             commandset_data header;
-            header.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, request.get_SOP_class_UID()));
-            header.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, next_message_id()));
+            header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, request.get_SOP_class_UID());
+            header[{0x0000, 0x0120}] = make_elementfield<VR::US>(2, next_message_id());
             request(this, sg, header, nullptr);
          }
       }
@@ -240,17 +241,12 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
    unsigned short message_id;
-   for (auto e : dataset_iterator_adaptor(b)) {
-      if (e.tag == elementfield::tag_type {0x0000, 0x0002}) {
-         get_value_field<VR::UI>(e, SOP_UID);
-      } else if (e.tag == elementfield::tag_type {0x0000, 0x0100}) {
-         short unsigned dsgint;
-         get_value_field<VR::US>(e, dsgint);
-         dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
-      } else if (e.tag == elementfield::tag_type {0x0000, 0x0120}) {
-         get_value_field<VR::US>(e, message_id);
-      }
-   }
+   unsigned short dsgint;
+   bool request = b.find({0x0000, 0x0110}) != b.end();
+   get_value_field<VR::UI>(b.at({0x0000, 0x0002}), SOP_UID);
+   get_value_field<VR::US>(request ? b.at({0x0000, 0x0110}) : b.at({0x0000, 0x0120}), message_id);
+   get_value_field<VR::US>(b.at({0x0000, 0x0100}), dsgint);
+   dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
 
    BOOST_LOG_SEV(logger, debug) << "SOP UID: \t" << SOP_UID << "\n"
                                 << "Service Group: \t" << dsg << "\n"
@@ -322,22 +318,19 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
 {
    using namespace upperlayer;
    commandset_data cresp;
-   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
 
    std::string SOP_uid;
    unsigned short message_id;
-   for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.tag.element_id == 0x0002 && e.tag.group_id == 0x0000) {
-         get_value_field<VR::UI>(e, SOP_uid);
-      } else if (e.tag.element_id == 0x0110 && e.tag.group_id == 0x0000) {
-         get_value_field<VR::US>(e, message_id);
-      }
-   }
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0120, 2, message_id));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+   auto cs = r.get_command();
+   get_value_field<VR::UI>(cs.at({0x0000, 0x0002}), SOP_uid);
+   get_value_field<VR::US>(cs.at({0x0000, 0x0110}), message_id);
+
+   cresp[{0x0000, 0x0000}] = make_elementfield<VR::UL>(4, 66);
+   cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, SOP_uid);
+   cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[{0x0000, 0x0120}] = make_elementfield<VR::US>(2, message_id);
+   cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(2, 0x0101);
+   cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(2, r.get_status());
 
    commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
@@ -356,19 +349,15 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
 
    std::string SOP_uid;
    unsigned short message_id;
-   for (const elementfield e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.tag.group_id == 0x0000 && e.tag.element_id == 0x0002) {
-         get_value_field<VR::UI>(e, SOP_uid);
-      } else if (e.tag.element_id == 0x0120 && e.tag.group_id == 0x0000) {
-         get_value_field<VR::US>(e, message_id);
-      }
-   }
-   cresp.insert(make_elementfield<VR::UL>(0x0000, 0x0000, 4, 62));
-   cresp.insert(make_elementfield<VR::UI>(0x0000, 0x0002, 18, SOP_uid));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0100, 2, static_cast<unsigned short>(r.get_response_type())));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0110, 2, message_id));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0800, 2, 0x0101));
-   cresp.insert(make_elementfield<VR::US>(0x0000, 0x0900, 2, r.get_status()));
+   auto cs = r.get_command();
+   get_value_field<VR::UI>(cs.at({0x0000, 0x0002}), SOP_uid);
+   get_value_field<VR::US>(cs.at({0x0000, 0x0120}), message_id);
+
+   cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, SOP_uid);
+   cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[{0x0000, 0x0110}] = make_elementfield<VR::US>(2, message_id);
+   cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(2, 0x0101);
+   cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(2, r.get_status());
 
    commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);

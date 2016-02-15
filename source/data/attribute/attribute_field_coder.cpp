@@ -356,20 +356,19 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
 
 
 
-elementfield decode_little_endian(const std::vector<unsigned char>& data
-                                  , elementfield::tag_type tag, std::size_t len, VR vr
-                                  , int begin)
+elementfield decode_little_endian(const std::vector<unsigned char>& data,
+                                  std::size_t len, VR vr, int begin)
 {
    switch (vr) {
       case VR::AE: {
          std::string ae;
          ae = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::AE>(tag.group_id, tag.element_id, len, ae);
+         return make_elementfield<VR::AE>(len, ae);
       }
       case VR::AS: {
          std::string as;
          as = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::AS>(tag.group_id, tag.element_id, len, as);
+         return make_elementfield<VR::AS>(len, as);
       }
       case VR::AT: {
          short gid, eid;
@@ -378,98 +377,98 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
          elementfield::tag_type tag;
          tag.element_id = eid;
          tag.group_id = gid;
-         return make_elementfield<VR::AT>(tag.group_id, tag.element_id, len, tag);
+         return make_elementfield<VR::AT>(len, tag);
          break;
       }
       case VR::CS: {
          std::string cs;
          cs = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::CS>(tag.group_id, tag.element_id, len, cs);
+         return make_elementfield<VR::CS>(len, cs);
          break;
       }
       case VR::DA: {
          std::string da;
          da = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::DA>(tag.group_id, tag.element_id, len, da);
+         return make_elementfield<VR::DA>(len, da);
          break;
       }
       case VR::DS: {
          std::string ds;
          ds = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::DS>(tag.group_id, tag.element_id, len, ds);
+         return make_elementfield<VR::DS>(len, ds);
          break;
       }
       case VR::DT: {
          std::string dt;
          dt = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::DT>(tag.group_id, tag.element_id, len, dt);
+         return make_elementfield<VR::DT>(len, dt);
          break;
       }
       case VR::FL: {
          float fl;
          convhelper::little_endian_to_float(data, begin, len, fl);
-         return make_elementfield<VR::FL>(tag.group_id, tag.element_id, len, fl);
+         return make_elementfield<VR::FL>(len, fl);
          break;
       }
       case VR::FD: {
          double fd;
          convhelper::little_endian_to_float(data, begin, len, fd);
-         return make_elementfield<VR::FD>(tag.group_id, tag.element_id, len, fd);
+         return make_elementfield<VR::FD>(len, fd);
          break;
       }
       case VR::IS: {
          std::string is;
          is = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::IS>(tag.group_id, tag.element_id, len, is);
+         return make_elementfield<VR::IS>(len, is);
          break;
       }
       case VR::LO: {
          std::string lo;
          lo = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::LO>(tag.group_id, tag.element_id, len, lo);
+         return make_elementfield<VR::LO>(len, lo);
          break;
       }
       case VR::LT: {
          std::string lt;
          lt = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::LT>(tag.group_id, tag.element_id, len, lt);
+         return make_elementfield<VR::LT>(len, lt);
       }
       case VR::OB: {
          std::vector<unsigned char> ob;
          ob = convhelper::decode_byte_array(data, begin, len);
-         return make_elementfield<VR::OB>(tag.group_id, tag.element_id, len, ob);
+         return make_elementfield<VR::OB>(len, ob);
          break;
       }
       case VR::OD: {
          std::string od;
          od = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::OD>(tag.group_id, tag.element_id, len, od);
+         return make_elementfield<VR::OD>(len, od);
       }
       case VR::OF: {
          std::string of;
          of = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::OF>(tag.group_id, tag.element_id, len, of);
+         return make_elementfield<VR::OF>(len, of);
       }
       case VR::OW: {
          std::vector<unsigned char> ow;
          ow = convhelper::decode_word_array_le(data, begin, len);
-         return make_elementfield<VR::OW>(tag.group_id, tag.element_id, len, ow);
+         return make_elementfield<VR::OW>(len, ow);
          break;
       }
       case VR::PN: {
          std::string pn;
          pn = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::OF>(tag.group_id, tag.element_id, len, pn);
+         return make_elementfield<VR::OF>(len, pn);
       }
       case VR::SH: {
          std::string sh;
          sh = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::OF>(tag.group_id, tag.element_id, len, sh);
+         return make_elementfield<VR::OF>(len, sh);
       }
       case VR::SL: {
          long val;
          convhelper::little_endian_to_integral(data, begin, 4, val);
-         return make_elementfield<VR::SL>(tag.group_id, tag.element_id, len, val);
+         return make_elementfield<VR::SL>(len, val);
       }
       case VR::SQ: {
 
@@ -477,42 +476,42 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data
       case VR::SS: {
          short val;
          convhelper::little_endian_to_integral(data, begin, 2, val);
-         return make_elementfield<VR::SS>(tag.group_id, tag.element_id, len, val);
+         return make_elementfield<VR::SS>(len, val);
       }
       case VR::ST: {
          std::string st;
          st = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::ST>(tag.group_id, tag.element_id, len, st);
+         return make_elementfield<VR::ST>(len, st);
       }
       case VR::TM: {
          std::string tm;
          tm = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::TM>(tag.group_id, tag.element_id, len, tm);
+         return make_elementfield<VR::TM>(len, tm);
       }
       case VR::UL: {
          unsigned long val;
          convhelper::little_endian_to_integral(data, begin, 4, val);
-         return make_elementfield<VR::UL>(tag.group_id, tag.element_id, len, val);
+         return make_elementfield<VR::UL>(len, val);
       }
       case VR::UI: {
          std::string ui;
          ui = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::UI>(tag.group_id, tag.element_id, len, ui);
+         return make_elementfield<VR::UI>(len, ui);
       }
       case VR::UR: {
          std::string ur;
          ur = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::UR>(tag.group_id, tag.element_id, len, ur);
+         return make_elementfield<VR::UR>(len, ur);
       }
       case VR::US: {
          unsigned short val;
          convhelper::little_endian_to_integral(data, begin, 2, val);
-         return make_elementfield<VR::US>(tag.group_id, tag.element_id, len, val);
+         return make_elementfield<VR::US>(len, val);
       }
       case VR::UT: {
          std::string ut;
          ut = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::UT>(tag.group_id, tag.element_id, len, ut);
+         return make_elementfield<VR::UT>(len, ut);
       }
       default:
          assert(false);

@@ -29,6 +29,7 @@ int main()
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RSP\n";
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, command});
+//         pm->release_association();
       }}}
    };
 
