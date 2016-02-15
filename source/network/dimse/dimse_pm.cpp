@@ -241,17 +241,12 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
    unsigned short message_id;
-   for (auto e : dataset_iterator_adaptor(b)) {
-      if (e.first == elementfield::tag_type {0x0000, 0x0002}) {
-         get_value_field<VR::UI>(e.second, SOP_UID);
-      } else if (e.first == elementfield::tag_type {0x0000, 0x0100}) {
-         short unsigned dsgint;
-         get_value_field<VR::US>(e.second, dsgint);
-         dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
-      } else if (e.first == elementfield::tag_type {0x0000, 0x0120}) {
-         get_value_field<VR::US>(e.second, message_id);
-      }
-   }
+   unsigned short dsgint;
+   bool request = b.find({0x0000, 0x0110}) != b.end();
+   get_value_field<VR::UI>(b.at({0x0000, 0x0002}), SOP_UID);
+   get_value_field<VR::US>(request ? b.at({0x0000, 0x0110}) : b.at({0x0000, 0x0120}), message_id);
+   get_value_field<VR::US>(b.at({0x0000, 0x0100}), dsgint);
+   dsg = static_cast<DIMSE_SERVICE_GROUP>(dsgint);
 
    BOOST_LOG_SEV(logger, debug) << "SOP UID: \t" << SOP_UID << "\n"
                                 << "Service Group: \t" << dsg << "\n"
@@ -326,13 +321,9 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
 
    std::string SOP_uid;
    unsigned short message_id;
-   for (const auto e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.first == elementfield::tag_type {0x0000, 0x0002}) {
-         get_value_field<VR::UI>(e.second, SOP_uid);
-      } else if (e.first == elementfield::tag_type {0x0000, 0x0110}) {
-         get_value_field<VR::US>(e.second, message_id);
-      }
-   }
+   auto cs = r.get_command();
+   get_value_field<VR::UI>(cs.at({0x0000, 0x0002}), SOP_uid);
+   get_value_field<VR::US>(cs.at({0x0000, 0x0110}), message_id);
 
    cresp[{0x0000, 0x0000}] = make_elementfield<VR::UL>(4, 66);
    cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, SOP_uid);
@@ -343,7 +334,6 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
 
    commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
-
 
    p_data_tf presp;
    presp.command_set = serdata;
@@ -359,13 +349,10 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
 
    std::string SOP_uid;
    unsigned short message_id;
-   for (const auto e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.first == elementfield::tag_type {0x0000, 0x0002}) {
-         get_value_field<VR::UI>(e.second, SOP_uid);
-      } else if (e.first == elementfield::tag_type {0x0000, 0x0120}) {
-         get_value_field<VR::US>(e.second, message_id);
-      }
-   }
+   auto cs = r.get_command();
+   get_value_field<VR::UI>(cs.at({0x0000, 0x0002}), SOP_uid);
+   get_value_field<VR::US>(cs.at({0x0000, 0x0120}), message_id);
+
    cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, SOP_uid);
    cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
    cresp[{0x0000, 0x0110}] = make_elementfield<VR::US>(2, message_id);
