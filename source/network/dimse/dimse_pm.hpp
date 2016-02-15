@@ -7,6 +7,7 @@
 #include <functional>
 #include <vector>
 #include <utility>
+#include <memory>
 #include <initializer_list>
 
 #include <boost/optional.hpp>
@@ -17,6 +18,8 @@
 #include "network/upperlayer/upperlayer.hpp"
 #include "data/dataset/transfer_processor.hpp"
 #include "data/dictionary/dictionary.hpp"
+
+#include "util/channel_sev_logger.hpp"
 
 
 namespace dicom
@@ -122,6 +125,14 @@ class dimse_pm
        */
       int next_message_id();
 
+      /**
+       * @brief find_transfer_processor uses the connection properties and the
+       *        availabe transfer processors to return a machting transfer
+       *        processor.
+       * @return reference to a matching transfer processor
+       */
+      data::dataset::transfer_processor& find_transfer_processor();
+
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
       CONN_STATE state;
 
@@ -132,7 +143,12 @@ class dimse_pm
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(response r, int message_id, data::dictionary::dictionary&)>> assemble_response;
+
       data::dictionary::dictionary& dict;
+
+      std::map<std::string, std::unique_ptr<data::dataset::transfer_processor>> transfer_processors;
+
+      util::log::channel_sev_logger logger;
 };
 
 

@@ -10,10 +10,12 @@
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary.hpp"
 
-
+#include "util/channel_sev_logger.hpp"
 
 int main()
 {
+   dicom::util::log::init_log();
+
    using namespace dicom::data;
    using namespace dicom::data::attribute;
    using namespace dicom::data::dictionary;

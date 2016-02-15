@@ -57,6 +57,15 @@ class dictionary
       dictionary_entry lookup_datadic(attribute::elementfield::tag_type tag);
 
       /**
+       * @brief lookup performs a lookup in the command dictionary and data
+       *        dictionar respectively
+       * @param gid group id of the tag
+       * @param eid element id of the tag
+       * @return dictionary entry corresponding the tag
+       */
+      dictionary_entry lookup(attribute::elementfield::tag_type tag);
+
+      /**
        * @brief lookup_commanddic performs a compile-time lookup of the given tag
        *        in the command dictionary.
        * @param gid group id of the tag

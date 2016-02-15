@@ -27,6 +27,8 @@ enum class TYPE : unsigned char
 
 TYPE get_type(const std::vector<unsigned char>& pdu);
 
+std::ostream& operator<<(std::ostream& out, TYPE t);
+
 
 /**
  * @brief The property struct or rather its subclasses represent the serial pdu data
@@ -38,8 +40,11 @@ struct property
       virtual void from_pdu(std::vector<unsigned char> pdu) = 0;
       virtual std::vector<unsigned char> make_pdu() const = 0;
       virtual TYPE type() const = 0;
+      virtual std::ostream& print(std::ostream& os) const = 0;
       virtual ~property() = 0;
 };
+
+std::ostream& operator<<(std::ostream& os, const property& p);
 
 /**
  * @brief make_property is a factory function which creates structured data
@@ -57,6 +62,7 @@ struct p_data_tf: property
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
+      std::ostream& print(std::ostream& os) const override;
 
       unsigned char pres_context_id;
       std::vector<unsigned char> command_set;
@@ -76,6 +82,7 @@ struct a_associate_rq: property
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
+      std::ostream& print(std::ostream& os) const override;
 
 
       std::string called_ae;
@@ -100,7 +107,7 @@ struct a_associate_ac: property
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
-
+      std::ostream& print(std::ostream& os) const override;
 
       std::string called_ae;
       std::string calling_ae;
@@ -126,12 +133,15 @@ struct a_associate_ac: property
       std::size_t max_message_length;
 };
 
+std::ostream& operator<<(std::ostream& os, a_associate_ac::presentation_context::RESULT r);
+
 struct a_associate_rj: property
 {
       a_associate_rj() = default;
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
+      std::ostream& print(std::ostream& os) const override;
 
       enum class SOURCE : unsigned char
       {
@@ -148,12 +158,17 @@ struct a_associate_rj: property
       SOURCE source_;
 };
 
+std::ostream& operator<<(std::ostream& os, a_associate_rj::SOURCE s);
+std::ostream& operator<<(std::ostream& os,
+                         std::pair<a_associate_rj::SOURCE, a_associate_rj::REASON> sr);
+
 struct a_release_rq: property
 {
       a_release_rq() = default;
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
+      std::ostream& print(std::ostream& os) const override;
 };
 
 struct a_release_rp: property
@@ -162,6 +177,7 @@ struct a_release_rp: property
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
+      std::ostream& print(std::ostream& os) const override;
 };
 
 struct a_abort: property
@@ -170,6 +186,7 @@ struct a_abort: property
       void from_pdu(std::vector<unsigned char> pdu) override;
       std::vector<unsigned char> make_pdu() const override;
       TYPE type() const override;
+      std::ostream& print(std::ostream& os) const override;
 
       enum class SOURCE : unsigned char
       {
@@ -189,7 +206,6 @@ struct a_abort: property
       REASON reason_;
 };
 
-std::ostream& operator<<(std::ostream& os, a_associate_rq t);
 
 }
 

@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include <boost/scope_exit.hpp>
+#include <boost/bimap.hpp>
 
 namespace dicom
 {
@@ -85,7 +86,7 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
             fields[i] = trim(fields[i]);
          }
          bool retired = fields[num_fields-2] == "RET";
-         return dictionary_entry {dictionary_entry::vr_of_string.at(fields[2])
+         return dictionary_entry {dictionary_entry::vr_of_string.left.at(fields[2])
                   , fields[0], fields[1], fields[3], retired};
       }
    }
@@ -120,7 +121,7 @@ dictionary_entry dictionary_dyn::greedylookup(attribute::elementfield::tag_type 
          bool retired = fields[num_fields-2] == "RET";
 
          dict_buffer.emplace(elementfield::tag_type {taggid, tageid}
-            , dictionary_entry {dictionary_entry::vr_of_string.at(fields[2])
+            , dictionary_entry {dictionary_entry::vr_of_string.left.at(fields[2])
                , fields[0], fields[1], fields[3], retired});
       }
    }

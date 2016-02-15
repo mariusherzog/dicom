@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <map>
+#include <ostream>
 
 #include "data/attribute/attribute.hpp"
 
@@ -48,12 +49,83 @@ enum class DIMSE_SERVICE_GROUP : unsigned
    C_CANCEL_RQ = 0xffff
 };
 
+inline std::ostream& operator<<(std::ostream& os, DIMSE_SERVICE_GROUP dsg)
+{
+    switch (dsg) {
+        case DIMSE_SERVICE_GROUP::C_STORE_RQ:
+            return os << "C-STORE-RQ";
+        case DIMSE_SERVICE_GROUP::C_STORE_RSP:
+            return os << "C-STORE-RSP";
+        case DIMSE_SERVICE_GROUP::C_GET_RQ:
+            return os << "C-GET-RQ";
+        case DIMSE_SERVICE_GROUP::C_GET_RSP:
+            return os << "C-GET-RSP";
+        case DIMSE_SERVICE_GROUP::C_FIND_RQ:
+            return os << "C-FIND-RQ";
+        case DIMSE_SERVICE_GROUP::C_FIND_RSP:
+            return os << "C-FIND-RSP";
+        case DIMSE_SERVICE_GROUP::C_MOVE_RQ:
+            return os << "C-MOVE-RQ";
+        case DIMSE_SERVICE_GROUP::C_MOVE_RSP:
+            return os << "C-MOVE-RSP";
+        case DIMSE_SERVICE_GROUP::C_ECHO_RQ:
+            return os << "C-ECHO-RQ";
+        case DIMSE_SERVICE_GROUP::C_ECHO_RSP:
+            return os << "C-ECHO-RSP";
+
+        case DIMSE_SERVICE_GROUP::N_EVENT_REPORT_RQ:
+            return os << "N-EVENT-REPORT-RQ";
+        case DIMSE_SERVICE_GROUP::N_EVENT_REPORT_RSP:
+            return os << "N-EVENT-REPORT-RSP";
+        case DIMSE_SERVICE_GROUP::N_GET_RQ:
+            return os << "N-GET-RQ";
+        case DIMSE_SERVICE_GROUP::N_GET_RSP:
+            return os << "N-GET-RSP";
+        case DIMSE_SERVICE_GROUP::N_SET_RQ:
+            return os << "N-SET-RQ";
+        case DIMSE_SERVICE_GROUP::N_SET_RSP:
+            return os << "N-SET-RSP";
+        case DIMSE_SERVICE_GROUP::N_ACTION_RQ:
+            return os << "N-ACTION-RQ";
+        case DIMSE_SERVICE_GROUP::N_ACTION_RSP:
+            return os << "N-ACTION-RSP";
+        case DIMSE_SERVICE_GROUP::N_CREATE_RQ:
+            return os << "N-CREATE-RQ";
+        case DIMSE_SERVICE_GROUP::N_CREATE_RSP:
+            return os << "N-CREATE-RSP";
+        case DIMSE_SERVICE_GROUP::N_DELETE_RQ:
+            return os << "N-DELETE-RQ";
+        case DIMSE_SERVICE_GROUP::N_DELETE_RSP:
+            return os << "N-DELETE-RSP";
+
+        case DIMSE_SERVICE_GROUP::C_CANCEL_RQ:
+            return os << "C-CANCEL-RQ";
+
+        default:
+            assert(false);
+    }
+}
+
 enum class DIMSE_PRIORITY : unsigned
 {
    LOW      = 0x0002,
    MEDIUM   = 0x0000,
    HIGH     = 0x0001
 };
+
+inline std::ostream& operator<<(std::ostream& os, DIMSE_PRIORITY p)
+{
+    switch (p) {
+        case DIMSE_PRIORITY::MEDIUM:
+            return os << "MEDIUM";
+        case DIMSE_PRIORITY::LOW:
+            return os << "LOW";
+        case DIMSE_PRIORITY::HIGH:
+            return os << "HIGH";
+        default:
+            assert(false);
+    }
+}
 
 struct STATUS
 {
@@ -86,6 +158,24 @@ struct STATUS
             stat = PENDING;
          else
             throw std::runtime_error("Invalid status code " + std::to_string(stat));
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, STATUS s)
+      {
+          switch (s.stat) {
+              case STAT::SUCCESS:
+                  return os << "SUCCESS";
+              case STAT::WARNING:
+                  return os << "WARNING";
+              case STAT::FAILURE:
+                  return os << "FAILURE";
+              case STAT::CANCEL:
+                  return os << "CANCEL";
+              case STAT::PENDING:
+                  return os << "PENDING";
+              default:
+                  assert(false);
+          }
       }
 
    private:
