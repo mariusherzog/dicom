@@ -6,8 +6,30 @@
 #include <chrono>
 #include <memory>
 #include <type_traits>
+#include <ostream>
 
 #include <boost/optional.hpp>
+
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dataset
+{
+   /**
+    * forward declaration of the dataset defined in the dataset namespace. This
+    * circular dependency is intrinsic to the DICOM dataset, as an attribute
+    * may be defined as another - nested - set.
+    */
+   struct dataset_type;
+}
+
+}
+
+}
+
 
 namespace dicom
 {
@@ -92,6 +114,8 @@ struct elementfield_base
       }
 
       virtual std::unique_ptr<elementfield_base> deep_copy() = 0;
+
+      virtual std::ostream& print(std::ostream& os) = 0;
 
       virtual ~elementfield_base() = 0;
 };
@@ -239,7 +263,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = std::map<elementfield::tag_type, elementfield>; };
+struct type_of<VR::SQ> { using type = dataset::dataset_type; };
 template<>
 struct type_of<VR::SS>
 {
@@ -292,6 +316,12 @@ struct type_of<VR::NN>
       using type = empty_t;
 };
 
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
+
 
 
 /**
@@ -309,6 +339,11 @@ struct element_field: elementfield_base
          element_field<vr>* ef = new element_field<vr> {};
          ef->value_field = value_field;
          return std::unique_ptr<elementfield_base> {ef};
+      }
+
+      std::ostream& print(std::ostream& os) override
+      {
+            return os << value_field;
       }
 
       virtual ~element_field() {}
@@ -375,7 +410,7 @@ class set_visitor : public attribute_visitor<vr>
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t data_len, typename type_of<vr>::type data)
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type &data)
 {
    static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;
@@ -404,6 +439,7 @@ elementfield make_elementfield()
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
    return el;
 }
+
 
 
 bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
