@@ -3,8 +3,7 @@
 
 #include "boost/optional.hpp"
 
-#include "data/dataset/iod.hpp"
-#include "data/dataset/commandset_data.hpp"
+#include "data/dataset/datasets.hpp"
 
 namespace dicom
 {
