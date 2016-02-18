@@ -5,6 +5,7 @@
 #include <map>
 #include <stack>
 
+#include "datasets.hpp"
 #include "data/attribute/attribute.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 

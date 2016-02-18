@@ -17,18 +17,6 @@ namespace dataset
 
 using namespace attribute;
 
-std::ostream& operator<<(std::ostream& os, elementfield::tag_type tag)
-{
-   std::ios state(nullptr);
-   state.copyfmt(os);
-
-   os << "(" << std::hex << std::setw(4) << std::setfill('0') << tag.group_id
-      << "," << std::hex << std::setw(4) << std::setfill('0') << tag.element_id
-      << ")";
-
-   os.copyfmt(state);
-   return os;
-}
 
 std::ostream& operator<<(std::ostream& os, const dataset_type& data)
 {
@@ -43,7 +31,10 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
       }
 
       std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
-      os << attr.first << "\n";
+      os << attr.first << "\t";
+      attr.second.value_field->print(os);
+      std::cout << "\n";
+
    }
 
    return os;

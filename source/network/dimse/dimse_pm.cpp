@@ -361,9 +361,7 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
    cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(2, 0x0101);
    cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(2, r.get_status());
 
-   std::cout << dataset_size(cresp) << "##";
    std::cout << cresp;
-//   data::dataset::operator<<(std::cout, r.get_command());
 
    commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);

@@ -1,5 +1,9 @@
 #include "attribute.hpp"
 
+#include <iomanip>
+#include <algorithm>
+#include <iterator>
+
 namespace dicom
 {
 
@@ -59,6 +63,30 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
 bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
 {
    return !(lhs == rhs);
+}
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const tag)
+{
+   std::ios state(nullptr);
+   state.copyfmt(os);
+
+   os << "(" << std::hex << std::setw(4) << std::setfill('0') << tag.group_id
+      << "," << std::hex << std::setw(4) << std::setfill('0') << tag.element_id
+      << ")";
+
+   os.copyfmt(state);
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
+{
+   std::copy(data.begin(), data.end(), std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::NN>::type)
+{
+   return os;
 }
 
 }
