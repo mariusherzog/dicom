@@ -326,12 +326,14 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
    get_value_field<VR::UI>(cs.at({0x0000, 0x0002}), SOP_uid);
    get_value_field<VR::US>(cs.at({0x0000, 0x0110}), message_id);
 
-   cresp[{0x0000, 0x0000}] = make_elementfield<VR::UL>(4, 66);
    cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, SOP_uid);
    cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
    cresp[{0x0000, 0x0120}] = make_elementfield<VR::US>(2, message_id);
    cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(2, 0x0101);
    cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(2, r.get_status());
+
+   auto size = dataset_size(cresp);
+   cresp[{0x0000, 0x0000}] = make_elementfield<VR::UL>(4, size);
 
    commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
@@ -361,7 +363,8 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
    cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(2, 0x0101);
    cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(2, r.get_status());
 
-   std::cout << cresp;
+   auto size = dataset_size(cresp);
+   cresp[{0x0000, 0x0000}] = make_elementfield<VR::UL>(4, size);
 
    commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);

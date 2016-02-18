@@ -142,7 +142,9 @@ class dimse_pm
       association_definition operations;
 
       static std::map<data::dataset::DIMSE_SERVICE_GROUP
-         , std::function<upperlayer::p_data_tf(response r, int message_id, data::dictionary::dictionary&)>> assemble_response;
+         , std::function<upperlayer::p_data_tf(response r,
+                                               int message_id,
+                                               data::dictionary::dictionary&)>> assemble_response;
 
       data::dictionary::dictionary& dict;
 
