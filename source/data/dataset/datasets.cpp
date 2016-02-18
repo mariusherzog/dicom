@@ -4,6 +4,8 @@
 #include <iomanip>
 
 #include "dataset_iterator.hpp"
+#include "data/dictionary/dictionary.hpp"
+#include "data/dictionary/dictionary_entry.hpp"
 
 namespace dicom
 {
@@ -30,11 +32,17 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
          depth++;
       }
 
+
       std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
-      os << attr.first << "\t";
+      os << attr.first << " ";
+      if (attr.second.value_rep.is_initialized()) {
+         os << dictionary::dictionary_entry::vr_of_string.right.at(attr.second.value_rep.get());
+      } else {
+         os << "NN (unknown)";
+      }
+      os << " " << attr.second.value_len << "\t\t";
       attr.second.value_field->print(os);
       std::cout << "\n";
-
    }
 
    return os;
