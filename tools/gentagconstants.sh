@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Helper script for generation of named constants for a tag in
+# the command or data dictionary. Manual adjustments after
+# creation may be necessary.
 
 function write_tag_constant {
    echo "const elementfield::tag_type $3 {$1, $2};"
@@ -21,8 +24,10 @@ for file in $(echo "$1 $2"); do
    
       GID=$(echo "$(echo $TAG | cut -d ',' -f1 | tr -d '(')")
       EID=$(echo "$(echo $TAG | cut -d ',' -f2 | tr -d ')')")
+
+      KEYWCLEAN=$(echo $KEYW | sed -e 's/[^a-zA-Z0-9]//g')
    
-      write_tag_constant "$GID" "$EID" "$KEYW" 
+      write_tag_constant "$GID" "$EID" "$KEYWCLEAN" 
    
    done < $file
 done
