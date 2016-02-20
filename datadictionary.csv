@@ -293,9 +293,9 @@
 (0x0014,0x3026); DS; Vertical Offset of; VerticalOffsetOfSensor; 1; 
 (0x0014,0x3028); DS; Sensor Temperature; SensorTemperature; 1; 
 (0x0014,0x3040); SQ; Dark Current; DarkCurrentSequence; 1; 
-(0x0014,0x3050); or; Dark Current Counts; DarkCurrentCounts; 1; 
+(0x0014,0x3050); OB OW; Dark Current Counts; DarkCurrentCounts; 1; 
 (0x0014,0x3060); SQ; Gain Correction; GainCorrectionReferenceSequence; 1; 
-(0x0014,0x3070); or; Air Counts; AirCounts; 1; 
+(0x0014,0x3070); OB OW; Air Counts; AirCounts; 1; 
 (0x0014,0x3071); DS; KV Used in Gain; KVUsedInGainCalibration; 1; 
 (0x0014,0x3072); DS; MA Used in Gain; MAUsedInGainCalibration; 1; 
 (0x0014,0x3073); DS; Used for; NumberOfFramesUsedForIntegration; 1; 
@@ -450,7 +450,7 @@
 (0x0018,0x1049); DS; Ingredient; ContrastBolusIngredientConcentration; 1; 
 (0x0018,0x1050); DS; Spatial Resolution; SpatialResolution; 1; 
 (0x0018,0x1060); DS; Trigger Time; TriggerTime; 1; 
-(0x0018,0x1061); LO; Trigger Source or; TriggerSourceOrType; 1; 
+(0x0018,0x1061); LO; Trigger Source or Type; TriggerSourceOrType; 1; 
 (0x0018,0x1062); IS; Nominal Interval; NominalInterval; 1; 
 (0x0018,0x1063); DS; Frame Time; FrameTime; 1; 
 (0x0018,0x1064); LO; Cardiac Framing; CardiacFramingType; 1; 
@@ -1421,7 +1421,7 @@
 (0x0028,0x0068); US; Repeat Interval; RepeatInterval; 1; RET
 (0x0028,0x0069); US; Bits Grouped; BitsGrouped; 1; RET
 (0x0028,0x0070); US; Perimeter Table; PerimeterTable; 1-; RET
-(0x0028,0x0071); or; Perimeter Value; PerimeterValue; 1; RET
+(0x0028,0x0071); US SS; Perimeter Value; PerimeterValue; 1; RET
 (0x0028,0x0080); US; Predictor Rows; PredictorRows; 1; RET
 (0x0028,0x0081); US; Predictor Columns; PredictorColumns; 1; RET
 (0x0028,0x0082); US; Predictor Constants; PredictorConstants; 1-; RET
@@ -1434,16 +1434,16 @@
 (0x0028,0x0101); US; Bits Stored; BitsStored; 1; 
 (0x0028,0x0102); US; High Bit; HighBit; 1; 
 (0x0028,0x0103); US; Pixel; PixelRepresentation; 1; 
-(0x0028,0x0104); or; Pixel Value; SmallestValidPixelValue; 1; RET
-(0x0028,0x0105); or; Value; LargestValidPixelValue; 1; RET
-(0x0028,0x0106); or; Pixel Value; SmallestImagePixelValue; 1; 
-(0x0028,0x0107); or; Value; LargestImagePixelValue; 1; 
-(0x0028,0x0108); or; Value in Series; SmallestPixelValueInSeries; 1; 
-(0x0028,0x0109); or; in Series; LargestPixelValueInSeries; 1; 
-(0x0028,0x0110); or; Pixel Value in; SmallestImagePixelValueInPlane; 1; RET
-(0x0028,0x0111); or; Value in Plane; LargestImagePixelValueInPlane; 1; RET
-(0x0028,0x0120); or; Pixel Padding Value; PixelPaddingValue; 1; 
-(0x0028,0x0121); or; Limit; PixelPaddingRangeLimit; 1; 
+(0x0028,0x0104); US SS; Pixel Value; SmallestValidPixelValue; 1; RET
+(0x0028,0x0105); US SS; Value; LargestValidPixelValue; 1; RET
+(0x0028,0x0106); US SS; Pixel Value; SmallestImagePixelValue; 1; 
+(0x0028,0x0107); US SS; Value; LargestImagePixelValue; 1; 
+(0x0028,0x0108); US SS; Value in Series; SmallestPixelValueInSeries; 1; 
+(0x0028,0x0109); US SS; in Series; LargestPixelValueInSeries; 1; 
+(0x0028,0x0110); US SS; Pixel Value in; SmallestImagePixelValueInPlane; 1; RET
+(0x0028,0x0111); US SS; Value in Plane; LargestImagePixelValueInPlane; 1; RET
+(0x0028,0x0120); US SS; Pixel Padding Value; PixelPaddingValue; 1; 
+(0x0028,0x0121); US SS; Limit; PixelPaddingRangeLimit; 1; 
 (0x0028,0x0200); US; Image Location; ImageLocation; 1; RET
 (0x0028,0x0300); CS; Quality Control; QualityControlImage; 1; 
 (0x0028,0x0301); CS; Burned In; BurnedInAnnotation; 1; 
@@ -1485,16 +1485,16 @@
 (0x0028,0x1056); CS; VOI LUT Function; VOILUTFunction; 1; 
 (0x0028,0x1080); CS; Gray Scale; GrayScale; 1; RET
 (0x0028,0x1090); CS; Recommended Viewing; RecommendedViewingMode; 1; 
-(0x0028,0x1100); or; Descriptor; GrayLookupTableDescriptor; 3; RET
-(0x0028,0x1101); or; Lookup Table; RedPaletteColorLookupTableDescriptor; 3; 
-(0x0028,0x1102); or; Lookup Table; GreenPaletteColorLookupTableDescriptor; 3; 
-(0x0028,0x1103); or; Lookup Table; BluePaletteColorLookupTableDescriptor; 3; 
+(0x0028,0x1100); US SS; Gray Lookup Table Descriptor; GrayLookupTableDescriptor; 3; RET
+(0x0028,0x1101); US SS; Lookup Table; RedPaletteColorLookupTableDescriptor; 3; 
+(0x0028,0x1102); US SS; Lookup Table; GreenPaletteColorLookupTableDescriptor; 3; 
+(0x0028,0x1103); US SS; Lookup Table; BluePaletteColorLookupTableDescriptor; 3; 
 (0x0028,0x1104); US; Lookup Table; AlphaPaletteColorLookupTableDescriptor; 3; 
-(0x0028,0x1111); or; Color Lookup Table; LargeRedPaletteColorLookupTableDescriptor; 4; RET
-(0x0028,0x1112); or; Color Lookup Table; LargeGreenPaletteColorLookupTableDescriptor; 4; RET
-(0x0028,0x1113); or; Color Lookup Table; LargeBluePaletteColorLookupTableDescriptor; 4; RET
+(0x0028,0x1111); US SS; Color Lookup Table; LargeRedPaletteColorLookupTableDescriptor; 4; RET
+(0x0028,0x1112); US SS; Color Lookup Table; LargeGreenPaletteColorLookupTableDescriptor; 4; RET
+(0x0028,0x1113); US SS; Color Lookup Table; LargeBluePaletteColorLookupTableDescriptor; 4; RET
 (0x0028,0x1199); UI; Palette Color; PaletteColorLookupTableUID; 1; 
-(0x0028,0x1200); SS; Data; GrayLookupTableData; n; RET
+(0x0028,0x1200); US SS OW; Data; GrayLookupTableData; n; RET
 (0x0028,0x1201); OW; Red Palette Color; RedPaletteColorLookupTableData; 1; 
 (0x0028,0x1202); OW; Green Palette Color; GreenPaletteColorLookupTableData; 1; 
 (0x0028,0x1203); OW; Blue Palette Color; BluePaletteColorLookupTableData; 1; 
@@ -1530,10 +1530,10 @@
 (0x0028,0x2112); DS; Lossy Image; LossyImageCompressionRatio; 1-; 
 (0x0028,0x2114); CS; Lossy Image; LossyImageCompressionMethod; 1-; 
 (0x0028,0x3000); SQ; Modality LUT; ModalityLUTSequence; 1; 
-(0x0028,0x3002); or; LUT Descriptor; LUTDescriptor; 3; 
+(0x0028,0x3002); US SS; LUT Descriptor; LUTDescriptor; 3; 
 (0x0028,0x3003); LO; LUT Explanation; LUTExplanation; 1; 
 (0x0028,0x3004); LO; Modality LUT Type; ModalityLUTType; 1; 
-(0x0028,0x3006); or; LUT Data; LUTData; n; 
+(0x0028,0x3006); US OW; LUT Data; LUTData; n; 
 (0x0028,0x3010); SQ; VOI LUT Sequence; VOILUTSequence; 1; 
 (0x0028,0x3110); SQ; Softcopy VOI LUT; SoftcopyVOILUTSequence; 1; 
 (0x0028,0x4000); LT; Image Presentation; ImagePresentationComments; 1; RET
@@ -1844,9 +1844,9 @@
 (0x0040,0x9096); SQ; Real World Value; RealWorldValueMappingSequence; 1; 
 (0x0040,0x9098); SQ; Pixel Value Mapping; PixelValueMappingCodeSequence; 1; 
 (0x0040,0x9210); SH; LUT Label; LUTLabel; 1; 
-(0x0040,0x9211); or; Last Value Mapped; RealWorldValueLastValueMapped; 1; 
+(0x0040,0x9211); US SS; Last Value Mapped; RealWorldValueLastValueMapped; 1; 
 (0x0040,0x9212); FD; Real World Value; RealWorldValueLUTData; 1-; 
-(0x0040,0x9216); or; First Value Mapped; RealWorldValueFirstValueMapped; 1; 
+(0x0040,0x9216); US SS; First Value Mapped; RealWorldValueFirstValueMapped; 1; 
 (0x0040,0x9224); FD; Real World Value; RealWorldValueIntercept; 1; 
 (0x0040,0x9225); FD; Real World Value; RealWorldValueSlope; 1; 
 (0x0040,0xA007); CS; Findings Flag; FindingsFlagTrial; 1; RET
@@ -2198,8 +2198,8 @@
 (0x0054,0x1401); CS; Dead Time; DeadTimeCorrectionFlag; 1; RET
 (0x0060,0x3000); SQ; Histogram Sequence; HistogramSequence; 1; 
 (0x0060,0x3002); US; Histogram Number of; HistogramNumberOfBins; 1; 
-(0x0060,0x3004); or; Value; HistogramFirstBinValue; 1; 
-(0x0060,0x3006); or; Value; HistogramLastBinValue; 1; 
+(0x0060,0x3004); US SS; Value; HistogramFirstBinValue; 1; 
+(0x0060,0x3006); US SS; Value; HistogramLastBinValue; 1; 
 (0x0060,0x3008); US; Histogram Bin Width; HistogramBinWidth; 1; 
 (0x0060,0x3010); LO; Histogram; HistogramExplanation; 1; 
 (0x0060,0x3020); UL; Histogram Data; HistogramData; 1-; 
@@ -3499,21 +3499,21 @@
 (0x50xx,0x2006); UL; Number of Samples; NumberOfSamples; 1; RET
 (0x50xx,0x2008); UL; Sample Rate; SampleRate; 1; RET
 (0x50xx,0x200A); UL; Total Time; TotalTime; 1; RET
-(0x50xx,0x200C); OB; Audio Sample Data AudioSampleData OW; or; 1; RET
+(0x50xx,0x200C); OB OW; Audio Sample Data; AudioSampleData; 1; RET
 (0x50xx,0x200E); LT; Audio Comments; AudioComments; 1; RET
 (0x50xx,0x2500); LO; Curve Label; CurveLabel; 1; RET
 (0x50xx,0x2600); SQ; Curve Referenced; CurveReferencedOverlaySequence; 1; RET
 (0x50xx,0x2610); US; Curve Referenced; CurveReferencedOverlayGroup; 1; RET
-(0x50xx,0x3000); OB; Curve Data CurveData OW; or; 1; RET
+(0x50xx,0x3000); OB OW; Curve Data; CurveData; 1; RET
 (0x5200,0x9229); SQ; Shared Functional; SharedFunctionalGroupsSequence; 1; 
 (0x5200,0x9230); SQ; Functional Groups; PerFrameFunctionalGroupsSequence; 1; 
 (0x5400,0x0100); SQ; Waveform Sequence; WaveformSequence; 1; 
-(0x5400,0x0110); OW; Channel Minimum ChannelMinimumValue OB; or; 1; 
-(0x5400,0x0112); OW; Channel Maximum ChannelMaximumValue OB; or; 1; 
+(0x5400,0x0110); OB OW; Channel Minimum; ChannelMinimumValue; 1; 
+(0x5400,0x0112); OB OW; Channel Maximum; ChannelMaximumValue; 1; 
 (0x5400,0x1004); US; Waveform Bits; WaveformBitsAllocated; 1; 
 (0x5400,0x1006); CS; Waveform Sample; WaveformSampleInterpretation; 1; 
-(0x5400,0x100A); OW; Waveform Padding WaveformPaddingValue OB; or; 1; 
-(0x5400,0x1010); OW; Waveform Data WaveformData OB; or; 1; 
+(0x5400,0x100A); OB OW; Waveform Padding; WaveformPaddingValue; 1; 
+(0x5400,0x1010); OB OW; Waveform Data; WaveformData; 1; 
 (0x5600,0x0010); OF; First Order Phase; FirstOrderPhaseCorrectionAngle; 1; 
 (0x5600,0x0020); OF; Spectroscopy Data; SpectroscopyData; 1; 
 (0x60xx,0x0010); US; Overlay Rows; OverlayRows; 1; 
@@ -3554,13 +3554,13 @@
 (0x60xx,0x1302); DS; ROI Mean; ROIMean; 1; 
 (0x60xx,0x1303); DS; ROI Standard; ROIStandardDeviation; 1; 
 (0x60xx,0x1500); LO; Overlay Label; OverlayLabel; 1; 
-(0x60xx,0x3000); OW; Overlay Data OverlayData OB; or; 1; 
+(0x60xx,0x3000); OB OW; Overlay Data; OverlayData; 1; 
 (0x60xx,0x4000); LT; Overlay Comments; OverlayComments; 1; RET
-(0x7FE0,0x0010); OB; Pixel Data PixelData OW; or; 1; 
+(0x7FE0,0x0010); OB OW; Pixel Data; PixelData; 1; 
 (0x7FE0,0x0020); OW; Coefficients SDVN; CoefficientsSDVN; 1; RET
 (0x7FE0,0x0030); OW; Coefficients SDHN; CoefficientsSDHN; 1; RET
 (0x7FE0,0x0040); OW; Coefficients SDDN; CoefficientsSDDN; 1; RET
-(0x7Fxx,0x0010); OB; Variable Pixel VariablePixelData OW; or; 1; RET
+(0x7Fxx,0x0010); OB OW; Variable Pixel; VariablePixelData; 1; RET
 (0x7Fxx,0x0011); US; Variable Next; VariableNextDataGroup; 1; RET
 (0x7Fxx,0x0020); OW; Variable; VariableCoefficientsSDVN; 1; RET
 (0x7Fxx,0x0030); OW; Variable; VariableCoefficientsSDHN; 1; RET
