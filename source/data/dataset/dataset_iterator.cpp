@@ -137,8 +137,8 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
          cit = step_into_nested(cit);
          return cit;
       }
-   } else if (commanddic.lookup(cit->first).vr == VR::SQ ||
-              datadic.lookup(cit->first).vr == VR::SQ) {
+   } else if (commanddic.lookup(cit->first).vr[0] == VR::SQ ||
+              datadic.lookup(cit->first).vr[0] == VR::SQ) {
       cit = step_into_nested(cit);
       return cit;
    }
@@ -153,8 +153,8 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
    if (is_in_nested() && (curr == nested_sets.top().begin() )) {
       return (cit = step_backw_outof_nested());
    } else if ((cit->second.value_rep.is_initialized() && cit->second.value_rep == VR::SQ) ||
-              commanddic.lookup(cit->first).vr == VR::SQ ||
-               datadic.lookup(cit->first).vr == VR::SQ) {
+              commanddic.lookup(cit->first).vr[0] == VR::SQ ||
+               datadic.lookup(cit->first).vr[0] == VR::SQ) {
       return (cit = step_backw_into_nested(cit));
    }
 

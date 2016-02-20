@@ -41,7 +41,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
       pos += 4;
       std::size_t value_len = decode_len_little_endian(data, pos);
       pos += 4;
-      VR repr = dict.lookup(tag).vr;
+      VR repr = dict.lookup(tag).vr[0];
 
       if (repr == VR::SQ) {
          nested_sets++;
@@ -72,7 +72,7 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
       pos += 4;
 
       if (tag != elementfield::tag_type {0xfffe, 0xe0dd}) {
-         VR repr = dict.get().lookup(tag).vr;
+         VR repr = dict.get().lookup(tag).vr[0];
 
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict.get()) : value_len;
@@ -105,7 +105,8 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
       if (vrtype == VR_TYPE::EXPLICIT) {
          repr = attr.second.value_rep.get();
       } else {
-         repr = dict.get().lookup(attr.first).vr;
+         /** @todo handle options */
+         repr = dict.get().lookup(attr.first).vr[0];
       }
       auto data = serialize_attribute(attr.second, repr);
       auto tag = encode_tag_little_endian(attr.first);

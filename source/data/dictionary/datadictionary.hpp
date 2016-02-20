@@ -20,7 +20,7 @@ struct datadictionary;
 template<unsigned gid, unsigned eid>
 struct datadictionary<gid, eid, bool_t<(gid & 0xffff) == 0x0008>, bool_t<(eid & 0xffff) == 0x0001>>: dictionary_entry {
    datadictionary():
-      dictionary_entry(attribute::VR::UL, "Length to End", "LengthToEnd", "1", true) {}
+      dictionary_entry({attribute::VR::UL, attribute::VR::NN}, "Length to End", "LengthToEnd", "1", true) {}
 };
 template<unsigned gid, unsigned eid>
 struct datadictionary<gid, eid, bool_t<(gid & 0xffff) == 0x0008>, bool_t<(eid & 0xffff) == 0x0005>>: dictionary_entry {
