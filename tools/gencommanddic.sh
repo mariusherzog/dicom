@@ -5,7 +5,7 @@ function write_cmd_struct {
    echo "template<>
 struct commanddictionary<$1, $2>: dictionary_entry {
    commanddictionary():
-      dictionary_entry(attribute::VR::$3, \"$4\", \"$5\", \"$6\", false) {}
+      dictionary_entry({attribute::VR::$3, attribute::VR::NN, attribute::VR::NN}, \"$4\", \"$5\", \"$6\", false) {}
 };"
 }
 
