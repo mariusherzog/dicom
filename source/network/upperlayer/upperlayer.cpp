@@ -195,6 +195,16 @@ void scx::do_read()
 
                statem.transition(e); // side effects of the statemachine's transition function
 
+               bool read = false;
+               if (read) {
+                  boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(20),
+                     [=](const boost::system::error_code& error, std::size_t bytes) {
+                     int q = (*rem_data)[0];
+                     std::cout << q;
+                  });
+                  return;
+               }
+
                // call appropriate handler
                if (received_pdu != boost::none) {
                   auto property = make_property(*compl_data);
@@ -202,6 +212,7 @@ void scx::do_read()
                   handlers[ptype](this, std::move(property));
                }
                received_pdu = boost::none;
+
 
                if (get_state() == statemachine::CONN_STATE::STA13) {
                   close_connection();
@@ -294,6 +305,11 @@ void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f
 void scx::inject_conf(TYPE t, std::function<void(scx*, property*)> f)
 {
    handlers_conf[t] = f;
+}
+
+void scx::schedule_read()
+{
+   this->do_read();
 }
 
 statemachine::CONN_STATE scx::get_state()
