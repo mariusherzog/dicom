@@ -62,9 +62,11 @@ using namespace dicom::util::log;
 
 
 
-scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+scx::scx(data::dictionary::dictionary& dict,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
    logger {"upperlayer"},
+   proc {data::dataset::commandset_processor {dict}},
    received_pdu {boost::none},
    handlers {}
 {
@@ -195,15 +197,45 @@ void scx::do_read()
 
                statem.transition(e); // side effects of the statemachine's transition function
 
-               bool read = false;
-               if (read) {
-                  boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(20),
-                     [=](const boost::system::error_code& error, std::size_t bytes) {
-                     int q = (*rem_data)[0];
-                     std::cout << q;
-                  });
-                  return;
+
+               if (ptype == TYPE::P_DATA_TF) {
+                  using namespace data::attribute;
+                  auto dataprop = make_property(*compl_data);
+                  auto pdataprop = dynamic_cast<p_data_tf*>(dataprop.get());
+                  assert(pdataprop);
+                  if (!pdataprop->command_set.empty()) {
+                     auto commandset = proc.deserialize(pdataprop->command_set);
+                     unsigned short datasetpresent;
+                     get_value_field<VR::US>(commandset.at({0x0000, 0x0800}), datasetpresent);
+                     if (datasetpresent != 0x0101) {
+
+                        // schedule another
+                        auto nextbuflen = std::make_shared<std::vector<unsigned char>>(6);
+                        auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
+                        boost::asio::async_read(sock(), boost::asio::buffer(*nextbuflen), boost::asio::transfer_exactly(6),
+                           [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
+                              if (error) {
+                                 throw boost::system::system_error(error);
+                              }
+                              std::size_t len = be_char_to_32b({nextbuflen->begin()+2, nextbuflen->begin()+6});
+                              nextbufdata->resize(len);
+                              boost::asio::async_read(sock(), boost::asio::buffer(*nextbufdata),
+                              [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
+                                 if (error) {
+                                    throw boost::system::system_error(error);
+                                 }
+                                 compl_data->insert(compl_data->end(), nextbuflen->begin(), nextbuflen->end());
+                                 compl_data->insert(compl_data->end(), nextbufdata->begin(), nextbufdata->end());
+                                 int x;
+                                 x++;
+                              });
+                        });
+                        return;
+                     }
+                  }
                }
+
+
 
                // call appropriate handler
                if (received_pdu != boost::none) {
@@ -318,8 +350,10 @@ statemachine::CONN_STATE scx::get_state()
 }
 
 
-scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {l},
+scp::scp(data::dictionary::dictionary& dict,
+         short port,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx {dict, l},
    io_service {},
    socket {io_service},
    acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
@@ -337,8 +371,11 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
       });
 }
 
-scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {l},
+scu::scu(data::dictionary::dictionary& dict,
+         std::string host, std::string port,
+         a_associate_rq& rq,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx {dict, l},
    io_service {},
    resolver {io_service},
    query {host, port},

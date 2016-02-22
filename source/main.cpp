@@ -81,7 +81,7 @@ int main()
    {
       auto request_property = ascdef.get_initial_request();
 //      dicom::network::upperlayer::scu sc("192.168.2.103", "11112", request_property);
-      dicom::network::upperlayer::scp sc(11113);
+      dicom::network::upperlayer::scp sc(dict, 11113);
       dicom::network::dimse::dimse_pm dpm(sc,
          ascdef,
          dict
