@@ -387,11 +387,11 @@ static upperlayer::p_data_tf assemble_cfind_rsp(response r, int pres_context_id,
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at({0x0000, 0x0002}), SOP_uid);
-   get_value_field<VR::US>(cs.at({0x0000, 0x0120}), message_id);
+   get_value_field<VR::US>(cs.at({0x0000, 0x0110}), message_id);
 
-   cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, SOP_uid);
+   cresp[{0x0000, 0x0002}] = make_elementfield<VR::UI>(22, SOP_uid);
    cresp[{0x0000, 0x0100}] = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
-   cresp[{0x0000, 0x0110}] = make_elementfield<VR::US>(2, message_id);
+   cresp[{0x0000, 0x0120}] = make_elementfield<VR::US>(2, message_id);
    cresp[{0x0000, 0x0800}] = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
    cresp[{0x0000, 0x0900}] = make_elementfield<VR::US>(2, r.get_status());
 
