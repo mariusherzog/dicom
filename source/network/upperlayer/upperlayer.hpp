@@ -69,7 +69,6 @@ struct Istate_trans_ops
 struct Iupperlayer_comm_ops
 {
       virtual void queue_for_write(std::unique_ptr<property> p) = 0;
-      virtual void schedule_read() = 0;
       virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
       virtual void inject_conf(TYPE t, std::function<void(scx*, property* f)>) = 0;
       virtual ~Iupperlayer_comm_ops() = 0;
@@ -127,8 +126,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] f
        */
       void inject_conf(TYPE t, std::function<void(scx*, property*)> f) override;
-
-      void schedule_read() override;
 
       /**
        * @brief queue_for_write takes ownership of a property and queues it for
@@ -213,6 +210,20 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] p
        */
       void send(property* p);
+
+      /**
+       * @brief handle_pdu calls the pdu-type specific handler
+       * @param p property containing data
+       * @param ptype type of the pdu / property
+       */
+      void handle_pdu(std::unique_ptr<property> p, TYPE ptype);
+
+      /**
+       * @brief get_complete_dataset reads the complete dataset and stores it
+       *        in the property's dataset member.
+       * @param[in] data
+       */
+      void get_complete_dataset(std::vector<unsigned char> data);
 
       /**
        * @brief sock is used by send() and receive() to access the socket of the
