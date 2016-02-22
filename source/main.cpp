@@ -26,7 +26,7 @@ int main()
    data[dicom::data::attribute::ContrastBolus];
 
 
-   dicom::data::dictionary::dictionary dict {"commanddictionary.csv"};
+   dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP,
