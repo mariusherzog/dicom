@@ -1,8 +1,9 @@
 #include "transfer_processor.hpp"
 
 #include "data/attribute/attribute_field_coder.hpp"
-#include "dataset_iterator.hpp"
+#include "data/attribute/constants.hpp"
 #include "data/dictionary/dictionary_entry.hpp" // vr of string
+#include "dataset_iterator.hpp"
 
 namespace dicom
 {
@@ -33,8 +34,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
    int nested_sets = 0;
    while (pos < data.size()) {
       elementfield::tag_type tag = decode_tag_little_endian(data, pos);
-      if (tag == elementfield::tag_type {0xfffe, 0xe0dd}
-          && nested_sets-- == 0) {
+      if (tag == SequenceDelimitationItem && nested_sets-- == 0) {
          pos += 8;
          break;
       }
@@ -71,7 +71,7 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
       std::size_t value_len = decode_len_little_endian(data, pos);
       pos += 4;
 
-      if (tag != elementfield::tag_type {0xfffe, 0xe0dd}) {
+      if (tag != SequenceDelimitationItem) {
          VR repr = dict.get().lookup(tag).vr;
 
          if (repr == VR::SQ) {

@@ -3,9 +3,12 @@
 #include <iostream>
 #include <iomanip>
 
-#include "dataset_iterator.hpp"
+
+#include "data/attribute/constants.hpp"
 #include "data/dictionary/dictionary.hpp"
 #include "data/dictionary/dictionary_entry.hpp"
+
+#include "dataset_iterator.hpp"
 
 namespace dicom
 {
@@ -25,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
 
    int depth = 0;
    for (const auto attr : dataset_iterator_adaptor(data)) {
-      if (attr.first == elementfield::tag_type {0xfffe, 0xe0dd}) {
+      if (attr.first == SequenceDelimitationItem) {
          depth--;
       }
       if (attr.second.value_rep == VR::SQ) {
