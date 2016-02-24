@@ -23,7 +23,7 @@ int main()
    using namespace dicom::network;
 
    dataset::iod data;
-   data[dicom::data::attribute::ContrastBolus];
+   data[dicom::data::attribute::Item];
 
 
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
