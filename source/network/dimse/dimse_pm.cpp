@@ -66,7 +66,8 @@ void dimse_pm::send_response(response r)
 {
    using namespace upperlayer;
    using namespace util::log;
-   BOOST_LOG_SEV(logger, info) << "User requested response";
+   BOOST_LOG_SEV(logger, info) << "User-issued request / response indication "
+                                  "of type " << r.get_response_type();
 
    std::string sop_uid;
    for (auto e : dataset_iterator_adaptor(r.get_command())) {
@@ -231,7 +232,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    commandset_processor proc {dict};
    commandset_data b = proc.deserialize(d->command_set);
 
-   BOOST_LOG_SEV(logger, info) << "Received response from remote";
+   BOOST_LOG_SEV(logger, info) << "Message from peer received";
 
    iod dataset;
    if (!d->data_set.empty()) {
@@ -252,6 +253,8 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    BOOST_LOG_SEV(logger, debug) << "SOP UID: \t" << SOP_UID << "\n"
                                 << "Service Group: \t" << dsg << "\n"
                                 << "Message ID: \t" << std::to_string(message_id) << "\n";
+
+   BOOST_LOG_SEV(logger, info) << "Issuing indication primitive to user";
 
    auto pcontexts = operations.get_SOP_class(SOP_UID);
    for (auto pc : pcontexts) {

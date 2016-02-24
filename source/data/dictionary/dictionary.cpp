@@ -38,10 +38,8 @@ dictionary_entry dictionary::lookup_datadic(attribute::elementfield::tag_type ta
 dictionary_entry dictionary::lookup(attribute::elementfield::tag_type tag)
 {
    try {
-      dictionary_entry d = commanddic.lookup(tag);
-      return d;
+      return commanddic.lookup(tag);
    } catch (std::exception& e) {
-      std::cout << e.what();
       return datadic.lookup(tag);
    }
 }
