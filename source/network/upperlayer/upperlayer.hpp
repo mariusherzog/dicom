@@ -18,6 +18,8 @@
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
 
+#include "data/dataset/transfer_processor.hpp"
+
 #include "util/channel_sev_logger.hpp"
 
 
@@ -92,7 +94,8 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 {
    public:
 
-      explicit scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
+      explicit scx(data::dictionary::dictionary& dict,
+                   std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       scx(const scx&) = delete;
       scx& operator=(const scx&) = delete;
       virtual ~scx() = 0;
@@ -209,6 +212,20 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       void send(property* p);
 
       /**
+       * @brief handle_pdu calls the pdu-type specific handler
+       * @param p property containing data
+       * @param ptype type of the pdu / property
+       */
+      void handle_pdu(std::unique_ptr<property> p, TYPE ptype);
+
+      /**
+       * @brief get_complete_dataset reads the complete dataset and stores it
+       *        in the property's dataset member.
+       * @param[in] data
+       */
+      void get_complete_dataset(std::vector<unsigned char> data);
+
+      /**
        * @brief sock is used by send() and receive() to access the socket of the
        *        subclasses
        * @return ref to boost::asio::ip::tcp::socket of the subclass
@@ -233,6 +250,8 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        */
       virtual boost::asio::steady_timer& artim_timer() = 0;
 
+      data::dataset::commandset_processor proc;
+
       std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
@@ -244,7 +263,9 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 class scp: public scx
 {
    public:
-      scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+      scp(data::dictionary::dictionary& dict,
+          short port,
+          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -267,7 +288,10 @@ class scp: public scx
 class scu: public scx
 {
    public:
-      scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+      scu(data::dictionary::dictionary& dict,
+          std::string host, std::string port,
+          a_associate_rq& rq,
+          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
 

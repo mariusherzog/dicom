@@ -70,9 +70,10 @@ property::~property()
 
 void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 {
-   std::size_t pos = 6;
+   std::size_t pos = 0;
    bool pdvs_left = true;
-   while (pdvs_left) {
+   while (pdvs_left || pos < pdu.size()-1) {
+      pos += 6;
       std::size_t pdv_len = be_char_to_32b({pdu.begin()+pos, pdu.begin()+pos+4});
       pos += 4;
       pres_context_id = pdu[pos];
@@ -87,7 +88,8 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
       }
 
       pdvs_left = !(msg_control & 0x02);
-      pos += pdv_len;
+      pos += pdv_len-2; // message control id and presentation context id are
+                        // included in the length
    }
 }
 
