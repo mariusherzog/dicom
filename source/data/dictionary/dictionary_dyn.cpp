@@ -3,6 +3,7 @@
 #include <vector>
 #include <exception>
 #include <sstream>
+#include <array>
 
 #include <cassert>
 
@@ -81,16 +82,34 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
       std::string strtag;
       std::getline(entry, strtag, ';');
       if (comparetag(strtag, tag)) {
+
+         std::array<attribute::VR, 3> vrs;
+         vrs.fill(attribute::VR::NN);
+
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
             fields[i] = trim(fields[i]);
+            if (i==0) {
+               int j = 0;
+               bool end = false;
+               std::string field = fields[i];
+               do {
+                  std::size_t pos = field.find_first_of(" \t");
+                  end = (pos == std::string::npos);
+                  pos = (pos == std::string::npos)
+                        ? fields[i].size()
+                        : pos;
+                  std::string strvr = field.substr(0, pos);
+                  field = field.substr(pos, field.size());
+                  vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
+               } while (j<2 && !end);
+            }
          }
          bool retired = fields[num_fields-2] == "RET";
          return dictionary_entry {
-            /** @todo parse additional vr options */
-            {dictionary_entry::vr_of_string.left.at(fields[0]), attribute::VR::NN, attribute::VR::NN}
-                  , fields[1], fields[2], fields[3], retired};
+            {vrs[0], vrs[1], vrs[2]}, fields[1], fields[2], fields[3], retired};
+
       }
    }
    throw std::runtime_error {"Tag not found"};
