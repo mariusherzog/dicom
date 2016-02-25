@@ -2,6 +2,8 @@
 
 #include <stack>
 
+#include "data/attribute/constants.hpp"
+
 namespace dicom
 {
 
@@ -128,7 +130,7 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
       nested_set_sizes.top().curr_nestedset_size += cit->second.value_len + 4 + 4;
    }
 
-   if (cit->first == elementfield::tag_type {0xfffe, 0xe0dd}
+   if (cit->first == SequenceDelimitationItem
        || (is_in_nested() && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
       //sequence delimination item encountered
       return (cit = step_outof_nested());

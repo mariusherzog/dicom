@@ -3567,6 +3567,6 @@
 (0x7Fxx,0x0040); OW; Variable; VariableCoefficientsSDDN; 1; RET
 (0xFFFA,0xFFFA); SQ; Signatures; DigitalSignaturesSequence; 1; 
 (0xFFFC,0xFFFC); OB; Data Set Trailing; DataSetTrailingPadding; 1; 
-(0xFFFE,0xE000); NN; Item Item; see; 1; 
-(0xFFFE,0xE00D); NN; Item Delimitation ItemDelimitationItem; see; 1; 
-(0xFFFE,0xE0DD); NN; Sequence SequenceDelimitationItem; see; 1; 
+(0xFFFE,0xE000); NN; Item; Item; 1; 
+(0xFFFE,0xE00D); NN; Item Delimitation; ItemDelimitationItem; 1; 
+(0xFFFE,0xE0DD); NN; Sequence; SequenceDelimitationItem; 1; 

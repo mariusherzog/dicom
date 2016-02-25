@@ -27,6 +27,7 @@ static std::string trim(std::string s)
 {
    if (s.size() > 0) {
       int f = s.find_first_not_of(" ");
+      if (f < 0) return s;
       std::string n = s.substr(f, s.size());
       int l = n.find_last_not_of(" ");
       return s.substr(f, l+1);
@@ -88,8 +89,8 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
          bool retired = fields[num_fields-2] == "RET";
          return dictionary_entry {
             /** @todo parse additional vr options */
-            {dictionary_entry::vr_of_string.left.at(fields[2]), attribute::VR::NN, attribute::VR::NN}
-                  , fields[0], fields[1], fields[3], retired};
+            {dictionary_entry::vr_of_string.left.at(fields[0]), attribute::VR::NN, attribute::VR::NN}
+                  , fields[1], fields[2], fields[3], retired};
       }
    }
    throw std::runtime_error {"Tag not found"};

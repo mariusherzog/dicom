@@ -62,9 +62,11 @@ using namespace dicom::util::log;
 
 
 
-scx::scx(std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+scx::scx(data::dictionary::dictionary& dict,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
    logger {"upperlayer"},
+   proc {data::dataset::commandset_processor {dict}},
    received_pdu {boost::none},
    handlers {}
 {
@@ -132,6 +134,50 @@ void scx::send(property* p)
    }
 }
 
+void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
+{
+   handlers[ptype](this, std::move(p));
+
+   if (get_state() == statemachine::CONN_STATE::STA13) {
+      close_connection();
+   }
+
+   // be ready for new data
+   if (!io_s().stopped()) {
+      do_read();
+   }
+}
+
+void scx::get_complete_dataset(std::vector<unsigned char> data)
+{
+   auto nextbuflen = std::make_shared<std::vector<unsigned char>>(6);
+   auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
+   auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
+   boost::asio::async_read(sock(), boost::asio::buffer(*nextbuflen), boost::asio::transfer_exactly(6),
+      [=]
+         (const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
+         if (error) {
+            throw boost::system::system_error(error);
+         }
+         std::size_t len = be_char_to_32b({nextbuflen->begin()+2, nextbuflen->begin()+6});
+         nextbufdata->resize(len);
+         boost::asio::async_read(sock(), boost::asio::buffer(*nextbufdata),
+         [=]
+            (const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
+            if (error) {
+               throw boost::system::system_error(error);
+            }
+            nextbufcompl->reserve(len+6);
+            nextbufcompl->insert(nextbufcompl->end(), nextbuflen->begin(), nextbuflen->end());
+            nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
+            data.insert(data.end(), nextbufcompl->begin(), nextbufcompl->end());
+
+            auto pdu = make_property(data);
+            handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
+         });
+   });
+}
+
 void scx::do_read()
 {
    // because the async operations terminate immediately the containers would go out of scope
@@ -195,22 +241,32 @@ void scx::do_read()
 
                statem.transition(e); // side effects of the statemachine's transition function
 
-               // call appropriate handler
                if (received_pdu != boost::none) {
                   auto property = make_property(*compl_data);
                   BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *property;
-                  handlers[ptype](this, std::move(property));
-               }
-               received_pdu = boost::none;
 
-               if (get_state() == statemachine::CONN_STATE::STA13) {
-                  close_connection();
+                  // PDUs of type p_data_tf may come in fragments and with a
+                  // data set, which needs to be received.
+                  if (ptype == TYPE::P_DATA_TF) {
+                     using namespace data::attribute;
+                     auto pdataprop = dynamic_cast<p_data_tf*>(property.get());
+                     assert(pdataprop);
+                     if (!pdataprop->command_set.empty()) {
+                        // check if a dataset is present in the message
+                        auto commandset = proc.deserialize(pdataprop->command_set);
+                        unsigned short datasetpresent;
+                        get_value_field<VR::US>(commandset.at({0x0000, 0x0800}), datasetpresent);
+                        if (datasetpresent != 0x0101) {
+                           get_complete_dataset(*compl_data);
+                        } else {
+                           handle_pdu(std::move(property), TYPE::P_DATA_TF);
+                        }
+                     }
+                  } else {
+                     handle_pdu(std::move(property), ptype);
+                  }
                }
 
-               // be ready for new data
-               if (!io_s().stopped()) {
-                  do_read();
-               }
             }
          );
       }
@@ -302,8 +358,10 @@ statemachine::CONN_STATE scx::get_state()
 }
 
 
-scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {l},
+scp::scp(data::dictionary::dictionary& dict,
+         short port,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx {dict, l},
    io_service {},
    socket {io_service},
    acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
@@ -321,8 +379,11 @@ scp::scp(short port, std::initializer_list<std::pair<TYPE, std::function<void(sc
       });
 }
 
-scu::scu(std::string host, std::string port, a_associate_rq& rq, std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {l},
+scu::scu(data::dictionary::dictionary& dict,
+         std::string host, std::string port,
+         a_associate_rq& rq,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx {dict, l},
    io_service {},
    resolver {io_service},
    query {host, port},
