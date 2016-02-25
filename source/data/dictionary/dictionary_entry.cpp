@@ -1,5 +1,7 @@
 #include "dictionary_entry.hpp"
 
+#include <algorithm>
+
 using namespace dicom::data::attribute;
 
 namespace dicom
@@ -11,12 +13,19 @@ namespace data
 namespace dictionary
 {
 
-dictionary_entry::dictionary_entry(VR vr, std::string mf, std::string kw
+dictionary_entry::dictionary_entry(std::array<VR, max_vr_options> vr, std::string mf, std::string kw
                                    , std::string vm, bool ret):
-   vr {vr}, message_field {mf}, keyword {kw}, vm {vm}, retired {ret}
+   vr(vr), message_field {mf}, keyword {kw}, vm {vm}, retired {ret}
 {
 
 }
+
+int dictionary_entry::vr_options() const
+{
+   return std::find_if(vr.begin(), vr.end(),
+         [](VR vr) { return vr == VR::NN; }) - vr.begin();
+}
+
 
 template <typename L, typename R>
 boost::bimap<L, R>
