@@ -43,9 +43,10 @@ static std::string trim(std::string s)
  * @param vrstring string containing possible VRs, separated by whitespace
  * @return array of VRs contained in the string
  */
-static std::array<attribute::VR, 3> get_vrs(std::string vrstring)
+static std::array<attribute::VR, dictionary_entry::max_vr_options> get_vrs(std::string vrstring)
 {
-   std::array<attribute::VR, 3> vrs;
+   constexpr int max_vr = dictionary_entry::max_vr_options;
+   std::array<attribute::VR, max_vr> vrs;
    int j = 0;
    bool end = false;
    do {
@@ -57,14 +58,14 @@ static std::array<attribute::VR, 3> get_vrs(std::string vrstring)
       std::string strvr = trim(vrstring.substr(0, pos));
       vrstring = vrstring.substr(pos, vrstring.size());
       vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
-   } while (j<2 && !end);
+   } while (j<max_vr-1 && !end);
 
-   if (j==2 && !end) {
+   if (j==max_vr-1 && !end) {
       std::string strvr = vrstring.substr(0, vrstring.size());
       vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
    }
 
-   for (; j<3; ++j) {
+   for (; j<max_vr; ++j) {
       vrs[j] = attribute::VR::NN;
    }
    return vrs;
@@ -115,7 +116,7 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
       std::string strtag;
       std::getline(entry, strtag, ';');
       if (comparetag(strtag, tag)) {
-         std::array<attribute::VR, 3> vrs;
+         std::array<attribute::VR, dictionary_entry::max_vr_options> vrs;
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
