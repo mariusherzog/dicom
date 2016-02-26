@@ -384,7 +384,7 @@ std::vector<uchar> a_associate_ac::make_pdu() const
 
       // insert presentation context items
       for (const auto pc : pres_contexts) {
-         pack.insert(pack.end(), {0x20, 0x00});
+         pack.insert(pack.end(), {0x21, 0x00});
 
          // Calculating size of presentation context
          std::size_t pcl = pc.transfer_syntax.size();
