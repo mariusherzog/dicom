@@ -3,6 +3,7 @@
 #include <vector>
 #include <exception>
 #include <sstream>
+#include <array>
 
 #include <cassert>
 
@@ -34,6 +35,40 @@ static std::string trim(std::string s)
    } else {
       return s;
    }
+}
+
+/**
+ * @brief get_vrs tokenizes the parameter string and returns an array of VRs
+ *        contained within.
+ * @param vrstring string containing possible VRs, separated by whitespace
+ * @return array of VRs contained in the string
+ */
+static std::array<attribute::VR, dictionary_entry::max_vr_options> get_vrs(std::string vrstring)
+{
+   constexpr int max_vr = dictionary_entry::max_vr_options;
+   std::array<attribute::VR, max_vr> vrs;
+   int j = 0;
+   bool end = false;
+   do {
+      std::size_t pos = vrstring.find_first_of(" \t");
+      end = (pos == std::string::npos);
+      pos = (pos == std::string::npos)
+            ? vrstring.size()
+            : pos+1;
+      std::string strvr = trim(vrstring.substr(0, pos));
+      vrstring = vrstring.substr(pos, vrstring.size());
+      vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
+   } while (j<max_vr-1 && !end);
+
+   if (j==max_vr-1 && !end) {
+      std::string strvr = vrstring.substr(0, vrstring.size());
+      vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
+   }
+
+   for (; j<max_vr; ++j) {
+      vrs[j] = attribute::VR::NN;
+   }
+   return vrs;
 }
 
 
@@ -81,16 +116,19 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
       std::string strtag;
       std::getline(entry, strtag, ';');
       if (comparetag(strtag, tag)) {
+         std::array<attribute::VR, dictionary_entry::max_vr_options> vrs;
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
             fields[i] = trim(fields[i]);
+            if (i==0) {
+               vrs = get_vrs(fields[i]);
+            }
          }
          bool retired = fields[num_fields-2] == "RET";
          return dictionary_entry {
-            /** @todo parse additional vr options */
-            {dictionary_entry::vr_of_string.left.at(fields[0]), attribute::VR::NN, attribute::VR::NN}
-                  , fields[1], fields[2], fields[3], retired};
+            {vrs[0], vrs[1], vrs[2]}, fields[1], fields[2], fields[3], retired};
+
       }
    }
    throw std::runtime_error {"Tag not found"};
@@ -116,17 +154,19 @@ dictionary_entry dictionary_dyn::greedylookup(attribute::elementfield::tag_type 
          unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
          unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
 
+         std::array<attribute::VR, dictionary_entry::max_vr_options> vrs;
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
             fields[i] = trim(fields[i]);
+            if (i==0) {
+               vrs = get_vrs(fields[i]);
+            }
          }
          bool retired = fields[num_fields-2] == "RET";
 
          dict_buffer.emplace(elementfield::tag_type {taggid, tageid}
-            , dictionary_entry {
-               {dictionary_entry::vr_of_string.left.at(fields[2]), attribute::VR::NN, attribute::VR::NN}
-               , fields[0], fields[1], fields[3], retired});
+            , dictionary_entry {{vrs[0], vrs[1], vrs[2]}, fields[1], fields[2], fields[3], retired});
       }
    }
    return dict_buffer.at(tag);
