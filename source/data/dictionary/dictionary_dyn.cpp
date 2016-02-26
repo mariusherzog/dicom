@@ -37,6 +37,39 @@ static std::string trim(std::string s)
    }
 }
 
+/**
+ * @brief get_vrs tokenizes the parameter string and returns an array of VRs
+ *        contained within.
+ * @param vrstring string containing possible VRs, separated by whitespace
+ * @return array of VRs contained in the string
+ */
+static std::array<attribute::VR, 3> get_vrs(std::string vrstring)
+{
+   std::array<attribute::VR, 3> vrs;
+   int j = 0;
+   bool end = false;
+   do {
+      std::size_t pos = vrstring.find_first_of(" \t");
+      end = (pos == std::string::npos);
+      pos = (pos == std::string::npos)
+            ? vrstring.size()
+            : pos+1;
+      std::string strvr = trim(vrstring.substr(0, pos));
+      vrstring = vrstring.substr(pos, vrstring.size());
+      vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
+   } while (j<2 && !end);
+
+   if (j==2 && !end) {
+      std::string strvr = vrstring.substr(0, vrstring.size());
+      vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
+   }
+
+   for (; j<3; ++j) {
+      vrs[j] = attribute::VR::NN;
+   }
+   return vrs;
+}
+
 
 dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
    dictionary_file {file, std::ios_base::in}, buffermode {mode}
@@ -82,28 +115,13 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
       std::string strtag;
       std::getline(entry, strtag, ';');
       if (comparetag(strtag, tag)) {
-
          std::array<attribute::VR, 3> vrs;
-         vrs.fill(attribute::VR::NN);
-
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
             fields[i] = trim(fields[i]);
             if (i==0) {
-               int j = 0;
-               bool end = false;
-               std::string field = fields[i];
-               do {
-                  std::size_t pos = field.find_first_of(" \t");
-                  end = (pos == std::string::npos);
-                  pos = (pos == std::string::npos)
-                        ? fields[i].size()
-                        : pos;
-                  std::string strvr = field.substr(0, pos);
-                  field = field.substr(pos, field.size());
-                  vrs[j++] = dictionary_entry::vr_of_string.left.at(strvr);
-               } while (j<2 && !end);
+               vrs = get_vrs(fields[i]);
             }
          }
          bool retired = fields[num_fields-2] == "RET";
