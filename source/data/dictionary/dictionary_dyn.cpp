@@ -154,17 +154,19 @@ dictionary_entry dictionary_dyn::greedylookup(attribute::elementfield::tag_type 
          unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
          unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
 
+         std::array<attribute::VR, dictionary_entry::max_vr_options> vrs;
          std::string fields[num_fields-1];
          for (int i=0; i<num_fields-1; ++i) {
             std::getline(entry, fields[i], ';');
             fields[i] = trim(fields[i]);
+            if (i==0) {
+               vrs = get_vrs(fields[i]);
+            }
          }
          bool retired = fields[num_fields-2] == "RET";
 
          dict_buffer.emplace(elementfield::tag_type {taggid, tageid}
-            , dictionary_entry {
-               {dictionary_entry::vr_of_string.left.at(fields[2]), attribute::VR::NN, attribute::VR::NN}
-               , fields[0], fields[1], fields[3], retired});
+            , dictionary_entry {{vrs[0], vrs[1], vrs[2]}, fields[1], fields[2], fields[3], retired});
       }
    }
    return dict_buffer.at(tag);
