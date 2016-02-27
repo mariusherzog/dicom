@@ -6,6 +6,8 @@
 #include <queue>
 #include <memory>
 
+#include "util/channel_sev_logger.hpp"
+
 namespace dicom
 {
 
@@ -85,6 +87,8 @@ class statemachine
       void dt2();
 
       static std::map<std::pair<EVENT, CONN_STATE>, std::function<void(statemachine*)>> transition_table;
+
+      dicom::util::log::channel_sev_logger logger;
 };
 
 }

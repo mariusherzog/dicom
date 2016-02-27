@@ -17,10 +17,13 @@ namespace network
 namespace upperlayer
 {
 
+using namespace dicom::util::log;
+
 
 statemachine::statemachine(Istate_trans_ops* ul):
    ul {ul},
-   state {CONN_STATE::STA1}
+   state {CONN_STATE::STA1},
+   logger {"upperlayer sm"}
 {
 }
 
@@ -42,12 +45,16 @@ statemachine::CONN_STATE statemachine::transition(EVENT e)
 
 void statemachine::aa1()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-1";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta13";
    ul->queue_for_write_w_prio(std::unique_ptr<property>(new a_abort {}));
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa2()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-2";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    ul->stop_artim();
    state = CONN_STATE::STA1;
    ul->close_connection();
@@ -55,6 +62,8 @@ void statemachine::aa2()
 
 void statemachine::aa3()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-3";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    // call a_abort handler
    state = CONN_STATE::STA1;
    ul->close_connection();
@@ -62,30 +71,40 @@ void statemachine::aa3()
 
 void statemachine::aa4()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-4";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    ul->stop_artim();
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa5()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-5";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    ul->stop_artim();
    state = CONN_STATE::STA1;
 }
 
 void statemachine::aa6()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-6";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta13";
    ul->ignore_next();
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa7()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-7";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta13";
    ul->queue_for_write_w_prio(std::unique_ptr<property>(new a_abort {}));
    state = CONN_STATE::STA13;
 }
 
 void statemachine::aa8()
 {
+   BOOST_LOG_SEV(logger, trace) << "AA-8";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta13";
    ul->queue_for_write_w_prio(std::unique_ptr<property>(new a_abort {}));
    ul->start_artim();
    // A-P-Abort indic
@@ -94,60 +113,82 @@ void statemachine::aa8()
 
 void statemachine::ae1()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-1";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta4";
    state = CONN_STATE::STA4;
 }
 
 void statemachine::ae2()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-2";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta5";
    state = CONN_STATE::STA5;
 }
 
 void statemachine::ae3()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-3";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta6";
    state = CONN_STATE::STA6;
 }
 
 void statemachine::ae4()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-4";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    state = CONN_STATE::STA1;
    ul->close_connection();
 }
 
 void statemachine::ae5()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-5";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta2";
    ul->start_artim();
    state = CONN_STATE::STA2;
 }
 
 void statemachine::ae6()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-6";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta3";
    ul->stop_artim();
    state = CONN_STATE::STA3;
 }
 
 void statemachine::ae7()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-7";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta6";
    state = CONN_STATE::STA6;
 }
 
 void statemachine::ae8()
 {
+   BOOST_LOG_SEV(logger, trace) << "AE-8";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta13";
    ul->start_artim();
    state = CONN_STATE::STA13;
 }
 
 void statemachine::ar1()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-1";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta7";
    state = CONN_STATE::STA7;
 }
 
 void statemachine::ar2()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-2";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta8";
    state = CONN_STATE::STA8;
 }
 
 void statemachine::ar3()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-3";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    state = CONN_STATE::STA1;
    // release conf handler
    ul->close_connection();
@@ -155,30 +196,42 @@ void statemachine::ar3()
 
 void statemachine::ar4()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-4";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta13";
    ul->start_artim();
    state = CONN_STATE::STA13;
 }
 
 void statemachine::ar5()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-5";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta1";
    ul->stop_artim();
    state = CONN_STATE::STA1;
 }
 
 void statemachine::ar6()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-6";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta7";
+   state = CONN_STATE::STA7;
 }
 
 void statemachine::ar7()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-7";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta8";
    state = CONN_STATE::STA8;
 }
 
 void statemachine::ar8()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-8";
    if (dynamic_cast<upperlayer::scu*>(ul)) {
+      BOOST_LOG_SEV(logger, trace) << "Next state is Sta9";
       state = CONN_STATE::STA9;
    } else {
+      BOOST_LOG_SEV(logger, trace) << "Next state is Sta10";
       state = CONN_STATE::STA10;
    }
    // a release indication collision
@@ -186,22 +239,30 @@ void statemachine::ar8()
 
 void statemachine::ar9()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-9";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta11";
    state = CONN_STATE::STA11;
 }
 
 void statemachine::ar10()
 {
+   BOOST_LOG_SEV(logger, trace) << "AR-10";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta12";
    state = CONN_STATE::STA12;
 }
 
 void statemachine::dt1()
 {
-   // keep state
+   BOOST_LOG_SEV(logger, trace) << "DT-1";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta6";
+   state = CONN_STATE::STA6;
 }
 
 void statemachine::dt2()
 {
-   //keep state
+   BOOST_LOG_SEV(logger, trace) << "DT-2";
+   BOOST_LOG_SEV(logger, trace) << "Next state is Sta6";
+   state = CONN_STATE::STA6;
 }
 
 
