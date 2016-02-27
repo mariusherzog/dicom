@@ -68,21 +68,31 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
    while (pos < data.size()) {
       elementfield::tag_type tag = decode_tag_little_endian(data, pos);
       pos += 4;
-      std::size_t value_len = decode_len_little_endian(data, pos);
+      std::size_t value_len;
+      if (tag != SequenceDelimitationItem
+          && tag != Item
+          && tag != ItemDelimitationItem) {
+         value_len = decode_len_little_endian(data, pos);
+      } else {
+         value_len = 0;
+      }
       pos += 4;
 
-      if (tag != SequenceDelimitationItem) {
+      if (tag != SequenceDelimitationItem
+          && tag != Item
+          && tag != ItemDelimitationItem) {
          VR repr = dict.get().lookup(tag).vr[0];
 
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict.get()) : value_len;
             dataset_type nested = deserialize({data.begin()+pos, data.begin()+pos+value_len});
             deserialized[tag] = make_elementfield<VR::SQ>(value_len, nested);
+         } else {
+            elementfield e = deserialize_attribute(data, value_len, repr, pos);
+            deserialized[tag] = e;
          }
 
-         elementfield e = deserialize_attribute(data, value_len, repr, pos);
          pos += value_len;
-         deserialized[tag] = e;
       } else {
          pos += value_len;
          deserialized[tag] = make_elementfield<VR::NN>();
