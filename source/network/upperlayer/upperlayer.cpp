@@ -132,7 +132,8 @@ void scx::send(property* p)
          std::size_t len = be_char_to_32b({pdu->begin()+6, pdu->begin()+10});
          auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
          boost::asio::async_write(sock(), boost::asio::buffer(*commandset),
-            [this, commandset, len, pdu, p, ptype, pdataprop](const boost::system::error_code& error, std::size_t /*bytes*/) {
+            [this, commandset, len, pdu, p, ptype, pdataprop]
+               (const boost::system::error_code& error, std::size_t /*bytes*/) {
                if (error) {
                   throw boost::system::system_error(error);
                }
@@ -146,7 +147,7 @@ void scx::send(property* p)
                   unsigned short datasetpresent;
                   get_value_field<VR::US>(commandset.at({0x0000, 0x0800}), datasetpresent);
                   if (datasetpresent != 0x0101) {
-                     write_complete_dataset({pdu->begin()+7+len, pdu->end()});
+                     write_complete_dataset(p, {pdu->begin()+10+len, pdu->end()});
                   } else {
                      handle_pdu_conf(p, TYPE::P_DATA_TF);
                   }
@@ -219,8 +220,24 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
    });
 }
 
-void scx::write_complete_dataset(std::vector<unsigned char> data)
+void scx::write_complete_dataset(property* p, std::vector<unsigned char> data)
 {
+   std::size_t len = be_char_to_32b({data.begin(), data.begin()+4});
+
+   auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+4+len);
+   boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
+      [this, p, data, len, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
+         if (error) {
+            throw boost::system::system_error(error);
+         }
+
+         bool lastsegment = (data[5] & 0x02);
+         if (lastsegment) {
+            handle_pdu_conf(p, TYPE::P_DATA_TF);
+         } else {
+            write_complete_dataset(p, {data.begin()+len, data.end()});
+         }
+   });
 
 }
 

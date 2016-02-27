@@ -232,11 +232,13 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        */
       void get_complete_dataset(std::vector<unsigned char> data);
 
+
       /**
-       * @brief write_complete_dataset
-       * @param data
+       * @brief write_complete_dataset write the complete dataset to the peer
+       * @param p property being written (stored in the write queue)
+       * @param data serialized property being written
        */
-      void write_complete_dataset(std::vector<unsigned char> data);
+      void write_complete_dataset(property* p, std::vector<unsigned char> data);
 
       /**
        * @brief sock is used by send() and receive() to access the socket of the

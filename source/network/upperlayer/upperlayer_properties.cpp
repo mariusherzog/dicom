@@ -109,11 +109,12 @@ std::vector<uchar> p_data_tf::make_pdu() const
          pdv_len = ui_to_32b_be(command_set.size()+2);
          pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
          pack.push_back(pres_context_id);
-         if (data_set.empty()) {
-            pack.push_back(0x03);
-         } else {
-            pack.push_back(0x01);
-         }
+//         if (data_set.empty()) {
+//            pack.push_back(0x03);
+//         } else {
+//            pack.push_back(0x01);
+//         }
+         pack.push_back(0x03);
          pack.insert(pack.end(), command_set.begin(), command_set.end());
       }
 
