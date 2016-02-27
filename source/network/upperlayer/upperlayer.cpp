@@ -172,8 +172,13 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
             nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
             data.insert(data.end(), nextbufcompl->begin(), nextbufcompl->end());
 
-            auto pdu = make_property(data);
-            handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
+            bool lastsegment = ((*nextbufcompl)[11] & 0x02);
+            if (lastsegment) {
+               auto pdu = make_property(data);
+               handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
+            } else {
+               get_complete_dataset(data);
+            }
          });
    });
 }
