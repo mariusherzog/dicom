@@ -82,8 +82,12 @@ dataset_iterator::step_into_nested(std::map<attribute::elementfield::tag_type, a
    dataset_type nested_set;
    get_value_field<VR::SQ>(curr->second, nested_set);
    nested_sets.push(nested_set);
-   curr = nested_sets.top().begin();
-   return curr;
+   if (nested_set.size() == 0) {
+      return step_outof_nested();
+   } else {
+      curr = nested_sets.top().begin();
+      return curr;
+   }
 }
 
 std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator dataset_iterator::step_outof_nested()
@@ -130,9 +134,9 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
       nested_set_sizes.top().curr_nestedset_size += cit->second.value_len + 4 + 4;
    }
 
-   if (cit->first == SequenceDelimitationItem
+   if (cit->first == SequenceDelimitationItem || cit->first == ItemDelimitationItem
        || (is_in_nested() && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
-      //sequence delimination item encountered
+      // sequence delimitation item encountered
       return (cit = step_outof_nested());
    } else if (cit->second.value_rep.is_initialized()) {
       if (cit->second.value_rep == VR::SQ) {

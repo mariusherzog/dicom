@@ -34,9 +34,11 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
       }
       if (attr.second.value_rep == VR::SQ) {
          depth++;
-         continue;
+//         continue;
       }
       if (attr.first == Item) {
+         std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
+         os << attr.first << "\n";
          continue;
       }
 
@@ -50,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
       }
       os << " " << attr.second.value_len << "\t\t";
       attr.second.value_field->print(os);
-      std::cout << "\n";
+      os << "\n";
    }
 
    return os;
