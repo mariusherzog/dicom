@@ -86,6 +86,8 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict.get()) : value_len;
             dataset_type nested = deserialize({data.begin()+pos, data.begin()+pos+value_len});
+            nested[ItemDelimitationItem] = make_elementfield<VR::NN>();
+            nested[SequenceDelimitationItem] = make_elementfield<VR::NN>();
             deserialized[tag] = make_elementfield<VR::SQ>(value_len, nested);
          } else {
             elementfield e = deserialize_attribute(data, value_len, repr, pos);

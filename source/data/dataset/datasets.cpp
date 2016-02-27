@@ -31,10 +31,19 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
       if (attr.first == SequenceDelimitationItem
           || attr.first == ItemDelimitationItem) {
          depth--;
+         continue;
       }
       if (attr.second.value_rep == VR::SQ) {
+         std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
          depth++;
-//         continue;
+         os << attr.first << " ";
+         if (attr.second.value_rep.is_initialized()) {
+            os << dictionary::dictionary_entry::vr_of_string.right.at(attr.second.value_rep.get());
+         } else {
+            os << "NN (unknown)";
+         }
+         os << " " << attr.second.value_len << "\n";
+         continue;
       }
       if (attr.first == Item) {
          std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
