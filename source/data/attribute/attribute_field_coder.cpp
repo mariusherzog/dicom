@@ -458,12 +458,12 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       case VR::PN: {
          std::string pn;
          pn = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::OF>(len, pn);
+         return make_elementfield<VR::PN>(len, pn);
       }
       case VR::SH: {
          std::string sh;
          sh = convhelper::decode_byte_string(data, begin, len);
-         return make_elementfield<VR::OF>(len, sh);
+         return make_elementfield<VR::SH>(len, sh);
       }
       case VR::SL: {
          long val;

@@ -40,7 +40,11 @@ dictionary_entry dictionary::lookup(attribute::elementfield::tag_type tag)
    try {
       return commanddic.lookup(tag);
    } catch (std::exception& e) {
-      return datadic.lookup(tag);
+      try {
+         return datadic.lookup(tag);
+      } catch (...) {
+         std::cerr << tag << "#\n";
+      }
    }
 }
 
