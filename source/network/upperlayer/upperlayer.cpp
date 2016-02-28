@@ -222,16 +222,18 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
 
 void scx::write_complete_dataset(property* p, std::vector<unsigned char> data)
 {
-   std::size_t len = be_char_to_32b({data.begin(), data.begin()+4});
+   std::size_t len = be_char_to_32b({data.begin()+2, data.begin()+6}) + 6;
+            // 6 bytes header + length
 
-   auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+4+len);
+   auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+len);
+
    boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
       [this, p, data, len, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
          if (error) {
             throw boost::system::system_error(error);
          }
 
-         bool lastsegment = (data[5] & 0x02);
+         bool lastsegment = ((*pdu)[11] & 0x02);
          if (lastsegment) {
             handle_pdu_conf(p, TYPE::P_DATA_TF);
          } else {

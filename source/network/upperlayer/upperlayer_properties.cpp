@@ -95,10 +95,8 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 
 std::vector<uchar> p_data_tf::make_pdu() const
 {
+   std::size_t msg_length = 4096-12;
    std::vector<uchar> pack;
-   pack.push_back(static_cast<uchar>(TYPE::P_DATA_TF));
-   pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x00});
-   std::size_t len_pos = 0x02;
 
    {
       // insert command part
@@ -106,6 +104,11 @@ std::vector<uchar> p_data_tf::make_pdu() const
       std::vector<uchar> pdv_len;
 
       if (!command_set.empty()) {
+         auto begin = pack.end()-pack.begin();
+         pack.push_back(static_cast<uchar>(TYPE::P_DATA_TF));
+         pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x00});
+         std::size_t len_pos = begin + 2;
+
          pdv_len = ui_to_32b_be(command_set.size()+2);
          pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
          pack.push_back(pres_context_id);
@@ -116,20 +119,38 @@ std::vector<uchar> p_data_tf::make_pdu() const
 //         }
          pack.push_back(0x03);
          pack.insert(pack.end(), command_set.begin(), command_set.end());
+
+         std::size_t pdu_len = pack.size()-6;
+         std::vector<uchar> plen = ui_to_32b_be(pdu_len);
+         std::copy(plen.begin(), plen.end(), pack.begin()+len_pos);
       }
 
+      // insert pack header
       if (!data_set.empty()) {
-         pdv_len = ui_to_32b_be(data_set.size()+2);
-         pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
-         pack.push_back(pres_context_id);
-         pack.push_back(0x02);
-         pack.insert(pack.end(), data_set.begin(), data_set.end());
+         for (std::size_t pos = 0; pos < data_set.size(); pos += msg_length) {
+            auto begin = pack.end()-pack.begin();
+            pack.push_back(static_cast<uchar>(TYPE::P_DATA_TF));
+            pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x00});
+            std::size_t len_pos = begin + 2;
+
+            auto remaining = std::min(msg_length, data_set.size()-pos);
+            pdv_len = ui_to_32b_be(remaining+2);
+            pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
+            pack.push_back(pres_context_id);
+
+            if (remaining < msg_length) {
+               pack.push_back(0x02);
+            } else {
+               pack.push_back(0x00);
+            }
+            pack.insert(pack.end(), data_set.begin()+pos, data_set.begin()+pos+remaining);
+
+            std::size_t pdu_len = remaining+6;
+            std::vector<uchar> plen = ui_to_32b_be(pdu_len);
+            std::copy(plen.begin(), plen.end(), pack.begin()+len_pos);
+         }
       }
    }
-
-   std::size_t pdu_len = pack.size()-6;
-   std::vector<uchar> plen = ui_to_32b_be(pdu_len);
-   std::copy(plen.begin(), plen.end(), pack.begin()+len_pos);
 
    return pack;
 }
