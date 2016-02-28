@@ -24,7 +24,8 @@ elementfield_base::~elementfield_base()
 bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
 {
    // Item tag should be placed first in a (nested) set
-   if (rhs.group_id == 0xfffe && rhs.element_id == 0xe000) return true;
+   if (lhs == Item) return true;
+   if (rhs == Item && lhs != Item) return false;
    return lhs.group_id == rhs.group_id ?
           lhs.element_id < rhs.element_id :
           lhs.group_id < rhs.group_id;
