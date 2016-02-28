@@ -35,6 +35,10 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    connection_request {boost::none},
    connection_properties {boost::none},
    operations {operations},
+   assemble_response { {DIMSE_SERVICE_GROUP::C_ECHO_RQ, &dimse_pm::assemble_cecho_rq},
+                       {DIMSE_SERVICE_GROUP::C_ECHO_RSP, &dimse_pm::assemble_cecho_rsp},
+                       {DIMSE_SERVICE_GROUP::C_FIND_RSP, &dimse_pm::assemble_cfind_rsp}
+                     },
    dict(dict),
    transfer_processors {  },
    logger {"dimse pm"}
@@ -105,7 +109,14 @@ void dimse_pm::send_response(response r)
       throw std::runtime_error(errormsg);
    }
 
-   auto data = assemble_response[r.get_response_type()](r, pres_context->id, dict);
+   auto data = assemble_response[r.get_response_type()](this, r, pres_context->id);
+
+   std::vector<unsigned char> dataset;
+   if (r.get_data().is_initialized()) {
+      auto& tfproc = find_transfer_processor();
+      dataset = tfproc.serialize(r.get_data().get());
+   }
+   data.data_set = dataset;
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
@@ -176,7 +187,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
       }
 
    }
-   ac.max_message_length = 0xFFFE;
+   ac.max_message_length = 4096;
 
    sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
    connection_properties = ac;
@@ -318,7 +329,7 @@ transfer_processor& dimse_pm::find_transfer_processor()
 }
 
 
-static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id, dictionary& dict)
+upperlayer::p_data_tf dimse_pm::assemble_cecho_rsp(response r, int pres_context_id)
 {
    using namespace upperlayer;
    commandset_data cresp;
@@ -348,7 +359,7 @@ static upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id,
    return presp;
 }
 
-static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, dictionary& dict)
+upperlayer::p_data_tf dimse_pm::assemble_cecho_rq(response r, int pres_context_id)
 {
    using namespace upperlayer;
    using namespace data::dataset;
@@ -379,7 +390,7 @@ static upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id, 
    return presp;
 }
 
-static upperlayer::p_data_tf assemble_cfind_rsp(response r, int pres_context_id, dictionary& dict)
+upperlayer::p_data_tf dimse_pm::assemble_cfind_rsp(response r,  int pres_context_id)
 {
    using namespace upperlayer;
    using namespace data::dataset;
@@ -410,16 +421,6 @@ static upperlayer::p_data_tf assemble_cfind_rsp(response r, int pres_context_id,
 
    return presp;
 }
-
-
-std::map<data::dataset::DIMSE_SERVICE_GROUP
-   , std::function<upperlayer::p_data_tf(response r, int message_id, dictionary&)>> dimse_pm::assemble_response
-{
-   {DIMSE_SERVICE_GROUP::C_ECHO_RQ, assemble_cecho_rq},
-   {DIMSE_SERVICE_GROUP::C_ECHO_RSP, assemble_cecho_rsp},
-   {DIMSE_SERVICE_GROUP::C_FIND_RSP, assemble_cfind_rsp},
-};
-
 
 }
 
