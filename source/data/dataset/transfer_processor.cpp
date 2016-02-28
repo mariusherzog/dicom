@@ -113,6 +113,10 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
 {
    std::vector<unsigned char> stream;
    for (const auto attr : dataset_iterator_adaptor(data)) {
+      if (attr.first == SequenceDelimitationItem
+          || attr.first == ItemDelimitationItem
+          || attr.first == Item) continue;
+
       VR repr;
       if (vrtype == VR_TYPE::EXPLICIT) {
          repr = attr.second.value_rep.get();
@@ -120,6 +124,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          /** @todo handle options */
          repr = dict.get().lookup(attr.first).vr[0];
       }
+
       auto data = serialize_attribute(attr.second, repr);
       auto tag = encode_tag_little_endian(attr.first);
       auto len = encode_len_little_endian(attr.second.value_len);
