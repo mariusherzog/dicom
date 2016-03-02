@@ -64,6 +64,7 @@ struct p_data_tf: property
       TYPE type() const override;
       std::ostream& print(std::ostream& os) const override;
 
+      std::size_t msg_length;
       unsigned char pres_context_id;
       std::vector<unsigned char> command_set;
       std::vector<unsigned char> data_set;

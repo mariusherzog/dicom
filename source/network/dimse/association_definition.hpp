@@ -54,8 +54,8 @@ class association_definition
       association_definition(std::string calling_ae,
                       std::string called_ae,
                       std::initializer_list<presentation_context> pcs,
-                      std::string application_context = "1.2.840.10008.3.1.1.1",
-                      int max_message_len = 0xfffe);
+                      int max_message_len = 0xfffe,
+                      std::string application_context = "1.2.840.10008.3.1.1.1");
 
       /**
        * @brief get_SOP_class returns the SOP_class_request instance with the

@@ -141,6 +141,8 @@ class dimse_pm
 
       association_definition operations;
 
+      std::size_t max_remote_msg_length;
+
       std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(dimse_pm*, response r, int pres_context_id)>> assemble_response;
 
