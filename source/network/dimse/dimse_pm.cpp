@@ -35,6 +35,7 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    connection_request {boost::none},
    connection_properties {boost::none},
    operations {operations},
+   max_remote_msg_length {0},
    assemble_response { {DIMSE_SERVICE_GROUP::C_ECHO_RQ, &dimse_pm::assemble_cecho_rq},
                        {DIMSE_SERVICE_GROUP::C_ECHO_RSP, &dimse_pm::assemble_cecho_rsp},
                        {DIMSE_SERVICE_GROUP::C_FIND_RSP, &dimse_pm::assemble_cfind_rsp}
@@ -187,7 +188,9 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
       }
 
    }
-   ac.max_message_length = 4096;
+   ac.max_message_length = operations.get_initial_request().max_message_length;
+
+   max_remote_msg_length = arq->max_message_length;
 
    sc->queue_for_write(std::unique_ptr<property>(new a_associate_ac {ac}));
    connection_properties = ac;
@@ -217,6 +220,7 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
    connection_properties = *asc;
    state = CONN_STATE::CONNECTED;
 
+   max_remote_msg_length = asc->max_message_length;
 
    for (auto sop : operations.get_all_SOP()) {
       if (sop.msg_type == dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR) {
@@ -355,6 +359,8 @@ upperlayer::p_data_tf dimse_pm::assemble_cecho_rsp(response r, int pres_context_
    p_data_tf presp;
    presp.command_set = serdata;
    presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
 
    return presp;
 }
@@ -386,6 +392,8 @@ upperlayer::p_data_tf dimse_pm::assemble_cecho_rq(response r, int pres_context_i
    p_data_tf presp;
    presp.command_set = serdata;
    presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
 
    return presp;
 }
@@ -418,6 +426,8 @@ upperlayer::p_data_tf dimse_pm::assemble_cfind_rsp(response r,  int pres_context
    p_data_tf presp;
    presp.command_set = serdata;
    presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
 
    return presp;
 }

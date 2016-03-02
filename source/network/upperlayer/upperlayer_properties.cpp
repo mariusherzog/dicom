@@ -95,7 +95,8 @@ void p_data_tf::from_pdu(std::vector<unsigned char> pdu)
 
 std::vector<uchar> p_data_tf::make_pdu() const
 {
-   std::size_t msg_length = 4096-12;
+   const std::size_t preamble_length = 12;
+   const std::size_t m_length = msg_length-preamble_length;
    std::vector<uchar> pack;
 
    {
@@ -127,18 +128,18 @@ std::vector<uchar> p_data_tf::make_pdu() const
 
       // insert pack header
       if (!data_set.empty()) {
-         for (std::size_t pos = 0; pos < data_set.size(); pos += msg_length) {
+         for (std::size_t pos = 0; pos < data_set.size(); pos += m_length) {
             auto begin = pack.end()-pack.begin();
             pack.push_back(static_cast<uchar>(TYPE::P_DATA_TF));
             pack.insert(pack.end(), {0x00, 0x00, 0x00, 0x00, 0x00});
             std::size_t len_pos = begin + 2;
 
-            auto remaining = std::min(msg_length, data_set.size()-pos);
+            auto remaining = std::min(m_length, data_set.size()-pos);
             pdv_len = ui_to_32b_be(remaining+2);
             pack.insert(pack.end(), pdv_len.begin(), pdv_len.end());
             pack.push_back(pres_context_id);
 
-            if (remaining < msg_length) {
+            if (remaining < m_length) {
                pack.push_back(0x02);
             } else {
                pack.push_back(0x00);
@@ -324,6 +325,7 @@ std::ostream& a_associate_rq::print(std::ostream& os) const
 {
    os << "Local Application Entity:\t" << called_ae << "\n"
       << "Remote Application Entity:\t" << calling_ae << "\n"
+      << "Maximum Message Length:\t\t" << max_message_length << "\n"
       << "Application Context:\t" << application_context << "\n"
       << "Proposed presentation contexts:\n";
    for (const auto pc : pres_contexts) {
@@ -452,6 +454,7 @@ std::ostream& a_associate_ac::print(std::ostream& os) const
 {
    os << "Local Application Entity:\t" << called_ae << "\n"
       << "Remote Application Entity:\t" << calling_ae << "\n"
+      << "Maximum Message Length:\t\t" << max_message_length << "\n"
       << "Application Context:\t" << application_context << "\n"
       << "Proposed presentation contexts:\n";
    for (const auto pc : pres_contexts) {
