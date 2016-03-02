@@ -219,11 +219,26 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       void handle_pdu(std::unique_ptr<property> p, TYPE ptype);
 
       /**
+       * @brief handle_pdu_conf
+       * @param p
+       * @param ptype
+       */
+      void handle_pdu_conf(property* p, TYPE ptype);
+
+      /**
        * @brief get_complete_dataset reads the complete dataset and stores it
        *        in the property's dataset member.
        * @param[in] data
        */
       void get_complete_dataset(std::vector<unsigned char> data);
+
+
+      /**
+       * @brief write_complete_dataset write the complete dataset to the peer
+       * @param p property being written (stored in the write queue)
+       * @param data serialized property being written
+       */
+      void write_complete_dataset(property* p, std::vector<unsigned char> data);
 
       /**
        * @brief sock is used by send() and receive() to access the socket of the

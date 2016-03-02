@@ -115,22 +115,48 @@ void scx::send(property* p)
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
       // call async_write after each sent property until the queue is
       // empty
-      boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-         [this, p, ptype](const boost::system::error_code& error, std::size_t /*bytes*/) {
-            if (error) {
-               throw boost::system::system_error(error);
+      if (ptype != TYPE::P_DATA_TF) {
+         boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
+            [this, p, ptype](const boost::system::error_code& error, std::size_t /*bytes*/) {
+               if (error) {
+                  throw boost::system::system_error(error);
+               }
+               BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
+               BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
+               handle_pdu_conf(p, ptype);
+         });
+      } else {
+         auto pdataprop = dynamic_cast<p_data_tf*>(p);
+         assert(pdataprop);
+
+         std::size_t len = be_char_to_32b({pdu->begin()+6, pdu->begin()+10});
+         auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
+         boost::asio::async_write(sock(), boost::asio::buffer(*commandset),
+            [this, commandset, len, pdu, p, ptype, pdataprop]
+               (const boost::system::error_code& error, std::size_t /*bytes*/) {
+               if (error) {
+                  throw boost::system::system_error(error);
+               }
+               BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
+               BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
+
+               using namespace data::attribute;
+               if (!pdataprop->command_set.empty()) {
+                  // check if a dataset is present in the message
+                  auto commandset = proc.deserialize(pdataprop->command_set);
+                  unsigned short datasetpresent;
+                  get_value_field<VR::US>(commandset.at({0x0000, 0x0800}), datasetpresent);
+                  if (datasetpresent != 0x0101) {
+                     write_complete_dataset(p, {pdu->begin()+10+len, pdu->end()});
+                  } else {
+                     handle_pdu_conf(p, TYPE::P_DATA_TF);
+                  }
+               } else {
+                  assert(false);
+               }
             }
-            BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
-            BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
-            if (handlers_conf.find(ptype) != handlers_conf.end()) {
-               handlers_conf[ptype](this, p);
-            }
-            send_queue.pop_front();
-            if (!send_queue.empty()) {
-               send(send_queue.front().get());
-            }
-         }
-      );
+         );
+      }
    }
 }
 
@@ -145,6 +171,17 @@ void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
    // be ready for new data
    if (!io_s().stopped()) {
       do_read();
+   }
+}
+
+void scx::handle_pdu_conf(property* p, TYPE ptype)
+{
+   if (handlers_conf.find(ptype) != handlers_conf.end()) {
+      handlers_conf[ptype](this, p);
+   }
+   send_queue.pop_front();
+   if (!send_queue.empty()) {
+      send(send_queue.front().get());
    }
 }
 
@@ -181,6 +218,29 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
             }
          });
    });
+}
+
+void scx::write_complete_dataset(property* p, std::vector<unsigned char> data)
+{
+   std::size_t len = be_char_to_32b({data.begin()+2, data.begin()+6}) + 6;
+            // 6 bytes header + length
+
+   auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+len);
+
+   boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
+      [this, p, data, len, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
+         if (error) {
+            throw boost::system::system_error(error);
+         }
+
+         bool lastsegment = ((*pdu)[11] & 0x02);
+         if (lastsegment) {
+            handle_pdu_conf(p, TYPE::P_DATA_TF);
+         } else {
+            write_complete_dataset(p, {data.begin()+len, data.end()});
+         }
+   });
+
 }
 
 void scx::do_read()

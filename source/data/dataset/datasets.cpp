@@ -39,17 +39,20 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
       }
 
       os << attr.first << " ";
-      if (attr.second.value_rep.is_initialized() && attr.second.value_rep.get() != VR::NN) {
+      if (attr.second.value_rep.is_initialized()
+          && attr.second.value_rep.get() != VR::NN
+          && attr.second.value_rep.get() != VR::NI) {
          os << dictionary::dictionary_entry::vr_of_string.right.at(attr.second.value_rep.get());
       } else {
-         os << "(unknown) NN";
+         os << "(unknown) NN / NI";
       }
       if (attr.first != SequenceDelimitationItem
           && attr.first != ItemDelimitationItem
           && attr.first != Item
           && attr.second.value_rep.is_initialized()
           && attr.second.value_rep.get() != VR::SQ
-          && attr.second.value_rep.get() != VR::NN) {
+          && attr.second.value_rep.get() != VR::NN
+          && attr.second.value_rep.get() != VR::NI) {
          os << " " << attr.second.value_len << "\t\t";
          attr.second.value_field->print(os);
       }

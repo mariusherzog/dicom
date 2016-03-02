@@ -141,10 +141,12 @@ class dimse_pm
 
       association_definition operations;
 
-      static std::map<data::dataset::DIMSE_SERVICE_GROUP
-         , std::function<upperlayer::p_data_tf(response r,
-                                               int message_id,
-                                               data::dictionary::dictionary&)>> assemble_response;
+      std::map<data::dataset::DIMSE_SERVICE_GROUP
+         , std::function<upperlayer::p_data_tf(dimse_pm*, response r, int pres_context_id)>> assemble_response;
+
+      upperlayer::p_data_tf assemble_cfind_rsp(response r,  int pres_context_id);
+      upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id);
 
       data::dictionary::dictionary& dict;
 

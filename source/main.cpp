@@ -44,7 +44,8 @@ int main()
          assert(data != nullptr);
          std::cout << "Received C_ECHO_RSP\n";
          std::cout << *data;
-         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, boost::none, dataset::STATUS::SUCCESS});
+         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, *data, 0xff00});
+         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, boost::none, 0x0000});
 //         pm->release_association();
       }}}
    };
