@@ -57,7 +57,8 @@ enum class VR
    AE, AS, AT, CS, DA, DS, DT, FL, FD, IS,
    LO, LT, OB, OD, OF, OW, PN, SH, SL, SQ,
    SS, ST, TM, UI, UL, UN, UR, US, UT,
-   NN
+   NN,
+   NI
 };
 
 /**
@@ -315,6 +316,11 @@ struct type_of<VR::NN>
 {
       using type = empty_t;
 };
+template<>
+struct type_of<VR::NI>
+{
+      using type = empty_t;
+};
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
 
@@ -436,6 +442,22 @@ elementfield make_elementfield()
    elementfield el;
    el.value_rep = vr;
    el.value_len = 0;
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+   return el;
+}
+
+/**
+ * @brief make_elementfield overload for attributes that do not have a value,
+ *        but a length field
+ * @return prepared instance of elementfield
+ */
+template <VR vr>
+elementfield make_elementfield(std::size_t len)
+{
+   static_assert(std::is_same<typename type_of<vr>::type, empty_t>::value, "Expected sequence info type (VR == NI)");
+   elementfield el;
+   el.value_rep = vr;
+   el.value_len = len;
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
    return el;
 }

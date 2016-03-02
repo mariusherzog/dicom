@@ -130,7 +130,10 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
 {
    // accumulate the size of the nested set's elements if a sequence size was
    // explicitly specified
-   if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
+   if (nested_set_sizes.top().curr_nestedset_max != 0xffff
+       && cit->first != Item
+       && cit->first != ItemDelimitationItem
+       && cit->first != SequenceDelimitationItem) {
       nested_set_sizes.top().curr_nestedset_size += cit->second.value_len + 4 + 4;
    }
 
@@ -164,7 +167,10 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
       return (cit = step_backw_into_nested(cit));
    }
 
-   if (nested_set_sizes.top().curr_nestedset_max != 0xffff) {
+   if (nested_set_sizes.top().curr_nestedset_max != 0xffff
+       && cit->first != Item
+       && cit->first != ItemDelimitationItem
+       && cit->first != SequenceDelimitationItem) {
       nested_set_sizes.top().curr_nestedset_size -= cit->second.value_len - (4 + 4);
    }
 

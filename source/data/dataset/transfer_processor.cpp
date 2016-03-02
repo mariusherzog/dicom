@@ -73,6 +73,8 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
           && tag != Item
           && tag != ItemDelimitationItem) {
          value_len = decode_len_little_endian(data, pos);
+      } else if (tag == Item) {
+         value_len = decode_len_little_endian(data, pos);
       } else {
          value_len = 0;
       }
@@ -96,8 +98,12 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
 
          pos += value_len;
       } else {
-         pos += value_len;
-         deserialized[tag] = make_elementfield<VR::NN>();
+         pos += 0;
+         if (tag == Item) {
+            deserialized[tag] = make_elementfield<VR::NI>(value_len);
+         } else {
+            deserialized[tag] = make_elementfield<VR::NN>();
+         }
       }
    }
    return deserialized;
@@ -114,8 +120,15 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
    std::vector<unsigned char> stream;
    for (const auto attr : dataset_iterator_adaptor(data)) {
       if (attr.first == SequenceDelimitationItem
-          || attr.first == ItemDelimitationItem
-          || attr.first == Item) continue;
+          || attr.first == ItemDelimitationItem) {
+         continue;
+      } else if (attr.first == Item) {
+         auto tag = encode_tag_little_endian(attr.first);
+         auto len = encode_len_little_endian(attr.second.value_len);
+         stream.insert(stream.end(), tag.begin(), tag.end());
+         stream.insert(stream.end(), len.begin(), len.end());
+         continue;
+      }
 
       VR repr;
       if (vrtype == VR_TYPE::EXPLICIT) {
