@@ -59,11 +59,11 @@ static void little_endian_to_float(const std::vector<unsigned char>& data
    static_assert(std::is_floating_point<T>::value, "Integral type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
    out = 0;
-   unsigned char floatbufout[sizeof(T)];
+   unsigned char floatbufout[sizeof(T)] = {0};
    for (int i=0; i<size; ++i) {
       floatbufout[i] |= ((data[begin+i] & 0xff));
    }
-   out = *reinterpret_cast<float*>(floatbufout);
+   out = *reinterpret_cast<T*>(floatbufout);
 }
 
 static std::vector<unsigned char> encode_byte_string(std::string str)
