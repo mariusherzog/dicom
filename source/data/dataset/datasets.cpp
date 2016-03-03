@@ -28,15 +28,11 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
 
    int depth = 0;
    for (const auto attr : dataset_iterator_adaptor(data)) {
-      std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
-
-      if (attr.first == SequenceDelimitationItem
-          || attr.first == ItemDelimitationItem) {
-         depth--;
-      }
-      if (attr.second.value_rep == VR::SQ) {
+      if (attr.first == Item) {
          depth++;
       }
+
+      std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
 
       os << attr.first << " ";
       if (attr.second.value_rep.is_initialized()
@@ -58,6 +54,9 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
       }
       os << "\n";
 
+      if (attr.first == ItemDelimitationItem) {
+         depth--;
+      }
    }
 
    return os;

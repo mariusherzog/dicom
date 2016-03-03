@@ -94,13 +94,8 @@ std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of
    return os;
 }
 
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const data)
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
 {
-//   for (const auto set : data) {
-//      os << set;
-//      os << "\n";
-//   }
-//   return os;
    return os << "";
 }
 
