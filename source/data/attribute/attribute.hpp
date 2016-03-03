@@ -264,7 +264,7 @@ struct type_of<VR::SL>
       static const std::size_t len = 4;
 };
 template<>
-struct type_of<VR::SQ> { using type = dataset::dataset_type; };
+struct type_of<VR::SQ> { using type = std::vector<dataset::dataset_type>; };
 template<>
 struct type_of<VR::SS>
 {
@@ -327,6 +327,8 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const data);
 
 
 

@@ -66,7 +66,7 @@ class transfer_processor
        * @param data datastream
        * @return structured attribute
        */
-      iod deserialize(std::vector<unsigned char> data) const;
+      dataset_type deserialize(std::vector<unsigned char> data) const;
 
       /**
        * @brief get_transfer_syntax is used to acquire the UID of the classe's
@@ -101,6 +101,14 @@ class transfer_processor
       deserialize_attribute(std::vector<unsigned char>& data,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
+
+
+      /**
+       * @brief deserialize_nested deserialized a nested attribute
+       * @param data array containing serialized bytes
+       * @return vector of sequence items
+       */
+      std::vector<dataset_type> deserialize_nested(std::vector<unsigned char> data) const;
 
       boost::optional<dictionary::dictionary&> dict;
       std::string transfer_syntax;
