@@ -326,6 +326,8 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const 
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const data);
 
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type const data);
+
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const data);
