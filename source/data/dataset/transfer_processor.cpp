@@ -60,11 +60,14 @@ commandset_processor::commandset_processor(dictionary::dictionary& dict):
 }
 
 
-iod transfer_processor::deserialize(std::vector<unsigned char> data) const
+dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) const
 {
-   iod deserialized;
-
+   dataset_type dataset;
    std::size_t pos = 0;
+   int items = 0;
+   std::vector<dataset_type> nested_set(1);
+   dataset_type* current_set = &nested_set[0];
+   std::size_t item_value_len = 0;
    while (pos < data.size()) {
       elementfield::tag_type tag = decode_tag_little_endian(data, pos);
       pos += 4;
@@ -75,6 +78,7 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
          value_len = decode_len_little_endian(data, pos);
       } else if (tag == Item) {
          value_len = decode_len_little_endian(data, pos);
+         item_value_len = value_len;
       } else {
          value_len = 0;
       }
@@ -87,26 +91,106 @@ iod transfer_processor::deserialize(std::vector<unsigned char> data) const
 
          if (repr == VR::SQ) {
             value_len = value_len == 0xffff ? find_enclosing(data, pos, dict.get()) : value_len;
-            dataset_type nested = deserialize({data.begin()+pos, data.begin()+pos+value_len});
-            nested[ItemDelimitationItem] = make_elementfield<VR::NN>();
-            nested[SequenceDelimitationItem] = make_elementfield<VR::NN>();
-            deserialized[tag] = make_elementfield<VR::SQ>(value_len, nested);
+            auto nested = deserialize_nested({data.begin()+pos, data.begin()+pos+value_len});
+            (*(nested.end()-1))
+                  [SequenceDelimitationItem] = make_elementfield<VR::NN>();
+            dataset[tag] = make_elementfield<VR::SQ>(value_len, nested);
          } else {
             elementfield e = deserialize_attribute(data, value_len, repr, pos);
-            deserialized[tag] = e;
+            dataset[tag] = e;
          }
 
          pos += value_len;
+
+      } else {
+//         pos += 0;
+//         if (tag == Item) {
+//            if (pos > 8) {
+//               (*current_set)[ItemDelimitationItem] = make_elementfield<VR::NN>();
+//               nested_set.push_back(dataset_type {});
+//            }
+//            current_set = &nested_set[items];
+//            (*current_set)[tag] = make_elementfield<VR::NI>(value_len);
+//            ++items;
+//         } else if (tag == ItemDelimitationItem) {
+//            (*current_set)[ItemDelimitationItem] = make_elementfield<VR::NN>();
+//            nested_set.push_back(dataset_type {});
+//            current_set = &nested_set[items];
+//         } else {
+//            dataset[tag] = make_elementfield<VR::NN>();
+//         }
+      }
+   }
+   return dataset;
+}
+
+std::vector<dataset_type> transfer_processor::deserialize_nested(std::vector<unsigned char> data) const
+{
+   std::size_t pos = 0;
+   int items = 0;
+   std::vector<dataset_type> nested_set(1);
+   dataset_type* current_set = &nested_set[0];
+   std::size_t item_value_len = 0;
+   while (pos < data.size()) {
+      elementfield::tag_type tag = decode_tag_little_endian(data, pos);
+      pos += 4;
+      std::size_t value_len;
+      if (tag != SequenceDelimitationItem
+          && tag != Item
+          && tag != ItemDelimitationItem) {
+         value_len = decode_len_little_endian(data, pos);
+      } else if (tag == Item) {
+         value_len = decode_len_little_endian(data, pos);
+         item_value_len = value_len;
+      } else {
+         value_len = 0;
+      }
+      pos += 4;
+
+      if (tag != SequenceDelimitationItem
+          && tag != Item
+          && tag != ItemDelimitationItem) {
+         VR repr = dict.get().lookup(tag).vr[0];
+
+         if (repr == VR::SQ) {
+            value_len = value_len == 0xffff ? find_enclosing(data, pos, dict.get()) : value_len;
+            auto nested = deserialize_nested({data.begin()+pos, data.begin()+pos+value_len});
+            (*(nested.end()-1))
+                  [SequenceDelimitationItem] = make_elementfield<VR::NN>();
+            (*current_set)[tag] = make_elementfield<VR::SQ>(value_len, nested);
+         } else {
+            elementfield e = deserialize_attribute(data, value_len, repr, pos);
+            (*current_set)[tag] = e;
+         }
+
+         pos += value_len;
+
+//         if ((item_value_len > 0 && pos > item_value_len)) {
+//            (*current_set)[ItemDelimitationItem] = make_elementfield<VR::NN>();
+//            nested_set.push_back(dataset_type {});
+//            current_set = &nested_set[items];
+//         }
       } else {
          pos += 0;
          if (tag == Item) {
-            deserialized[tag] = make_elementfield<VR::NI>(value_len);
+            if (pos > 8) {
+               (*current_set)[ItemDelimitationItem] = make_elementfield<VR::NN>();
+               nested_set.push_back(dataset_type {});
+            }
+            current_set = &nested_set[items];
+            (*current_set)[tag] = make_elementfield<VR::NI>(value_len);
+            ++items;
+         } else if (tag == ItemDelimitationItem) {
+            (*current_set)[ItemDelimitationItem] = make_elementfield<VR::NN>();
+            nested_set.push_back(dataset_type {});
+            current_set = &nested_set[items];
          } else {
-            deserialized[tag] = make_elementfield<VR::NN>();
+            (*current_set)[tag] = make_elementfield<VR::NN>();
          }
       }
    }
-   return deserialized;
+   (*current_set)[ItemDelimitationItem] = make_elementfield<VR::NN>();
+   return nested_set;
 }
 
 

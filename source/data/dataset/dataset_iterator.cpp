@@ -80,7 +80,7 @@ dataset_iterator::step_into_nested(std::map<attribute::elementfield::tag_type, a
    parent_its.push(curr); // save current position of the iterator
    nested_set_sizes.push({0, curr->second.value_len});
    dataset_type nested_set;
-   get_value_field<VR::SQ>(curr->second, nested_set);
+   //get_value_field<VR::SQ>(curr->second, nested_set);
    nested_sets.push(nested_set);
    if (nested_set.size() == 0) {
       return step_outof_nested();
@@ -111,7 +111,7 @@ dataset_iterator::step_backw_into_nested(std::map<attribute::elementfield::tag_t
       explicitlength = false;
    }
    dataset_type nested_set;
-   get_value_field<VR::SQ>(prev->second, nested_set);
+   //get_value_field<VR::SQ>(prev->second, nested_set);
    nested_sets.push(nested_set);
    auto curr = --nested_sets.top().end();
    return explicitlength ? curr : --curr;
