@@ -103,6 +103,11 @@ class transfer_processor
                             std::size_t pos) const = 0;
 
 
+      /**
+       * @brief deserialize_nested deserialized a nested attribute
+       * @param data array containing serialized bytes
+       * @return vector of sequence items
+       */
       std::vector<dataset_type> deserialize_nested(std::vector<unsigned char> data) const;
 
       boost::optional<dictionary::dictionary&> dict;
