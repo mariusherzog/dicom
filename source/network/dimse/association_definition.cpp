@@ -29,8 +29,8 @@ static std::string pad_to_16(std::string s)
 association_definition::association_definition(std::string calling_ae,
                                  std::string called_ae,
                                  std::initializer_list<presentation_context> pcs,
-                                 std::string application_context,
-                                 int max_message_len)
+                                 int max_message_len,
+                                 std::string application_context)
 {
    request.application_context = application_context;
    request.called_ae = pad_to_16(called_ae);

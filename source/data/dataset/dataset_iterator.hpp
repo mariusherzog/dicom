@@ -49,7 +49,7 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, st
    private:
       std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator cit;
 
-      std::stack<std::map<attribute::elementfield::tag_type, attribute::elementfield>> nested_sets;
+      std::stack<typename attribute::type_of<attribute::VR::SQ>::type> nested_sets;
       std::stack<std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator> parent_its;
 
       /**
@@ -63,6 +63,14 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, st
       };
 
       std::stack<set_size> nested_set_sizes;
+
+      struct nested_items
+      {
+            std::size_t nested_items_curr;
+            std::size_t nested_items_max;
+      };
+
+      std::stack<nested_items> items;
 
       static dictionary::dictionary_dyn commanddic;
       static dictionary::dictionary_dyn datadic;

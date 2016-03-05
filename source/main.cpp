@@ -74,7 +74,8 @@ int main()
           {echo, {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
           {echorsp, {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
           {findrsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
-      }
+      },
+      4096
    };
 
 
