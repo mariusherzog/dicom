@@ -163,7 +163,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
    }
 
    // The size of the outermost set should be exactly one
-   assert(current_sequence.top().size == 1);
+   assert(current_sequence.top().size() == 1);
    return current_sequence.top()[0];
 }
 
