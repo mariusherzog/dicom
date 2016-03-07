@@ -42,14 +42,44 @@ class transfer_processor
       };
 
       /**
+       * @brief The vr_of_tag struct defines a transfer-syntax specific mapping
+       *        of a tag (range) to a VR.
+       */
+      struct vr_of_tag
+      {
+            const attribute::elementfield::tag_type tag;
+            const unsigned eid_mask;
+            const unsigned gid_mask;
+
+            const attribute::VR vr;
+
+            vr_of_tag(attribute::elementfield::tag_type tag,
+                      attribute::VR vr,
+                      unsigned eid_mask = 0xffff,
+                      unsigned gid_mask = 0xffff);
+      };
+
+      /**
        * @brief transfer_processor constructor
        * @param dict optional dictionary, only necessary for implicit VR TSs
        * @param tfs transfer syntax UID
        * @param vrtype enum instance defining if the ts is [ex|im]plicit VR.
+       * @param tstags list of transfer-syntax-specific tag-to-VR-mapping
        */
-      transfer_processor(boost::optional<dictionary::dictionary&> dict, std::string tfs, VR_TYPE vrtype);
+      transfer_processor(boost::optional<dictionary::dictionary&> dict,
+                         std::string tfs,
+                         VR_TYPE vrtype,
+                         std::initializer_list<vr_of_tag> tstags = {});
 
       transfer_processor(const transfer_processor& other);
+
+      /**
+       * @brief get_vr returns the VR of a given tag, honoring transfer-syntax
+       *        specific settings specified by a subclass.
+       * @param tag tag of the VR to be looked for
+       * @return VR associated with the tag
+       */
+      attribute::VR get_vr(attribute::elementfield::tag_type tag) const;
 
    public:
 
@@ -101,6 +131,8 @@ class transfer_processor
       deserialize_attribute(std::vector<unsigned char>& data,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
+
+      std::vector<vr_of_tag> tstags;
 
       boost::optional<dictionary::dictionary&> dict;
       std::string transfer_syntax;

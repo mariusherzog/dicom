@@ -114,7 +114,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          if (tag != SequenceDelimitationItem
              && tag != Item
              && tag != ItemDelimitationItem) {
-            VR repr = dict.get().lookup(tag).vr[0];
+            VR repr = get_vr(tag);
 
             // if the current item is a sequence, push the nested serialized
             // data on the stack so it will be processed next. Store the current
@@ -163,7 +163,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
    }
 
    // The size of the outermost set should be exactly one
-   assert(current_sequence.top().size == 1);
+   assert(current_sequence.top().size() == 1);
    return current_sequence.top()[0];
 }
 
@@ -192,8 +192,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
       if (vrtype == VR_TYPE::EXPLICIT) {
          repr = attr.second.value_rep.get();
       } else {
-         /** @todo handle options */
-         repr = dict.get().lookup(attr.first).vr[0];
+         repr = get_vr(attr.first);
       }
 
       auto data = serialize_attribute(attr.second, repr);
@@ -225,7 +224,9 @@ elementfield commandset_processor::deserialize_attribute(std::vector<unsigned ch
 
 
 transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> dict,
-                                       std::string tfs, VR_TYPE vrtype):
+                                       std::string tfs, VR_TYPE vrtype,
+                                       std::initializer_list<vr_of_tag> tstags):
+   tstags {tstags},
    dict(dict),
    transfer_syntax {tfs},
    vrtype {vrtype}
@@ -243,10 +244,29 @@ transfer_processor::transfer_processor(const transfer_processor& other):
 {
 }
 
+VR transfer_processor::get_vr(elementfield::tag_type tag) const
+{
+   auto spectag = std::find_if(tstags.begin(), tstags.end(),
+                               [tag](vr_of_tag vrt) {
+         return (tag.group_id & vrt.gid_mask) == vrt.tag.group_id
+             && (tag.element_id & vrt.eid_mask) == vrt.tag.element_id;
+   });
+   if (spectag == tstags.end()) {
+      return dict.get().lookup(tag).vr[0];
+   } else {
+      return spectag->vr;
+   }
+}
+
 little_endian_implicit::little_endian_implicit(dictionary::dictionary& dict):
    transfer_processor {boost::optional<dictionary::dictionary&> {dict},
                        "1.2.840.10008.1.2",
-                       VR_TYPE::IMPLICIT}
+                       VR_TYPE::IMPLICIT,
+                       {
+                           {{0x7fe0, 0x0010}, VR::OW, 0xffff, 0xffff},
+                           {{0x6000, 0x3000}, VR::OW, 0xff00, 0xffff},
+                           {{0x5400, 0x1010}, VR::OW, 0xffff, 0xffff}
+                        } }
 {
 }
 
@@ -266,6 +286,17 @@ elementfield little_endian_implicit::deserialize_attribute(std::vector<unsigned 
                                                            std::size_t pos) const
 {
    return decode_little_endian(data, len, vr, pos);
+}
+
+transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
+                                         VR vr,
+                                         unsigned eid_mask,
+                                         unsigned gid_mask):
+   tag {tag},
+   eid_mask {eid_mask},
+   gid_mask {gid_mask},
+   vr {vr}
+{
 }
 
 
