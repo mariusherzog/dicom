@@ -146,9 +146,16 @@ class dimse_pm
       std::map<data::dataset::DIMSE_SERVICE_GROUP
          , std::function<upperlayer::p_data_tf(dimse_pm*, response r, int pres_context_id)>> assemble_response;
 
-      upperlayer::p_data_tf assemble_cfind_rsp(response r,  int pres_context_id);
+      upperlayer::p_data_tf assemble_cfind_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cfind_rsp(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_cecho_rq(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_cecho_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cget_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cget_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cmove_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cmove_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cstore_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_cstore_rsp(response r, int pres_context_id);
 
       data::dictionary::dictionary& dict;
 
