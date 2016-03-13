@@ -112,12 +112,52 @@ class dimse_pm
       void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
 
       /**
+       * @brief sent_association_ac is set as a handler for the upperlayer when an
+       *        a_associate_ac pdu is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
+      void sent_association_ac(upperlayer::scx* sc, upperlayer::property* r);
+
+      /**
+       * @brief sent_association_rq is set as a handler for the upperlayer when an
+       *        a_associate_rq pdu is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
+      void sent_association_rq(upperlayer::scx* sc, upperlayer::property* r);
+
+      /**
+       * @brief sent_data_tf is set as a handler for the upperlayer when an
+       *        p_data_tf pdu is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
+      void sent_data_tf(upperlayer::scx* sc, upperlayer::property* r);
+
+      /**
        * @brief sent_release_rq is set as a handler for the upperlayer when an
        *        association request is sent successfully.
        * @param[in, out] sc
        * @param r
        */
       void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
+
+      /**
+       * @brief sent_release_rp is set as a handler for the upperlayer when an
+       *        a_release_rp pdu is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
+      void sent_release_rp(upperlayer::scx* sc, upperlayer::property* r);
+
+      /**
+       * @brief sent_abort is set as a handler for the upperlayer when an
+       *        a_abort pdu is sent successfully.
+       * @param[in, out] sc
+       * @param r
+       */
+      void sent_abort(upperlayer::scx* sc, upperlayer::property* r);
 
       /**
        * @brief next_message_id returns a free message id

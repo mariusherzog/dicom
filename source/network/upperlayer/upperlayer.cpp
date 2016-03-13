@@ -117,10 +117,12 @@ void scx::send(property* p)
       // empty
       if (ptype != TYPE::P_DATA_TF) {
          boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-            [this, p, ptype](const boost::system::error_code& error, std::size_t /*bytes*/) {
+            [this, p, ptype](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
                }
+
+               BOOST_LOG_SEV(logger, trace) << "Sent PDU of size " << bytes;
                BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
                BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
                handle_pdu_conf(p, ptype);
@@ -133,10 +135,12 @@ void scx::send(property* p)
          auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
          boost::asio::async_write(sock(), boost::asio::buffer(*commandset),
             [this, commandset, len, pdu, p, ptype, pdataprop]
-               (const boost::system::error_code& error, std::size_t /*bytes*/) {
+               (const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
                }
+
+               BOOST_LOG_SEV(logger, trace) << "Sent data fragment of size " << bytes;
                BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
                BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
 
@@ -191,19 +195,23 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
    auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
    boost::asio::async_read(sock(), boost::asio::buffer(*nextbuflen), boost::asio::transfer_exactly(6),
-      [=]
-         (const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
+      [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
          if (error) {
             throw boost::system::system_error(error);
          }
          std::size_t len = be_char_to_32b({nextbuflen->begin()+2, nextbuflen->begin()+6});
          nextbufdata->resize(len);
+
+         BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
+
          boost::asio::async_read(sock(), boost::asio::buffer(*nextbufdata),
-         [=]
-            (const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
+         [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
             if (error) {
                throw boost::system::system_error(error);
             }
+
+            BOOST_LOG_SEV(logger, trace) << "Read data fragment of size " << bytes;
+
             nextbufcompl->reserve(len+6);
             nextbufcompl->insert(nextbufcompl->end(), nextbuflen->begin(), nextbuflen->end());
             nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
@@ -211,9 +219,11 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
 
             bool lastsegment = ((*nextbufcompl)[11] & 0x02);
             if (lastsegment) {
+               BOOST_LOG_SEV(logger, trace) << "Last data fragment";
                auto pdu = make_property(data);
                handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
             } else {
+               BOOST_LOG_SEV(logger, trace) << "More data fragments expected";
                get_complete_dataset(data);
             }
          });
@@ -228,15 +238,19 @@ void scx::write_complete_dataset(property* p, std::vector<unsigned char> data)
    auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+len);
 
    boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-      [this, p, data, len, pdu](const boost::system::error_code& error, std::size_t /*bytes*/) {
+      [this, p, data, len, pdu](const boost::system::error_code& error, std::size_t bytes) {
          if (error) {
             throw boost::system::system_error(error);
          }
 
+         BOOST_LOG_SEV(logger, trace) << "Sent data fragment of size " << bytes;
+
          bool lastsegment = ((*pdu)[11] & 0x02);
          if (lastsegment) {
+            BOOST_LOG_SEV(logger, trace) << "Last data fragment";
             handle_pdu_conf(p, TYPE::P_DATA_TF);
          } else {
+            BOOST_LOG_SEV(logger, trace) << "More data fragments to be sent";
             write_complete_dataset(p, {data.begin()+len, data.end()});
          }
    });
@@ -264,8 +278,11 @@ void scx::do_read()
 
          std::size_t len = be_char_to_32b({size->begin()+2, size->begin()+6});
          rem_data->resize(len);
+
+         BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
+
          boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(len),
-            [=](const boost::system::error_code& error, std::size_t /*bytes*/) {
+            [=](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
                }
@@ -313,6 +330,7 @@ void scx::do_read()
                   // PDUs of type p_data_tf may come in fragments and with a
                   // data set, which needs to be received.
                   if (ptype == TYPE::P_DATA_TF) {
+                     BOOST_LOG_SEV(logger, trace) << "Read data fragment of size " << bytes;
                      using namespace data::attribute;
                      auto pdataprop = dynamic_cast<p_data_tf*>(property.get());
                      assert(pdataprop);
@@ -322,12 +340,18 @@ void scx::do_read()
                         unsigned short datasetpresent;
                         get_value_field<VR::US>(commandset.at({0x0000, 0x0800}), datasetpresent);
                         if (datasetpresent != 0x0101) {
+                           BOOST_LOG_SEV(logger, trace) << "Dataset present in the PDU ("
+                                                        << "(0000,0800) = " << datasetpresent << ")";
                            get_complete_dataset(*compl_data);
                         } else {
                            handle_pdu(std::move(property), TYPE::P_DATA_TF);
                         }
+                     } else {
+                        BOOST_LOG_SEV(logger, warning) << "No commandset present in the received data PDU. " <<
+                                                        "Ignoring Message";
                      }
                   } else {
+                     BOOST_LOG_SEV(logger, trace) << "Read PDU of size " << bytes;
                      handle_pdu(std::move(property), ptype);
                   }
                }

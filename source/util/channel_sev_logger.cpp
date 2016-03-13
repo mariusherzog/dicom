@@ -21,8 +21,8 @@ void init_log()
          (
             expr::stream
             << "[" << expr::attr<std::string>("Channel")
-            << "] [" << logging::trivial::severity
-            << "] [" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
+            << "]\t [" << logging::trivial::severity
+            << "]\t [" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
             << "] " << expr::smessage
             )
          );
