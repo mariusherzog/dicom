@@ -141,13 +141,14 @@ std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
 
 /**
  * @brief encode_len_little_endian converts a length of a value field into
- *        a 4-byte little endian representation
+ *        a 2 or 4-byte little endian representation
  * @param len length
- * @return 4 bytes of the parameter length in little endian
+ * @return 2 or 4 bytes of the parameter length in little endian
  */
-std::vector<unsigned char> encode_len_little_endian(std::size_t len)
+std::vector<unsigned char> encode_len_little_endian(bool explicitvr, std::size_t len)
 {
-   return convhelper::integral_to_little_endian(len, 4);
+   std::size_t lenbytes = explicitvr ? 2 : 4;
+   return convhelper::integral_to_little_endian(len, lenbytes);
 }
 
 
@@ -161,10 +162,11 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
    return tag;
 }
 
-std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, int begin)
+std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, bool explicitvr, int begin)
 {
+   std::size_t lenbytes = explicitvr ? 2 : 4;
    std::size_t len;
-   convhelper::little_endian_to_integral(data, begin, 4, len);
+      convhelper::little_endian_to_integral(data, begin, lenbytes, len);
    return len;
 }
 

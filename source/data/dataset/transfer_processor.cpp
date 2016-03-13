@@ -30,7 +30,7 @@ transfer_processor::~transfer_processor()
  * @param dict dictionary for the tag lookup
  * @return size of the nested set
  */
-static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg, dictionary::dictionary& dict)
+static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicitvr, std::size_t beg, dictionary::dictionary& dict)
 {
    std::size_t pos = beg;
    int nested_sets = 0;
@@ -41,7 +41,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
          break;
       }
       pos += 4;
-      std::size_t value_len = decode_len_little_endian(data, pos);
+      std::size_t value_len = decode_len_little_endian(data, explicitvr, pos);
       pos += 4;
       VR repr = dict.lookup(tag).vr[0];
 
@@ -49,7 +49,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t b
          nested_sets++;
       }
 
-      value_len = value_len == 0xffff ? find_enclosing(data, pos, dict) : value_len;
+      value_len = value_len == 0xffff ? find_enclosing(data, explicitvr, pos, dict) : value_len;
       pos += value_len;
 
    }
@@ -97,30 +97,43 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
 
          elementfield::tag_type tag = decode_tag_little_endian(current_data.top(), pos);
          pos += 4;
+
+         VR repr = VR::NN;
+         if (tag != SequenceDelimitationItem
+               && tag != Item
+               && tag != ItemDelimitationItem) {
+            if (vrtype != VR_TYPE::IMPLICIT) {
+               repr = dictionary::dictionary_entry::vr_of_string
+                     .left.at(std::string {data.begin()+pos, data.begin()+pos+2});
+               pos += 2;
+            } else {
+               repr = get_vr(tag);
+            }
+         }
+
          std::size_t value_len;
          if (tag != SequenceDelimitationItem
              && tag != Item
              && tag != ItemDelimitationItem) {
-            value_len = decode_len_little_endian(current_data.top(), pos);
+            value_len = decode_len_little_endian(current_data.top(), vrtype == VR_TYPE::EXPLICIT, pos);
          } else if (tag == Item) {
-            value_len = decode_len_little_endian(current_data.top(), pos);
+            value_len = decode_len_little_endian(current_data.top(), vrtype == VR_TYPE::EXPLICIT, pos);
          } else {
             value_len = 0;
          }
-         pos += 4;
+         pos += vrtype == VR_TYPE::IMPLICIT ? 4 : 2;
 
          // Items and DelimitationItems do not have a VR or length field and are
          // to be treated separately.
          if (tag != SequenceDelimitationItem
              && tag != Item
              && tag != ItemDelimitationItem) {
-            VR repr = get_vr(tag);
 
             // if the current item is a sequence, push the nested serialized
             // data on the stack so it will be processed next. Store the current
             // state of the deserialization on appropriate stacks.
             if (repr == VR::SQ) {
-               value_len = value_len == 0xffff ? find_enclosing(current_data.top(), pos, dict.get()) : value_len;
+               value_len = value_len == 0xffff ? find_enclosing(current_data.top(), vrtype == VR_TYPE::EXPLICIT, pos, dict.get()) : value_len;
                current_data.push({current_data.top().begin()+pos, current_data.top().begin()+pos+value_len});
                current_sequence.push({dataset_type {}});
                positions.push(0);
@@ -182,7 +195,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          continue;
       } else if (attr.first == Item) {
          auto tag = encode_tag_little_endian(attr.first);
-         auto len = encode_len_little_endian(attr.second.value_len);
+         auto len = encode_len_little_endian(vrtype == VR_TYPE::EXPLICIT, attr.second.value_len);
          stream.insert(stream.end(), tag.begin(), tag.end());
          stream.insert(stream.end(), len.begin(), len.end());
          continue;
@@ -197,7 +210,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
 
       auto data = serialize_attribute(attr.second, repr);
       auto tag = encode_tag_little_endian(attr.first);
-      auto len = encode_len_little_endian(attr.second.value_len);
+      auto len = encode_len_little_endian(vrtype == VR_TYPE::EXPLICIT, attr.second.value_len);
       stream.insert(stream.end(), tag.begin(), tag.end());
       if (vrtype == VR_TYPE::EXPLICIT) {
          auto vr = dictionary::dictionary_entry::vr_of_string.right.at(repr);
@@ -305,6 +318,24 @@ transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
    gid_mask {gid_mask},
    vr {vr}
 {
+}
+
+little_endian_explicit::little_endian_explicit():
+   transfer_processor {boost::none, "1.2.840.10008.1.2.1", VR_TYPE::EXPLICIT}
+{
+
+}
+
+std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield e, VR vr) const
+{
+   return encode_little_endian(e, vr);
+}
+
+elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data,
+                                                           std::size_t len, VR vr,
+                                                           std::size_t pos) const
+{
+   return decode_little_endian(data, len, vr, pos);
 }
 
 
