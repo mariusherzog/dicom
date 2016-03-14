@@ -73,8 +73,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    sc.inject_conf(upperlayer::TYPE::A_ABORT,
              std::bind(&dimse_pm::sent_abort, this, _1, _2));
 
-//   transfer_processors["1.2.840.10008.1.2"]
-//         = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
+   transfer_processors["1.2.840.10008.1.2"]
+         = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
    transfer_processors["1.2.840.10008.1.2.1"]
          = std::unique_ptr<transfer_processor> {new little_endian_explicit};
 }

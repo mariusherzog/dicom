@@ -161,9 +161,8 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
    return tag;
 }
 
-std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, bool explicitvr, int begin)
+std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
 {
-   std::size_t lenbytes = explicitvr ? 2 : 4;
    std::size_t len;
       convhelper::little_endian_to_integral(data, begin, lenbytes, len);
    return len;

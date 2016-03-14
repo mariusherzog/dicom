@@ -18,11 +18,37 @@ namespace dataset
 
 using namespace attribute;
 
-/**
- * @brief specialVRs contains all VR for which the attribute is to be treated
- *        differently in explicit VR transfer syntaxes.
- */
+
 static const std::vector<VR> specialVRs {VR::OB, VR::OW, VR::OF, VR::SQ, VR::UR, VR::UT, VR::UN, VR::NI, VR::NN};
+
+static const std::vector<elementfield::tag_type> item_attributes {Item, ItemDelimitationItem, SequenceDelimitationItem};
+
+/**
+ * @brief is_specialVR checks if the given VR needs special handling in explicit
+ *        transfer syntaxes
+ * @param vr VR to be checked
+ * @return true if VR is "special", false otherwise
+ * @see DICOM standard part 3.5, chapter 7.1.2
+ */
+static bool is_special_VR(VR vr)
+{
+   return std::find(specialVRs.begin(), specialVRs.end(), vr)
+         != specialVRs.end();
+}
+
+
+/**
+ * @brief is_item_attribute checks if the passed tag is of an item type, ie.
+ *        Item, ItemDelimitationItem or SequenceDelimitationItem
+ * @param tag tag to be checked
+ * @return true if tag corresponds to an "item type", false otherwise
+ */
+static bool is_item_attribute(elementfield::tag_type tag)
+{
+   return std::find(item_attributes.begin(), item_attributes.end(), tag)
+         != item_attributes.end();
+}
+
 
 
 transfer_processor::~transfer_processor()
@@ -106,16 +132,14 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          pos += 4;
 
          VR repr = VR::NN;
-         if (tag != SequenceDelimitationItem
-               && tag != Item
-               && tag != ItemDelimitationItem) {
+         if (!is_item_attribute(tag)) {
             if (vrtype != VR_TYPE::IMPLICIT) {
                repr = dictionary::dictionary_entry::vr_of_string
                      .left.at(std::string {current_data.top().begin()+pos, current_data.top().begin()+pos+2});
-               if (std::find(specialVRs.begin(), specialVRs.end(), repr) == specialVRs.end()) {
-                  pos += 2;
-               } else {
+               if (is_special_VR(repr)) {
                   pos += 4;
+               } else {
+                  pos += 2;
                }
             } else {
                repr = get_vr(tag);
@@ -123,26 +147,30 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          }
 
          std::size_t value_len;
-         if (tag != SequenceDelimitationItem
-             && tag != Item
-             && tag != ItemDelimitationItem) {
-            value_len = decode_len_little_endian(current_data.top(), vrtype == VR_TYPE::EXPLICIT, pos);
+         if (!is_item_attribute(tag)) {
+            if (vrtype == VR_TYPE::IMPLICIT) {
+               value_len = decode_len_little_endian(current_data.top(), 4, pos);
+            } else {
+               if (is_special_VR(repr)) {
+                  value_len = decode_len_little_endian(current_data.top(), 4, pos);
+               } else {
+                  value_len = decode_len_little_endian(current_data.top(), 2, pos);
+               }
+            }
          } else if (tag == Item) {
-            value_len = decode_len_little_endian(current_data.top(), vrtype == VR_TYPE::EXPLICIT, pos);
+            value_len = decode_len_little_endian(current_data.top(), 4, pos);
          } else {
             value_len = 0;
          }
 
-         if (vrtype == VR_TYPE::IMPLICIT || std::find(specialVRs.begin(), specialVRs.end(), repr) != specialVRs.end()) {
+         if (vrtype == VR_TYPE::IMPLICIT || is_special_VR(repr)) {
             pos += 4;
          } else {
             pos += 2;
          }
          // Items and DelimitationItems do not have a VR or length field and are
          // to be treated separately.
-         if (tag != SequenceDelimitationItem
-             && tag != Item
-             && tag != ItemDelimitationItem) {
+         if (!is_item_attribute(tag)) {
 
             // if the current item is a sequence, push the nested serialized
             // data on the stack so it will be processed next. Store the current
@@ -231,7 +259,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
       if (vrtype == VR_TYPE::EXPLICIT) {
          auto vr = dictionary::dictionary_entry::vr_of_string.right.at(repr);
          stream.insert(stream.end(), vr.begin(), vr.begin()+2);
-         if (std::find(specialVRs.begin(), specialVRs.end(), repr) != specialVRs.end()) {
+         if (is_special_VR(repr)) {
             stream.push_back(0x00); stream.push_back(0x00);
             len = encode_len_little_endian(4, attr.second.value_len);
          } else {

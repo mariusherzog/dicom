@@ -73,7 +73,7 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
  *        of the value field
  * @return length specified in the serialized stream data
  */
-std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, bool explicitvr, int begin);
+std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin);
 
 }
 
