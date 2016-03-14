@@ -53,7 +53,7 @@ std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag);
  * @param len length
  * @return 4 bytes of the parameter length in little endian
  */
-std::vector<unsigned char> encode_len_little_endian(std::size_t len);
+std::vector<unsigned char> encode_len_little_endian(std::size_t lenbytes, std::size_t len);
 
 /**
  * @brief decode_tag_little_endian transforms the serialized tag data into a
@@ -73,7 +73,7 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
  *        of the value field
  * @return length specified in the serialized stream data
  */
-std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, int begin);
+std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin);
 
 }
 

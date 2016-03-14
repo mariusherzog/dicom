@@ -75,6 +75,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
 
    transfer_processors["1.2.840.10008.1.2"]
          = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
+   transfer_processors["1.2.840.10008.1.2.1"]
+         = std::unique_ptr<transfer_processor> {new little_endian_explicit};
 }
 
 dimse_pm::~dimse_pm()
@@ -190,7 +192,8 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
          auto transfer_syntaxes = pres_cont.transfer_syntaxes;
          for (const auto ts : transfer_syntaxes) {
             if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
-                != transfer_syntaxes.end()) {
+                != transfer_syntaxes.end() /* &&
+                std::find_if(transfer_processors.begin(), transfer_processors.end(),)*/) {
                ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
                have_common_ts = true;
                break;
