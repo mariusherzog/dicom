@@ -210,7 +210,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          continue;
       } else if (attr.first == Item) {
          auto tag = encode_tag_little_endian(attr.first);
-         auto len = encode_len_little_endian(vrtype == VR_TYPE::EXPLICIT, attr.second.value_len);
+         auto len = encode_len_little_endian(4, attr.second.value_len);
          stream.insert(stream.end(), tag.begin(), tag.end());
          stream.insert(stream.end(), len.begin(), len.end());
          continue;
@@ -223,13 +223,22 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          repr = get_vr(attr.first);
       }
 
+
       auto data = serialize_attribute(attr.second, repr);
       auto tag = encode_tag_little_endian(attr.first);
-      auto len = encode_len_little_endian(vrtype == VR_TYPE::EXPLICIT, attr.second.value_len);
+      std::vector<unsigned char> len;
       stream.insert(stream.end(), tag.begin(), tag.end());
       if (vrtype == VR_TYPE::EXPLICIT) {
          auto vr = dictionary::dictionary_entry::vr_of_string.right.at(repr);
          stream.insert(stream.end(), vr.begin(), vr.begin()+2);
+         if (std::find(specialVRs.begin(), specialVRs.end(), repr) != specialVRs.end()) {
+            stream.push_back(0x00); stream.push_back(0x00);
+            len = encode_len_little_endian(4, attr.second.value_len);
+         } else {
+            len = encode_len_little_endian(2, attr.second.value_len);
+         }
+      } else {
+         len = encode_len_little_endian(4, attr.second.value_len);
       }
       stream.insert(stream.end(), len.begin(), len.end());
       stream.insert(stream.end(), data.begin(), data.end());

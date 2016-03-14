@@ -145,9 +145,8 @@ std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
  * @param len length
  * @return 2 or 4 bytes of the parameter length in little endian
  */
-std::vector<unsigned char> encode_len_little_endian(bool explicitvr, std::size_t len)
+std::vector<unsigned char> encode_len_little_endian(std::size_t lenbytes, std::size_t len)
 {
-   std::size_t lenbytes = explicitvr ? 2 : 4;
    return convhelper::integral_to_little_endian(len, lenbytes);
 }
 
