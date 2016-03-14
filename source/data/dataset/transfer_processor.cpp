@@ -18,6 +18,13 @@ namespace dataset
 
 using namespace attribute;
 
+/**
+ * @brief specialVRs contains all VR for which the attribute is to be treated
+ *        differently in explicit VR transfer syntaxes.
+ */
+static const std::vector<VR> specialVRs {VR::OB, VR::OW, VR::OF, VR::SQ, VR::UR, VR::UT, VR::UN, VR::NI, VR::NN};
+
+
 transfer_processor::~transfer_processor()
 {
 }
@@ -104,8 +111,12 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                && tag != ItemDelimitationItem) {
             if (vrtype != VR_TYPE::IMPLICIT) {
                repr = dictionary::dictionary_entry::vr_of_string
-                     .left.at(std::string {data.begin()+pos, data.begin()+pos+2});
-               pos += 2;
+                     .left.at(std::string {current_data.top().begin()+pos, current_data.top().begin()+pos+2});
+               if (std::find(specialVRs.begin(), specialVRs.end(), repr) == specialVRs.end()) {
+                  pos += 2;
+               } else {
+                  pos += 4;
+               }
             } else {
                repr = get_vr(tag);
             }
@@ -121,8 +132,12 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          } else {
             value_len = 0;
          }
-         pos += vrtype == VR_TYPE::IMPLICIT ? 4 : 2;
 
+         if (vrtype == VR_TYPE::IMPLICIT || std::find(specialVRs.begin(), specialVRs.end(), repr) != specialVRs.end()) {
+            pos += 4;
+         } else {
+            pos += 2;
+         }
          // Items and DelimitationItems do not have a VR or length field and are
          // to be treated separately.
          if (tag != SequenceDelimitationItem
