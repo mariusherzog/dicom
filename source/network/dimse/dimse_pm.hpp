@@ -196,6 +196,18 @@ class dimse_pm
       upperlayer::p_data_tf assemble_cmove_rsp(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_cstore_rq(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_cstore_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_neventreport_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_neventreport_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_nget_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_nget_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_nset_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_nset_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_naction_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_naction_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_ncreate_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_ncreate_rsp(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_ndelete_rq(response r, int pres_context_id);
+      upperlayer::p_data_tf assemble_ndelete_rsp(response r, int pres_context_id);
 
       data::dictionary::dictionary& dict;
 

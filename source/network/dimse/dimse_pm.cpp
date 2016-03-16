@@ -48,6 +48,18 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                        {DIMSE_SERVICE_GROUP::C_MOVE_RSP,  &dimse_pm::assemble_cmove_rsp},
                        {DIMSE_SERVICE_GROUP::C_GET_RQ,    &dimse_pm::assemble_cget_rq},
                        {DIMSE_SERVICE_GROUP::C_GET_RSP,   &dimse_pm::assemble_cget_rsp},
+                       {DIMSE_SERVICE_GROUP::N_EVENT_REPORT_RQ,    &dimse_pm::assemble_neventreport_rq},
+                       {DIMSE_SERVICE_GROUP::N_EVENT_REPORT_RSP,   &dimse_pm::assemble_neventreport_rsp},
+                       {DIMSE_SERVICE_GROUP::N_GET_RQ,    &dimse_pm::assemble_nget_rq},
+                       {DIMSE_SERVICE_GROUP::N_GET_RSP,   &dimse_pm::assemble_nget_rsp},
+                       {DIMSE_SERVICE_GROUP::N_SET_RQ,    &dimse_pm::assemble_nset_rq},
+                       {DIMSE_SERVICE_GROUP::N_SET_RSP,   &dimse_pm::assemble_nset_rsp},
+                       {DIMSE_SERVICE_GROUP::N_ACTION_RQ,    &dimse_pm::assemble_naction_rq},
+                       {DIMSE_SERVICE_GROUP::N_ACTION_RSP,   &dimse_pm::assemble_naction_rsp},
+                       {DIMSE_SERVICE_GROUP::N_CREATE_RQ,    &dimse_pm::assemble_ncreate_rq},
+                       {DIMSE_SERVICE_GROUP::N_CREATE_RSP,   &dimse_pm::assemble_ncreate_rsp},
+                       {DIMSE_SERVICE_GROUP::N_DELETE_RQ,    &dimse_pm::assemble_ndelete_rq},
+                       {DIMSE_SERVICE_GROUP::N_DELETE_RSP,   &dimse_pm::assemble_ndelete_rsp}
                      },
    dict(dict),
    transfer_processors {  },
@@ -777,6 +789,443 @@ upperlayer::p_data_tf dimse_pm::assemble_cmove_rsp(response r, int pres_context_
    cresp[NumberOfCompletedSuboperations] = make_elementfield<VR::US>(2, num_completed_sub);
    cresp[NumberOfFailedSuboperations]    = make_elementfield<VR::US>(2, num_failed_sub);
    cresp[NumberOfWarningSuboperations]   = make_elementfield<VR::US>(2, num_warning_sub);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_neventreport_rq(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id, event_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
+   get_value_field<VR::US>(cs.at(EventTypeID), event_id);
+
+   cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]           = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageID]              = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]     = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[AffectedSOPInstanceUID] = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
+   cresp[EventTypeID]            = make_elementfield<VR::US>(2, event_id);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc {dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_neventreport_rsp(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id, event_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::US>(cs.at(EventTypeID), event_id);
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
+   cresp[EventTypeID]               = make_elementfield<VR::US>(2, event_id);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc {dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_nget_rq(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, SOP_instance_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
+   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
+
+   cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageID]                 = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid.length(), SOP_instance_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_nget_rsp(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_nset_rq(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, SOP_instance_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
+   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
+
+   cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageID]                 = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid.length(), SOP_instance_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_nset_rsp(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_naction_rq(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, SOP_instance_uid;
+   unsigned short message_id, action_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
+   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
+   get_value_field<VR::US>(cs.at(ActionTypeID), action_id);
+
+
+   cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageID]                 = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid.length(), SOP_instance_uid);
+   cresp[ActionTypeID]              = make_elementfield<VR::US>(2, action_id);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_naction_rsp(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id, action_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+   get_value_field<VR::US>(cs.at(ActionTypeID), action_id);
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
+   cresp[ActionTypeID]              = make_elementfield<VR::US>(2, action_id);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_ncreate_rq(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, SOP_instance_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), SOP_instance_uid);
+   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
+
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageID]                 = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(SOP_instance_uid.length(), SOP_instance_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_ncreate_rsp(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_ndelete_rq(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, SOP_instance_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
+   get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
+   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
+
+
+   cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageID]                 = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid.length(), SOP_instance_uid);
+
+   auto size = dataset_size(cresp);
+   cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
+
+   commandset_processor proc{dict};
+   auto serdata = proc.serialize(cresp);
+
+   p_data_tf presp;
+   presp.command_set = serdata;
+   presp.pres_context_id = pres_context_id;
+   presp.msg_length = max_remote_msg_length;
+   assert(max_remote_msg_length > 0);
+
+   return presp;
+}
+
+upperlayer::p_data_tf dimse_pm::assemble_ndelete_rsp(response r, int pres_context_id)
+{
+   using namespace upperlayer;
+   using namespace data::dataset;
+   commandset_data cresp;
+
+   std::string SOP_uid, aff_SOP_uid;
+   unsigned short message_id;
+   auto cs = r.get_command();
+   bool hasdata = r.get_data().is_initialized();
+   get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
+
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
 
    auto size = dataset_size(cresp);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);
