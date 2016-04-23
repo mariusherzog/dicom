@@ -42,6 +42,15 @@ class transfer_processor
       };
 
       /**
+       * @brief The ENDIANNESS enum is used by the subclasses to define the
+       *        endianness of the encoded length, value and VR (if applicable)
+       */
+      enum class ENDIANNESS
+      {
+         LITTLE, BIG
+      };
+
+      /**
        * @brief The vr_of_tag struct defines a transfer-syntax specific mapping
        *        of a tag (range) to a VR.
        */
@@ -69,6 +78,7 @@ class transfer_processor
       transfer_processor(boost::optional<dictionary::dictionary&> dict,
                          std::string tfs,
                          VR_TYPE vrtype,
+                         ENDIANNESS endianness,
                          std::initializer_list<vr_of_tag> tstags = {});
 
       transfer_processor(const transfer_processor& other);
@@ -132,11 +142,16 @@ class transfer_processor
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
 
+      attribute::VR deserialize_VR(std::vector<unsigned char> dataset,
+                                   attribute::elementfield::tag_type tag,
+                                   std::size_t& pos) const;
+
       std::vector<vr_of_tag> tstags;
 
       boost::optional<dictionary::dictionary&> dict;
       std::string transfer_syntax;
       VR_TYPE vrtype;
+      ENDIANNESS endianness;
 };
 
 /**

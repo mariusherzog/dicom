@@ -90,7 +90,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicit
 }
 
 commandset_processor::commandset_processor(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT}
+   transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
 {
 }
 
@@ -131,20 +131,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          elementfield::tag_type tag = decode_tag_little_endian(current_data.top(), pos);
          pos += 4;
 
-         VR repr = VR::NN;
-         if (!is_item_attribute(tag)) {
-            if (vrtype != VR_TYPE::IMPLICIT) {
-               repr = dictionary::dictionary_entry::vr_of_string
-                     .left.at(std::string {current_data.top().begin()+pos, current_data.top().begin()+pos+2});
-               if (is_special_VR(repr)) {
-                  pos += 4;
-               } else {
-                  pos += 2;
-               }
-            } else {
-               repr = get_vr(tag);
-            }
-         }
+         VR repr = deserialize_VR(current_data.top(), tag, pos);
 
          std::size_t value_len;
          if (!is_item_attribute(tag)) {
@@ -224,6 +211,26 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
 }
 
 
+VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, elementfield::tag_type tag, std::size_t& pos) const
+{
+   if (!is_item_attribute(tag)) {
+      if (vrtype != VR_TYPE::IMPLICIT) {
+         VR repr = dictionary::dictionary_entry::vr_of_string
+               .left.at(std::string {dataset.begin()+pos, dataset.begin()+pos+2});
+         if (is_special_VR(repr)) {
+            pos += 4;
+         } else {
+            pos += 2;
+         }
+         return repr;
+      } else {
+         return get_vr(tag);
+      }
+   }
+   return VR::NN;
+}
+
+
 std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield e, VR vr) const
 {
    return encode_little_endian(e, vr);
@@ -290,11 +297,13 @@ elementfield commandset_processor::deserialize_attribute(std::vector<unsigned ch
 
 transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> dict,
                                        std::string tfs, VR_TYPE vrtype,
+                                       ENDIANNESS endianness,
                                        std::initializer_list<vr_of_tag> tstags):
    tstags {tstags},
    dict(dict),
    transfer_syntax {tfs},
-   vrtype {vrtype}
+   vrtype {vrtype},
+   endianness {endianness}
 {
    if (vrtype == VR_TYPE::IMPLICIT && !dict.is_initialized()) {
       throw std::runtime_error("Uninitialized dictionary with "
@@ -327,6 +336,7 @@ little_endian_implicit::little_endian_implicit(dictionary::dictionary& dict):
    transfer_processor {boost::optional<dictionary::dictionary&> {dict},
                        "1.2.840.10008.1.2",
                        VR_TYPE::IMPLICIT,
+                       ENDIANNESS::LITTLE,
                        {
                            {{0x7fe0, 0x0010}, VR::OW},
                            {{0x6000, 0x3000}, VR::OW, 0xff00, 0xffff},
@@ -373,7 +383,7 @@ transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
 }
 
 little_endian_explicit::little_endian_explicit():
-   transfer_processor {boost::none, "1.2.840.10008.1.2.1", VR_TYPE::EXPLICIT}
+   transfer_processor {boost::none, "1.2.840.10008.1.2.1", VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE}
 {
 
 }
