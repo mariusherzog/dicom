@@ -31,8 +31,8 @@ static std::vector<unsigned char> integral_to_big_endian(T data, int size)
 {
    static_assert(std::is_integral<T>::value, "Integral type expected");
    std::vector<unsigned char> buf(size);
-   for (int i=size-1; i>=0; --i) {
-      buf[i] = ((data >> 8*i) & 0xff);
+   for (int i=0; i<size; ++i) {
+      buf[i] = (data >> (8*(size-1-i)) & 0xff);
    }
    return buf;
 }
