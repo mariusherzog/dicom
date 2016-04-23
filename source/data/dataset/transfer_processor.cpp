@@ -23,6 +23,8 @@ static const std::vector<VR> specialVRs {VR::OB, VR::OW, VR::OF, VR::SQ, VR::UR,
 
 static const std::vector<elementfield::tag_type> item_attributes {Item, ItemDelimitationItem, SequenceDelimitationItem};
 
+
+
 /**
  * @brief is_specialVR checks if the given VR needs special handling in explicit
  *        transfer syntaxes

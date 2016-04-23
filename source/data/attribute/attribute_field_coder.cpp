@@ -27,6 +27,17 @@ static std::vector<unsigned char> integral_to_little_endian(T data, int size)
 }
 
 template <typename T>
+static std::vector<unsigned char> integral_to_big_endian(T data, int size)
+{
+   static_assert(std::is_integral<T>::value, "Integral type expected");
+   std::vector<unsigned char> buf(size);
+   for (int i=size-1; i>=0; --i) {
+      buf[i] = ((data >> 8*i) & 0xff);
+   }
+   return buf;
+}
+
+template <typename T>
 static void little_endian_to_integral(const std::vector<unsigned char>& data
                                       , int begin, int size, T& out)
 {
@@ -34,6 +45,17 @@ static void little_endian_to_integral(const std::vector<unsigned char>& data
    out = 0;
    for (int i=0; i<size; ++i) {
       out |= ((data[begin+i] & 0xff) << 8*i);
+   }
+}
+
+template <typename T>
+static void big_endian_to_integral(const std::vector<unsigned char>& data
+                                      , int begin, int size, T& out)
+{
+   static_assert(std::is_integral<T>::value, "Integral type expected");
+   out = 0;
+   for (int i=0; i<size; ++i) {
+      out |= ((data[begin+i] & 0xff) << 8*(size-1-i));
    }
 }
 
@@ -123,12 +145,6 @@ static std::vector<unsigned char> decode_word_array_le(const std::vector<unsigne
 
 }
 
-/**
- * @brief encode_tag_little_endian converts the element tag into a little endian
- *        representation of 8 bytes
- * @param tag tag to be encoded
- * @return vector of bytes representing the tag in little endian
- */
 std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
 {
    std::vector<unsigned char> data;
@@ -139,17 +155,25 @@ std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
    return data;
 }
 
-/**
- * @brief encode_len_little_endian converts a length of a value field into
- *        a 2 or 4-byte little endian representation
- * @param len length
- * @return 2 or 4 bytes of the parameter length in little endian
- */
+std::vector<unsigned char> encode_tag_big_endian(elementfield::tag_type tag)
+{
+   std::vector<unsigned char> data;
+   auto group_le = convhelper::integral_to_big_endian(tag.group_id, 2);
+   auto elem_le = convhelper::integral_to_big_endian(tag.element_id, 2);
+   data.insert(data.begin(), elem_le.begin(), elem_le.end());
+   data.insert(data.begin(), group_le.begin(), group_le.end());
+   return data;
+}
+
 std::vector<unsigned char> encode_len_little_endian(std::size_t lenbytes, std::size_t len)
 {
    return convhelper::integral_to_little_endian(len, lenbytes);
 }
 
+std::vector<unsigned char> encode_len_big_endian(std::size_t lenbytes, std::size_t len)
+{
+   return convhelper::integral_to_big_endian(len, lenbytes);
+}
 
 elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int begin)
 {
@@ -161,10 +185,27 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
    return tag;
 }
 
+elementfield::tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin)
+{
+   unsigned short gid, eid;
+   convhelper::big_endian_to_integral(data, begin, 2, gid);
+   convhelper::big_endian_to_integral(data, begin+2, 2, eid);
+
+   elementfield::tag_type tag {gid, eid};
+   return tag;
+}
+
 std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
 {
    std::size_t len;
       convhelper::little_endian_to_integral(data, begin, lenbytes, len);
+   return len;
+}
+
+std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
+{
+   std::size_t len;
+      convhelper::big_endian_to_integral(data, begin, lenbytes, len);
    return len;
 }
 

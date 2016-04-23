@@ -48,12 +48,28 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data, std::s
 std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag);
 
 /**
+ * @brief encode_tag_big_endian converts the element tag into a big endian
+ *        representation of 8 bytes
+ * @param tag tag to be encoded
+ * @return vector of bytes representing the tag in big endian
+ */
+std::vector<unsigned char> encode_tag_big_endian(elementfield::tag_type tag);
+
+/**
  * @brief encode_len_little_endian converts a length of a value field into
  *        a 4-byte little endian representation.
  * @param len length
  * @return 4 bytes of the parameter length in little endian
  */
 std::vector<unsigned char> encode_len_little_endian(std::size_t lenbytes, std::size_t len);
+
+/**
+ * @brief encode_len_big_endian converts a length of a value field into
+ *        a 4-byte big endian representation.
+ * @param len length
+ * @return 4 bytes of the parameter length in big endian
+ */
+std::vector<unsigned char> encode_len_big_endian(std::size_t lenbytes, std::size_t len);
 
 /**
  * @brief decode_tag_little_endian transforms the serialized tag data into a
@@ -66,6 +82,16 @@ std::vector<unsigned char> encode_len_little_endian(std::size_t lenbytes, std::s
 elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int begin);
 
 /**
+ * @brief decode_tag_big_endian transforms the serialized tag data into a
+ *        structured form.
+ * @param data serialized stream data
+ * @param begin beginning, as in absolute position from the data stream start,
+ *        of the value field
+ * @return instance of tag_type with the tag elements
+ */
+elementfield::tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin);
+
+/**
  * @brief decode_len_little_endian transforms the serialized length data into a
  *        structured form.
  * @param data serialized stream data
@@ -74,6 +100,16 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
  * @return length specified in the serialized stream data
  */
 std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin);
+
+/**
+ * @brief decode_len_big_endian transforms the serialized length data into a
+ *        structured form.
+ * @param data serialized stream data
+ * @param begin beginning, as in absolute position from the data stream start,
+ *        of the value field
+ * @return length specified in the serialized stream data
+ */
+std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin);
 
 }
 
