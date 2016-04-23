@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "data/dataset/datasets.hpp"
+#include "data/attribute/attribute.hpp"
 
 namespace dicom
 {
@@ -15,18 +16,19 @@ namespace attribute
 {
 
 /**
- * @brief encode_little_endian converts the attribute into a serialized little
- *        endian representation.
+ * @brief encode converts the attribute into a serialized representation.
  * @param attr attribute to be encoded
+ * @param endianness endiannes of the to-be-encoded data
  * @param vr VR of given attribute
  * @return vector of bytes representing the attribute
  */
-std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr);
+std::vector<unsigned char> encode(elementfield attr, ENDIANNESS endianness, const VR vr);
 
 /**
- * @brief decode_little_endian converts a serialized attribute into a structured
+ * @brief decode_big_endian converts a serialized attribute into a structured
  *        elementfield representation.
  * @param data stream with serialized data
+ * @param endianness endiannes of the to-be-decoded data
  * @param len length of the value field
  * @param vr vr of the value field
  * @param begin beginning, as in absolute position from the data stream start,
@@ -37,7 +39,7 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr);
  * as a parameter, parses the respective value field, and returns an instance of
  * elementfield which contains all the data.
  */
-elementfield decode_little_endian(const std::vector<unsigned char>& data, std::size_t len, VR vr, int begin);
+elementfield decode(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t len, VR vr, int begin);
 
 /**
  * @brief encode_tag_little_endian converts the element tag into a little endian

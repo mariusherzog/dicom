@@ -47,6 +47,16 @@ namespace data
 namespace attribute
 {
 
+/**
+ * @brief The ENDIANNESS enum defines the endianness of the data in a serialized
+ *        representation
+ */
+enum class ENDIANNESS
+{
+   BIG, LITTLE
+};
+
+
 
 /**
  * @brief The VR enum defines the value representations of an attribute

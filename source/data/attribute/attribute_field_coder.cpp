@@ -62,7 +62,7 @@ static void big_endian_to_integral(const std::vector<unsigned char>& data
 template <typename T>
 static std::vector<unsigned char> float_to_little_endian(T data, int size)
 {
-   static_assert(std::is_floating_point<T>::value, "Integral type expected");
+   static_assert(std::is_floating_point<T>::value, "Floating type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
    std::vector<unsigned char> buf(size);
    unsigned char floatbuf[sizeof(T)];
@@ -75,15 +75,44 @@ static std::vector<unsigned char> float_to_little_endian(T data, int size)
 }
 
 template <typename T>
+static std::vector<unsigned char> float_to_big_endian(T data, int size)
+{
+   static_assert(std::is_floating_point<T>::value, "Floating type expected");
+   static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
+   std::vector<unsigned char> buf(size);
+   unsigned char floatbuf[sizeof(T)];
+   unsigned char* floatbufin = floatbuf;
+   floatbufin = reinterpret_cast<unsigned char*>(&data);
+   for (int i=size-1; i>=0; --i) {
+      buf[i] = floatbufin[i];
+   }
+   return buf;
+}
+
+template <typename T>
 static void little_endian_to_float(const std::vector<unsigned char>& data
                                       , int begin, int size, T& out)
 {
-   static_assert(std::is_floating_point<T>::value, "Integral type expected");
+   static_assert(std::is_floating_point<T>::value, "Floating type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
    out = 0;
    unsigned char floatbufout[sizeof(T)] = {0};
    for (int i=0; i<size; ++i) {
       floatbufout[i] |= ((data[begin+i] & 0xff));
+   }
+   out = *reinterpret_cast<T*>(floatbufout);
+}
+
+template <typename T>
+static void big_endian_to_float(const std::vector<unsigned char>& data
+                                      , int begin, int size, T& out)
+{
+   static_assert(std::is_floating_point<T>::value, "Floating type expected");
+   static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
+   out = 0;
+   unsigned char floatbufout[sizeof(T)] = {0};
+   for (int i=0; i<size; ++i) {
+      floatbufout[i] |= ((data[begin+size-1-i] & 0xff));
    }
    out = *reinterpret_cast<T*>(floatbufout);
 }
@@ -144,6 +173,7 @@ static std::vector<unsigned char> decode_word_array_le(const std::vector<unsigne
 }
 
 }
+
 
 std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
 {
@@ -211,7 +241,7 @@ std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::s
 
 
 
-std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
+std::vector<unsigned char> encode(elementfield attr, ENDIANNESS endianness, const VR vr)
 {
    std::vector<unsigned char> data;
    switch (vr) {
@@ -230,8 +260,14 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
       case VR::AT: {
          elementfield::tag_type tag;
          get_value_field<VR::AT>(attr, tag);
-         auto group_le = convhelper::integral_to_little_endian(tag.group_id, 2);
-         auto elem_le = convhelper::integral_to_little_endian(tag.element_id, 2);
+         std::vector<unsigned char> group_le, elem_le;
+         if (endianness == ENDIANNESS::LITTLE) {
+            group_le = convhelper::integral_to_little_endian(tag.group_id, 2);
+            elem_le = convhelper::integral_to_little_endian(tag.element_id, 2);
+         } else {
+            group_le = convhelper::integral_to_big_endian(tag.group_id, 2);
+            elem_le = convhelper::integral_to_big_endian(tag.element_id, 2);
+         }
          data.insert(data.begin(), elem_le.begin(), elem_le.end());
          data.insert(data.begin(), group_le.begin(), group_le.end());
          break;
@@ -262,13 +298,21 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
       case VR::FL: {
          float field;
          get_value_field<VR::FL>(attr, field);
-         data = convhelper::float_to_little_endian(field, 4);
+         if (endianness == ENDIANNESS::LITTLE) {
+            data = convhelper::float_to_little_endian(field, 4);
+         } else {
+            data = convhelper::float_to_big_endian(field, 4);
+         }
          break;
       }
       case VR::FD: {
          double field;
          get_value_field<VR::FD>(attr, field);
-         data = convhelper::float_to_little_endian(field, 8);
+         if (endianness == ENDIANNESS::LITTLE) {
+            data = convhelper::float_to_little_endian(field, 8);
+         } else {
+            data = convhelper::float_to_big_endian(field, 8);
+         }
          break;
       }
       case VR::IS: {
@@ -328,7 +372,11 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
       case VR::SL: {
          long field;
          get_value_field<VR::SL>(attr, field);
-         data = convhelper::integral_to_little_endian(field, 4);
+         if (endianness == ENDIANNESS::LITTLE) {
+            data = convhelper::integral_to_little_endian(field, 4);
+         } else {
+            data = convhelper::integral_to_big_endian(field, 4);
+         }
          break;
       }
       case VR::SQ: {
@@ -339,7 +387,11 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
       case VR::SS: {
          short field;
          get_value_field<VR::SS>(attr, field);
-         data = convhelper::integral_to_little_endian(field, 2);
+         if (endianness == ENDIANNESS::LITTLE) {
+            data = convhelper::integral_to_little_endian(field, 2);
+         } else {
+            data = convhelper::integral_to_big_endian(field, 2);
+         }
          break;
       }
       case VR::ST: {
@@ -363,7 +415,11 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
       case VR::UL: {
          unsigned int field;
          get_value_field<VR::UL>(attr, field);
-         data = convhelper::integral_to_little_endian(field, 4);
+         if (endianness == ENDIANNESS::LITTLE) {
+            data = convhelper::integral_to_little_endian(field, 4);
+         } else {
+            data = convhelper::integral_to_big_endian(field, 4);
+         }
          break;
       }
       case VR::UN: { /** @todo */
@@ -378,7 +434,11 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
       case VR::US: {
          unsigned short field;
          get_value_field<VR::US>(attr, field);
-         data = convhelper::integral_to_little_endian(field, 2);
+         if (endianness == ENDIANNESS::LITTLE) {
+            data = convhelper::integral_to_little_endian(field, 2);
+         } else {
+            data = convhelper::integral_to_big_endian(field, 2);
+         }
          break;
       }
       case VR::UT: {
@@ -397,7 +457,7 @@ std::vector<unsigned char> encode_little_endian(elementfield attr, const VR vr)
 
 
 
-elementfield decode_little_endian(const std::vector<unsigned char>& data,
+elementfield decode(const std::vector<unsigned char>& data, ENDIANNESS endianness,
                                   std::size_t len, VR vr, int begin)
 {
    switch (vr) {
@@ -413,8 +473,13 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       }
       case VR::AT: {
          short gid, eid;
-         convhelper::little_endian_to_integral(data, begin, 2, gid);
-         convhelper::little_endian_to_integral(data, begin, 2, eid);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_integral(data, begin, 2, gid);
+            convhelper::little_endian_to_integral(data, begin, 2, eid);
+         } else {
+            convhelper::big_endian_to_integral(data, begin, 2, gid);
+            convhelper::big_endian_to_integral(data, begin, 2, eid);
+         }
          elementfield::tag_type tag;
          tag.element_id = eid;
          tag.group_id = gid;
@@ -447,13 +512,21 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       }
       case VR::FL: {
          float fl;
-         convhelper::little_endian_to_float(data, begin, len, fl);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_float(data, begin, len, fl);
+         } else {
+            convhelper::big_endian_to_float(data, begin, len, fl);
+         }
          return make_elementfield<VR::FL>(len, fl);
          break;
       }
       case VR::FD: {
          double fd;
-         convhelper::little_endian_to_float(data, begin, len, fd);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_float(data, begin, len, fd);
+         } else {
+            convhelper::big_endian_to_float(data, begin, len, fd);
+         }
          return make_elementfield<VR::FD>(len, fd);
          break;
       }
@@ -508,7 +581,11 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       }
       case VR::SL: {
          long val;
-         convhelper::little_endian_to_integral(data, begin, 4, val);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_integral(data, begin, 4, val);
+         } else {
+            convhelper::big_endian_to_integral(data, begin, 4, val);
+         }
          return make_elementfield<VR::SL>(len, val);
       }
       case VR::SQ: {
@@ -516,7 +593,11 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       }
       case VR::SS: {
          short val;
-         convhelper::little_endian_to_integral(data, begin, 2, val);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_integral(data, begin, 2, val);
+         } else {
+            convhelper::big_endian_to_integral(data, begin, 2, val);
+         }
          return make_elementfield<VR::SS>(len, val);
       }
       case VR::ST: {
@@ -531,7 +612,11 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       }
       case VR::UL: {
          unsigned long val;
-         convhelper::little_endian_to_integral(data, begin, 4, val);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_integral(data, begin, 4, val);
+         } else {
+            convhelper::big_endian_to_integral(data, begin, 4, val);
+         }
          return make_elementfield<VR::UL>(len, val);
       }
       case VR::UI: {
@@ -546,7 +631,11 @@ elementfield decode_little_endian(const std::vector<unsigned char>& data,
       }
       case VR::US: {
          unsigned short val;
-         convhelper::little_endian_to_integral(data, begin, 2, val);
+         if (endianness == ENDIANNESS::LITTLE) {
+            convhelper::little_endian_to_integral(data, begin, 2, val);
+         } else {
+            convhelper::big_endian_to_integral(data, begin, 2, val);
+         }
          return make_elementfield<VR::US>(len, val);
       }
       case VR::UT: {

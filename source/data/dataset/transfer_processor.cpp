@@ -171,7 +171,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                positions.push(0);
                lasttag.push({tag, value_len});
             } else {
-               elementfield e = deserialize_attribute(current_data.top(), value_len, repr, pos);
+               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, pos);
                current_sequence.top().back()[tag] = e;
             }
             pos += value_len;
@@ -233,9 +233,9 @@ VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, elemen
 }
 
 
-std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield e, VR vr) const
+std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield e, ENDIANNESS end, VR vr) const
 {
-   return encode_little_endian(e, vr);
+   return encode(e, end, vr);
 }
 
 std::vector<unsigned char> transfer_processor::serialize(iod data) const
@@ -261,7 +261,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
       }
 
 
-      auto data = serialize_attribute(attr.second, repr);
+      auto data = serialize_attribute(attr.second, endianness, repr);
       auto tag = encode_tag_little_endian(attr.first);
       std::vector<unsigned char> len;
       stream.insert(stream.end(), tag.begin(), tag.end());
@@ -289,11 +289,12 @@ std::string transfer_processor::get_transfer_syntax() const
 }
 
 elementfield commandset_processor::deserialize_attribute(std::vector<unsigned char>& data,
+                                                         attribute::ENDIANNESS end,
                                                        std::size_t len,
                                                        VR vr,
                                                        std::size_t pos) const
 {
-   return decode_little_endian(data, len, vr, pos);
+   return decode(data, end, len, vr, pos);
 }
 
 
@@ -361,16 +362,17 @@ little_endian_implicit::little_endian_implicit(const little_endian_implicit& oth
 
 }
 
-std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, attribute::VR vr) const
+std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, ENDIANNESS end, attribute::VR vr) const
 {
-   return encode_little_endian(e, vr);
+   return encode(e, end, vr);
 }
 
 elementfield little_endian_implicit::deserialize_attribute(std::vector<unsigned char>& data,
+                                                           attribute::ENDIANNESS end,
                                                            std::size_t len, attribute::VR vr,
                                                            std::size_t pos) const
 {
-   return decode_little_endian(data, len, vr, pos);
+   return decode(data, end, len, vr, pos);
 }
 
 transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
@@ -390,16 +392,16 @@ little_endian_explicit::little_endian_explicit():
 
 }
 
-std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield e, VR vr) const
+std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
 {
-   return encode_little_endian(e, vr);
+   return encode(e, end, vr);
 }
 
-elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data,
+elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
                                                            std::size_t len, VR vr,
                                                            std::size_t pos) const
 {
-   return decode_little_endian(data, len, vr, pos);
+   return decode(data, end, len, vr, pos);
 }
 
 

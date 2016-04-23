@@ -8,6 +8,7 @@
 #include "data/dictionary/dictionary.hpp"
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
+#include "data/attribute/attribute.hpp"
 
 namespace dicom
 {
@@ -42,15 +43,6 @@ class transfer_processor
       };
 
       /**
-       * @brief The ENDIANNESS enum is used by the subclasses to define the
-       *        endianness of the encoded length, value and VR (if applicable)
-       */
-      enum class ENDIANNESS
-      {
-         LITTLE, BIG
-      };
-
-      /**
        * @brief The vr_of_tag struct defines a transfer-syntax specific mapping
        *        of a tag (range) to a VR.
        */
@@ -78,7 +70,7 @@ class transfer_processor
       transfer_processor(boost::optional<dictionary::dictionary&> dict,
                          std::string tfs,
                          VR_TYPE vrtype,
-                         ENDIANNESS endianness,
+                         attribute::ENDIANNESS endianness,
                          std::initializer_list<vr_of_tag> tstags = {});
 
       transfer_processor(const transfer_processor& other);
@@ -126,7 +118,7 @@ class transfer_processor
        * @return vector of bytes with serialized data
        */
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::VR vr) const = 0;
+      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const = 0;
 
       /**
        * @brief deserialize_attribute is overriden by a subclass to implement
@@ -139,6 +131,7 @@ class transfer_processor
        */
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::ENDIANNESS end,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
 
@@ -151,7 +144,7 @@ class transfer_processor
       boost::optional<dictionary::dictionary&> dict;
       std::string transfer_syntax;
       VR_TYPE vrtype;
-      ENDIANNESS endianness;
+      attribute::ENDIANNESS endianness;
 };
 
 /**
@@ -166,10 +159,11 @@ class commandset_processor: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::VR vr) const override;
+      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const override;
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::ENDIANNESS end,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const override;
 };
@@ -187,10 +181,10 @@ class little_endian_implicit: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::VR vr) const;
+      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
 
       virtual attribute::elementfield
-      deserialize_attribute(std::vector<unsigned char>& data,
+      deserialize_attribute(std::vector<unsigned char>& data, attribute::ENDIANNESS end,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const;
 };
@@ -202,10 +196,11 @@ class little_endian_explicit: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::VR vr) const;
+      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::ENDIANNESS end,
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const;
 };
