@@ -456,7 +456,7 @@ std::ostream& a_associate_ac::print(std::ostream& os) const
       << "Remote Application Entity:\t" << calling_ae << "\n"
       << "Maximum Message Length:\t\t" << max_message_length << "\n"
       << "Application Context:\t" << application_context << "\n"
-      << "Proposed presentation contexts:\n";
+      << "Status of proposed presentation contexts:\n";
    for (const auto pc : pres_contexts) {
       os << "\tContext id: " << static_cast<unsigned>(pc.id);
       os << "\tResult: " << pc.result_ << "\n";
