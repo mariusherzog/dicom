@@ -175,6 +175,13 @@ static std::vector<unsigned char> decode_word_array_le(const std::vector<unsigne
 }
 
 
+
+/**
+ * @brief encode_tag_little_endian converts the element tag into a little endian
+ *        representation of 8 bytes
+ * @param tag tag to be encoded
+ * @return vector of bytes representing the tag in little endian
+ */
 std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
 {
    std::vector<unsigned char> data;
@@ -185,6 +192,12 @@ std::vector<unsigned char> encode_tag_little_endian(elementfield::tag_type tag)
    return data;
 }
 
+/**
+ * @brief encode_tag_big_endian converts the element tag into a big endian
+ *        representation of 8 bytes
+ * @param tag tag to be encoded
+ * @return vector of bytes representing the tag in big endian
+ */
 std::vector<unsigned char> encode_tag_big_endian(elementfield::tag_type tag)
 {
    std::vector<unsigned char> data;
@@ -195,16 +208,36 @@ std::vector<unsigned char> encode_tag_big_endian(elementfield::tag_type tag)
    return data;
 }
 
+/**
+ * @brief encode_len_little_endian converts a length of a value field into
+ *        a 4-byte little endian representation.
+ * @param len length
+ * @return 4 bytes of the parameter length in little endian
+ */
 std::vector<unsigned char> encode_len_little_endian(std::size_t lenbytes, std::size_t len)
 {
    return convhelper::integral_to_little_endian(len, lenbytes);
 }
 
+/**
+ * @brief encode_len_big_endian converts a length of a value field into
+ *        a 4-byte big endian representation.
+ * @param len length
+ * @return 4 bytes of the parameter length in big endian
+ */
 std::vector<unsigned char> encode_len_big_endian(std::size_t lenbytes, std::size_t len)
 {
    return convhelper::integral_to_big_endian(len, lenbytes);
 }
 
+/**
+ * @brief decode_tag_little_endian transforms the serialized tag data into a
+ *        structured form.
+ * @param data serialized stream data
+ * @param begin beginning, as in absolute position from the data stream start,
+ *        of the value field
+ * @return instance of tag_type with the tag elements
+ */
 elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int begin)
 {
    unsigned short gid, eid;
@@ -215,6 +248,14 @@ elementfield::tag_type decode_tag_little_endian(const std::vector<unsigned char>
    return tag;
 }
 
+/**
+ * @brief decode_tag_big_endian transforms the serialized tag data into a
+ *        structured form.
+ * @param data serialized stream data
+ * @param begin beginning, as in absolute position from the data stream start,
+ *        of the value field
+ * @return instance of tag_type with the tag elements
+ */
 elementfield::tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin)
 {
    unsigned short gid, eid;
@@ -225,6 +266,15 @@ elementfield::tag_type decode_tag_big_endian(const std::vector<unsigned char>& d
    return tag;
 }
 
+/**
+ * @brief decode_len_little_endian transforms the serialized length data into a
+ *        structured form.
+ * @param data serialized stream data
+ * @param lenbytes size in bytes of the length field
+ * @param begin beginning, as in absolute position from the data stream start,
+ *        of the value field
+ * @return length specified in the serialized stream data
+ */
 std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
 {
    std::size_t len;
@@ -232,6 +282,14 @@ std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std
    return len;
 }
 
+/**
+ * @brief decode_len_big_endian transforms the serialized length data into a
+ *        structured form.
+ * @param data serialized stream data
+ * @param begin beginning, as in absolute position from the data stream start,
+ *        of the value field
+ * @return length specified in the serialized stream data
+ */
 std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
 {
    std::size_t len;
@@ -241,7 +299,7 @@ std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::s
 
 
 
-std::vector<unsigned char> encode(elementfield attr, ENDIANNESS endianness, const VR vr)
+std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endianness, const VR vr)
 {
    std::vector<unsigned char> data;
    switch (vr) {
@@ -457,7 +515,7 @@ std::vector<unsigned char> encode(elementfield attr, ENDIANNESS endianness, cons
 
 
 
-elementfield decode(const std::vector<unsigned char>& data, ENDIANNESS endianness,
+elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNESS endianness,
                                   std::size_t len, VR vr, int begin)
 {
    switch (vr) {
@@ -648,6 +706,42 @@ elementfield decode(const std::vector<unsigned char>& data, ENDIANNESS endiannes
          break;
    }
    assert(false);
+}
+
+std::vector<unsigned char> encode_tag(elementfield::tag_type tag, ENDIANNESS endianness)
+{
+   if (endianness == ENDIANNESS::LITTLE) {
+      return encode_tag_little_endian(tag);
+   } else {
+      return encode_tag_big_endian(tag);
+   }
+}
+
+std::vector<unsigned char> encode_len(std::size_t lenbytes, std::size_t len, ENDIANNESS endianness)
+{
+   if (endianness == ENDIANNESS::LITTLE) {
+      return encode_len_little_endian(lenbytes, len);
+   } else {
+      return encode_len_big_endian(lenbytes, len);
+   }
+}
+
+elementfield::tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNESS endianness)
+{
+   if (endianness == ENDIANNESS::LITTLE) {
+      return decode_tag_little_endian(data, begin);
+   } else {
+      return decode_tag_big_endian(data, begin);
+   }
+}
+
+std::size_t decode_len(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t lenbytes, int begin)
+{
+   if (endianness == ENDIANNESS::LITTLE) {
+      return decode_len_little_endian(data, lenbytes, begin);
+   } else {
+      return decode_len_big_endian(data, lenbytes, begin);
+   }
 }
 
 }
