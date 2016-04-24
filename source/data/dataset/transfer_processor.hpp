@@ -205,6 +205,22 @@ class little_endian_explicit: public transfer_processor
                             std::size_t pos) const;
 };
 
+class big_endian_explicit: public transfer_processor
+{
+   public:
+      explicit big_endian_explicit();
+
+   private:
+      virtual std::vector<unsigned char>
+      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
+
+      virtual attribute::elementfield
+      deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::ENDIANNESS end,
+                            std::size_t len, attribute::VR vr,
+                            std::size_t pos) const;
+};
+
 }
 
 }

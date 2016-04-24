@@ -67,10 +67,10 @@ int main()
 
    dimse::association_definition ascdef {"STORESCP", "ANY-SCU",
       {
-          {echorq, {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
-          {echo, {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
-          {echorsp, {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
-          {findrsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
+          {echorq, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
+          {echo, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
+          {echorsp, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
+          {findrsp, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
       },
       4096
    };

@@ -96,6 +96,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
          = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
    transfer_processors["1.2.840.10008.1.2.1"]
          = std::unique_ptr<transfer_processor> {new little_endian_explicit};
+   transfer_processors["1.2.840.10008.1.2.2"]
+         = std::unique_ptr<transfer_processor> {new big_endian_explicit};
 }
 
 dimse_pm::~dimse_pm()

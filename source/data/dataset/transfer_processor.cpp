@@ -408,6 +408,24 @@ elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned 
    return decode_value_field(data, end, len, vr, pos);
 }
 
+big_endian_explicit::big_endian_explicit():
+   transfer_processor {boost::none, "1.2.840.10008.1.2.1", VR_TYPE::EXPLICIT, ENDIANNESS::BIG}
+{
+
+}
+
+std::vector<unsigned char> big_endian_explicit::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
+{
+   return encode_value_field(e, end, vr);
+}
+
+elementfield big_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
+                                                           std::size_t len, VR vr,
+                                                           std::size_t pos) const
+{
+   return decode_value_field(data, end, len, vr, pos);
+}
+
 
 }
 
