@@ -383,7 +383,22 @@ transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
 }
 
 little_endian_explicit::little_endian_explicit():
-   transfer_processor {boost::none, "1.2.840.10008.1.2.1", VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE}
+   transfer_processor {boost::none,
+                       "1.2.840.10008.1.2.1",
+                       VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE,
+                       {
+                           {{0x7fe0, 0x0010}, VR::OW},
+                           {{0x6000, 0x3000}, VR::OW, 0xff00, 0xffff},
+                           {{0x5400, 0x1010}, VR::OW}, {{0x0028, 0x1201}, VR::OW},
+                           {{0x0028, 0x1202}, VR::OW}, {{0x0028, 0x1203}, VR::OW},
+                           {{0x0028, 0x1204}, VR::OW}, {{0x0028, 0x1101}, VR::SS},
+                           {{0x0028, 0x1102}, VR::SS}, {{0x0028, 0x1103}, VR::SS},
+                           {{0x0028, 0x1221}, VR::OW}, {{0x0028, 0x1222}, VR::OW},
+                           {{0x0028, 0x1223}, VR::OW}, {{0x0028, 0x3006}, VR::US},
+                           {{0x0028, 0x3002}, VR::SS}, {{0x0028, 0x1408}, VR::OW},
+                           {{0x0066, 0x0025}, VR::OW}, {{0x0066, 0x0024}, VR::OW},
+                           {{0x0066, 0x0023}, VR::OW}, {{0x0066, 0x0029}, VR::OW}
+                       } }
 {
 
 }
