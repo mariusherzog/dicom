@@ -73,11 +73,19 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicit
 {
    std::size_t pos = beg;
    int nested_sets = 0;
-   while (pos < data.size()) {
+
+   std::stack<std::size_t> beginnings;
+   beginnings.push(pos);
+
+   while (!beginnings.empty() && pos < data.size()) {
+      pos = beginnings.top();
       elementfield::tag_type tag = decode_tag(data, pos, endianness);
-      if (tag == SequenceDelimitationItem && nested_sets-- == 0) {
+      if (tag == SequenceDelimitationItem) {
          pos += 8;
-         break;
+         beginnings.pop();
+         std::size_t oldpos = beginnings.top();
+         beginnings.top() += pos-oldpos;
+         continue;
       }
       pos += 4;
       std::size_t value_len = decode_len(data, endianness, explicitvr, pos);
@@ -88,12 +96,17 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicit
          nested_sets++;
       }
 
-      value_len = value_len == 0xffff ? find_enclosing(data, explicitvr, endianness, pos, dict) : value_len;
-      pos += value_len;
+      if (value_len == 0xffff) {
+         beginnings.push(pos);
+      } else {
+         pos += value_len;
+      }
 
    }
-   return pos-beg;
+   return beginnings.top()-beg;
 }
+
+
 
 commandset_processor::commandset_processor(dictionary::dictionary& dict):
    transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
