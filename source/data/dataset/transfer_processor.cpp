@@ -23,6 +23,8 @@ static const std::vector<VR> specialVRs {VR::OB, VR::OW, VR::OF, VR::SQ, VR::UR,
 
 static const std::vector<elementfield::tag_type> item_attributes {Item, ItemDelimitationItem, SequenceDelimitationItem};
 
+
+
 /**
  * @brief is_specialVR checks if the given VR needs special handling in explicit
  *        transfer syntaxes
@@ -58,23 +60,27 @@ transfer_processor::~transfer_processor()
 /**
  * @brief find_enclosing is used to determine the size of the nested set if it
  *        is not explicitly specified.
+ * @todo convert this recursive function into an iterative one
  * @param data serialized dataset
+ * @param explicitvr true if vr is explicit, false otherwise
+ * @param endianness endianness of the data stream
  * @param beg first element
  * @param dict dictionary for the tag lookup
  * @return size of the nested set
  */
-static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicitvr, std::size_t beg, dictionary::dictionary& dict)
+static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicitvr,
+                                  ENDIANNESS endianness, std::size_t beg, dictionary::dictionary& dict)
 {
    std::size_t pos = beg;
    int nested_sets = 0;
    while (pos < data.size()) {
-      elementfield::tag_type tag = decode_tag_little_endian(data, pos);
+      elementfield::tag_type tag = decode_tag(data, pos, endianness);
       if (tag == SequenceDelimitationItem && nested_sets-- == 0) {
          pos += 8;
          break;
       }
       pos += 4;
-      std::size_t value_len = decode_len_little_endian(data, explicitvr, pos);
+      std::size_t value_len = decode_len(data, endianness, explicitvr, pos);
       pos += 4;
       VR repr = dict.lookup(tag).vr[0];
 
@@ -82,7 +88,7 @@ static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicit
          nested_sets++;
       }
 
-      value_len = value_len == 0xffff ? find_enclosing(data, explicitvr, pos, dict) : value_len;
+      value_len = value_len == 0xffff ? find_enclosing(data, explicitvr, endianness, pos, dict) : value_len;
       pos += value_len;
 
    }
@@ -128,7 +134,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          auto& pos = positions.top();
          assert(!current_sequence.top().empty());
 
-         elementfield::tag_type tag = decode_tag_little_endian(current_data.top(), pos);
+         elementfield::tag_type tag = decode_tag(current_data.top(), pos, endianness);
          pos += 4;
 
          VR repr = deserialize_VR(current_data.top(), tag, pos);
@@ -136,16 +142,16 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          std::size_t value_len;
          if (!is_item_attribute(tag)) {
             if (vrtype == VR_TYPE::IMPLICIT) {
-               value_len = decode_len_little_endian(current_data.top(), 4, pos);
+               value_len = decode_len(current_data.top(), endianness, 4, pos);
             } else {
                if (is_special_VR(repr)) {
-                  value_len = decode_len_little_endian(current_data.top(), 4, pos);
+                  value_len = decode_len(current_data.top(), endianness, 4, pos);
                } else {
-                  value_len = decode_len_little_endian(current_data.top(), 2, pos);
+                  value_len = decode_len(current_data.top(), endianness, 2, pos);
                }
             }
          } else if (tag == Item) {
-            value_len = decode_len_little_endian(current_data.top(), 4, pos);
+            value_len = decode_len(current_data.top(), endianness, 4, pos);
          } else {
             value_len = 0;
          }
@@ -163,13 +169,13 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             // data on the stack so it will be processed next. Store the current
             // state of the deserialization on appropriate stacks.
             if (repr == VR::SQ) {
-               value_len = value_len == 0xffff ? find_enclosing(current_data.top(), vrtype == VR_TYPE::EXPLICIT, pos, dict.get()) : value_len;
+               value_len = value_len == 0xffff ? find_enclosing(current_data.top(), vrtype == VR_TYPE::EXPLICIT, endianness, pos, dict.get()) : value_len;
                current_data.push({current_data.top().begin()+pos, current_data.top().begin()+pos+value_len});
                current_sequence.push({dataset_type {}});
                positions.push(0);
                lasttag.push({tag, value_len});
             } else {
-               elementfield e = deserialize_attribute(current_data.top(), value_len, repr, pos);
+               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, pos);
                current_sequence.top().back()[tag] = e;
             }
             pos += value_len;
@@ -231,9 +237,9 @@ VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, elemen
 }
 
 
-std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield e, VR vr) const
+std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield e, ENDIANNESS end, VR vr) const
 {
-   return encode_little_endian(e, vr);
+   return encode_value_field(e, end, vr);
 }
 
 std::vector<unsigned char> transfer_processor::serialize(iod data) const
@@ -244,8 +250,8 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
           || attr.first == ItemDelimitationItem) {
          continue;
       } else if (attr.first == Item) {
-         auto tag = encode_tag_little_endian(attr.first);
-         auto len = encode_len_little_endian(4, attr.second.value_len);
+         auto tag = encode_tag(attr.first, endianness);
+         auto len = encode_len(4, attr.second.value_len, endianness);
          stream.insert(stream.end(), tag.begin(), tag.end());
          stream.insert(stream.end(), len.begin(), len.end());
          continue;
@@ -259,8 +265,8 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
       }
 
 
-      auto data = serialize_attribute(attr.second, repr);
-      auto tag = encode_tag_little_endian(attr.first);
+      auto data = serialize_attribute(attr.second, endianness, repr);
+      auto tag = encode_tag(attr.first, endianness);
       std::vector<unsigned char> len;
       stream.insert(stream.end(), tag.begin(), tag.end());
       if (vrtype == VR_TYPE::EXPLICIT) {
@@ -268,12 +274,12 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          stream.insert(stream.end(), vr.begin(), vr.begin()+2);
          if (is_special_VR(repr)) {
             stream.push_back(0x00); stream.push_back(0x00);
-            len = encode_len_little_endian(4, attr.second.value_len);
+            len = encode_len(4, attr.second.value_len, endianness);
          } else {
-            len = encode_len_little_endian(2, attr.second.value_len);
+            len = encode_len(2, attr.second.value_len, endianness);
          }
       } else {
-         len = encode_len_little_endian(4, attr.second.value_len);
+         len = encode_len(4, attr.second.value_len, endianness);
       }
       stream.insert(stream.end(), len.begin(), len.end());
       stream.insert(stream.end(), data.begin(), data.end());
@@ -287,11 +293,12 @@ std::string transfer_processor::get_transfer_syntax() const
 }
 
 elementfield commandset_processor::deserialize_attribute(std::vector<unsigned char>& data,
+                                                         attribute::ENDIANNESS end,
                                                        std::size_t len,
                                                        VR vr,
                                                        std::size_t pos) const
 {
-   return decode_little_endian(data, len, vr, pos);
+   return decode_value_field(data, end, len, vr, pos);
 }
 
 
@@ -359,16 +366,17 @@ little_endian_implicit::little_endian_implicit(const little_endian_implicit& oth
 
 }
 
-std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, attribute::VR vr) const
+std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, ENDIANNESS end, attribute::VR vr) const
 {
-   return encode_little_endian(e, vr);
+   return encode_value_field(e, end, vr);
 }
 
 elementfield little_endian_implicit::deserialize_attribute(std::vector<unsigned char>& data,
+                                                           attribute::ENDIANNESS end,
                                                            std::size_t len, attribute::VR vr,
                                                            std::size_t pos) const
 {
-   return decode_little_endian(data, len, vr, pos);
+   return decode_value_field(data, end, len, vr, pos);
 }
 
 transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
@@ -403,16 +411,48 @@ little_endian_explicit::little_endian_explicit():
 
 }
 
-std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield e, VR vr) const
+std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
 {
-   return encode_little_endian(e, vr);
+   return encode_value_field(e, end, vr);
 }
 
-elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data,
+elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
                                                            std::size_t len, VR vr,
                                                            std::size_t pos) const
 {
-   return decode_little_endian(data, len, vr, pos);
+   return decode_value_field(data, end, len, vr, pos);
+}
+
+big_endian_explicit::big_endian_explicit():
+   transfer_processor {boost::none, "1.2.840.10008.1.2.1",
+                       VR_TYPE::EXPLICIT, ENDIANNESS::BIG,
+                       {
+                           {{0x7fe0, 0x0010}, VR::OW},
+                           {{0x6000, 0x3000}, VR::OW, 0xff00, 0xffff},
+                           {{0x5400, 0x1010}, VR::OW}, {{0x0028, 0x1201}, VR::OW},
+                           {{0x0028, 0x1202}, VR::OW}, {{0x0028, 0x1203}, VR::OW},
+                           {{0x0028, 0x1204}, VR::OW}, {{0x0028, 0x1101}, VR::SS},
+                           {{0x0028, 0x1102}, VR::SS}, {{0x0028, 0x1103}, VR::SS},
+                           {{0x0028, 0x1221}, VR::OW}, {{0x0028, 0x1222}, VR::OW},
+                           {{0x0028, 0x1223}, VR::OW}, {{0x0028, 0x3006}, VR::US},
+                           {{0x0028, 0x3002}, VR::SS}, {{0x0028, 0x1408}, VR::OW},
+                           {{0x0066, 0x0025}, VR::OW}, {{0x0066, 0x0024}, VR::OW},
+                           {{0x0066, 0x0023}, VR::OW}, {{0x0066, 0x0029}, VR::OW}
+                       } }
+{
+
+}
+
+std::vector<unsigned char> big_endian_explicit::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
+{
+   return encode_value_field(e, end, vr);
+}
+
+elementfield big_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
+                                                           std::size_t len, VR vr,
+                                                           std::size_t pos) const
+{
+   return decode_value_field(data, end, len, vr, pos);
 }
 
 
