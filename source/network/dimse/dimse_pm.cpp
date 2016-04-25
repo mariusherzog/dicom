@@ -369,12 +369,15 @@ void dimse_pm::sent_association_ac(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_association_rq(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_association_rq(upperlayer::scx* sc, upperlayer::property* r)
 {
    using namespace dicom::util::log;
    assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of a_associate_rq pdu "
                                    "from upperlayer implementation";
+   upperlayer::a_associate_rq* rq = dynamic_cast<upperlayer::a_associate_rq*>(r);
+   assert(rq != nullptr);
+   connection_request = *rq;
 }
 
 void dimse_pm::sent_data_tf(upperlayer::scx* sc, upperlayer::property*)
@@ -385,16 +388,12 @@ void dimse_pm::sent_data_tf(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property* r)
+void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of release_rq pdu "
                                    "from upperlayer implementation";
-
-   upperlayer::a_associate_rq* rq = dynamic_cast<upperlayer::a_associate_rq*>(r);
-   assert(rq != nullptr);
-   connection_request = *rq;
 }
 
 void dimse_pm::sent_release_rp(upperlayer::scx* sc, upperlayer::property*)
