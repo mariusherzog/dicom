@@ -139,6 +139,19 @@ class transfer_processor
                                    attribute::elementfield::tag_type tag,
                                    std::size_t& pos) const;
 
+      /**
+       * @brief find_enclosing is used to determine the size of the nested set if it
+       *        is not explicitly specified.
+       * @todo convert this recursive function into an iterative one
+       * @param data serialized dataset
+       * @param explicitvr true if vr is explicit, false otherwise
+       * @param endianness endianness of the data stream
+       * @param beg first element
+       * @param dict dictionary for the tag lookup
+       * @return size of the nested set
+       */
+      std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg) const;
+
       std::vector<vr_of_tag> tstags;
 
       boost::optional<dictionary::dictionary&> dict;
