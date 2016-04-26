@@ -77,6 +77,7 @@ int main()
          std::cout << "Send C_FIND_RQ\n";
          dataset::dataset_type dat;
          dataset::iod seq;
+         dat[dicom::data::attribute::Item] = dicom::data::attribute::make_elementfield<VR::NI>();
          dat[{0x0008, 0x0104}] = dicom::data::attribute::make_elementfield<VR::LO>(4, "meo");
          dat[{0xfffe, 0xe0dd}] = dicom::data::attribute::make_elementfield<VR::NI>();
          seq[{0x0032, 0x1064}] = dicom::data::attribute::make_elementfield<VR::SQ>(0xffffffff, {dat});

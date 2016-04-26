@@ -79,29 +79,7 @@ std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, 
       pos += 4;
 
       VR repr = deserialize_VR(data, tag, pos);
-
-      std::size_t value_len;
-      if (!is_item_attribute(tag)) {
-         if (vrtype == VR_TYPE::IMPLICIT) {
-            value_len = decode_len(data, endianness, 4, pos);
-         } else {
-            if (is_special_VR(repr)) {
-               value_len = decode_len(data, endianness, 4, pos);
-            } else {
-               value_len = decode_len(data, endianness, 2, pos);
-            }
-         }
-      } else if (tag == Item) {
-         value_len = decode_len(data, endianness, 4, pos);
-      } else {
-         value_len = 0;
-      }
-
-      if (vrtype == VR_TYPE::IMPLICIT || is_special_VR(repr)) {
-         pos += 4;
-      } else {
-         pos += 2;
-      }
+      std::size_t value_len = deserialize_length(data, tag, repr, pos);
 
       if (repr == VR::SQ) {
          nested_sets++;
@@ -162,29 +140,8 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          pos += 4;
 
          VR repr = deserialize_VR(current_data.top(), tag, pos);
+         std::size_t value_len = deserialize_length(current_data.top(), tag, repr, pos);
 
-         std::size_t value_len;
-         if (!is_item_attribute(tag)) {
-            if (vrtype == VR_TYPE::IMPLICIT) {
-               value_len = decode_len(current_data.top(), endianness, 4, pos);
-            } else {
-               if (is_special_VR(repr)) {
-                  value_len = decode_len(current_data.top(), endianness, 4, pos);
-               } else {
-                  value_len = decode_len(current_data.top(), endianness, 2, pos);
-               }
-            }
-         } else if (tag == Item) {
-            value_len = decode_len(current_data.top(), endianness, 4, pos);
-         } else {
-            value_len = 0;
-         }
-
-         if (vrtype == VR_TYPE::IMPLICIT || is_special_VR(repr)) {
-            pos += 4;
-         } else {
-            pos += 2;
-         }
          // Items and DelimitationItems do not have a VR or length field and are
          // to be treated separately.
          if (!is_item_attribute(tag)) {
@@ -260,6 +217,27 @@ VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, elemen
       }
    }
    return VR::NN;
+}
+
+std::size_t transfer_processor::deserialize_length(std::vector<unsigned char> dataset,
+                                                   attribute::elementfield::tag_type tag,
+                                                   VR repr, std::size_t& pos) const
+{
+   const std::size_t lengthfield_size
+         = (vrtype == VR_TYPE::IMPLICIT || is_special_VR(repr))
+         ? 4 : 2;
+
+   std::size_t value_len;
+   if (!is_item_attribute(tag)) {
+      value_len = decode_len(dataset, endianness, lengthfield_size, pos);
+   } else if (tag == Item) {
+      value_len = decode_len(dataset, endianness, 4, pos);
+   } else {
+      value_len = 0;
+   }
+   pos += lengthfield_size;
+
+   return value_len;
 }
 
 
