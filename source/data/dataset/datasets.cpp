@@ -46,11 +46,18 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
           && attr.first != ItemDelimitationItem
           && attr.first != Item
           && attr.second.value_rep.is_initialized()
-          && attr.second.value_rep.get() != VR::SQ
           && attr.second.value_rep.get() != VR::NN
           && attr.second.value_rep.get() != VR::NI) {
-         os << " " << attr.second.value_len << "\t\t";
-         attr.second.value_field->print(os);
+         if (attr.second.value_rep.get() == VR::SQ ) {
+            os << " " << attr.second.value_len;
+            if ((attr.second.value_len & 0xffffffff) == 0xffffffff) {
+               os << "(undefined length)";
+            }
+            os << "\t\t";
+         } else {
+            os << " " << attr.second.value_len << "\t\t";
+            attr.second.value_field->print(os);
+         }
       }
       os << "\n";
 
