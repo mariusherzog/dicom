@@ -135,9 +135,43 @@ class transfer_processor
                             std::size_t len, attribute::VR vr,
                             std::size_t pos) const = 0;
 
+      /**
+       * @brief deserialize_VR deserializes and returns the VR, which may be
+       *        explicit or implicit.
+       * @param dataset serialized data
+       * @param tag tag of the current attribute
+       * @param[in, out] pos
+       * @return deserialized VR
+       */
       attribute::VR deserialize_VR(std::vector<unsigned char> dataset,
                                    attribute::elementfield::tag_type tag,
                                    std::size_t& pos) const;
+
+      /**
+       * @brief deserialize_length deserializes and returns the length of the
+       *        value field of the current attribute
+       * @param dataset serialized data
+       * @param tag tag of the current attribute
+       * @param[in, out] pos
+       * @return length of the value field
+       */
+      std::size_t deserialize_length(std::vector<unsigned char> dataset,
+                                     attribute::elementfield::tag_type tag,
+                                     attribute::VR repr,
+                                     std::size_t& pos) const;
+
+      /**
+       * @brief find_enclosing is used to determine the size of the nested set if it
+       *        is not explicitly specified.
+       * @todo convert this recursive function into an iterative one
+       * @param data serialized dataset
+       * @param explicitvr true if vr is explicit, false otherwise
+       * @param endianness endianness of the data stream
+       * @param beg first element
+       * @param dict dictionary for the tag lookup
+       * @return size of the nested set
+       */
+      std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg) const;
 
       std::vector<vr_of_tag> tstags;
 

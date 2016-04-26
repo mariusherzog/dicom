@@ -57,43 +57,45 @@ transfer_processor::~transfer_processor()
 {
 }
 
-/**
- * @brief find_enclosing is used to determine the size of the nested set if it
- *        is not explicitly specified.
- * @todo convert this recursive function into an iterative one
- * @param data serialized dataset
- * @param explicitvr true if vr is explicit, false otherwise
- * @param endianness endianness of the data stream
- * @param beg first element
- * @param dict dictionary for the tag lookup
- * @return size of the nested set
- */
-static std::size_t find_enclosing(std::vector<unsigned char> data, bool explicitvr,
-                                  ENDIANNESS endianness, std::size_t beg, dictionary::dictionary& dict)
+
+std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, std::size_t beg) const
 {
    std::size_t pos = beg;
    int nested_sets = 0;
-   while (pos < data.size()) {
+
+   std::stack<std::size_t> beginnings;
+   beginnings.push(pos);
+
+   while (!beginnings.empty() && pos < data.size()) {
+      pos = beginnings.top();
       elementfield::tag_type tag = decode_tag(data, pos, endianness);
-      if (tag == SequenceDelimitationItem && nested_sets-- == 0) {
+      if (tag == SequenceDelimitationItem) {
          pos += 8;
-         break;
+         beginnings.pop();
+         std::size_t oldpos = beginnings.top();
+         beginnings.top() += pos-oldpos;
+         continue;
       }
       pos += 4;
-      std::size_t value_len = decode_len(data, endianness, explicitvr, pos);
-      pos += 4;
-      VR repr = dict.lookup(tag).vr[0];
+
+      VR repr = deserialize_VR(data, tag, pos);
+      std::size_t value_len = deserialize_length(data, tag, repr, pos);
 
       if (repr == VR::SQ) {
          nested_sets++;
       }
 
-      value_len = value_len == 0xffff ? find_enclosing(data, explicitvr, endianness, pos, dict) : value_len;
-      pos += value_len;
+      if ((value_len & 0xffffffff) == 0xffffffff) {
+         beginnings.push(pos);
+      } else {
+         pos += value_len;
+      }
 
    }
-   return pos-beg;
+   return beginnings.top()-beg;
 }
+
+
 
 commandset_processor::commandset_processor(dictionary::dictionary& dict):
    transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
@@ -138,29 +140,8 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          pos += 4;
 
          VR repr = deserialize_VR(current_data.top(), tag, pos);
+         std::size_t value_len = deserialize_length(current_data.top(), tag, repr, pos);
 
-         std::size_t value_len;
-         if (!is_item_attribute(tag)) {
-            if (vrtype == VR_TYPE::IMPLICIT) {
-               value_len = decode_len(current_data.top(), endianness, 4, pos);
-            } else {
-               if (is_special_VR(repr)) {
-                  value_len = decode_len(current_data.top(), endianness, 4, pos);
-               } else {
-                  value_len = decode_len(current_data.top(), endianness, 2, pos);
-               }
-            }
-         } else if (tag == Item) {
-            value_len = decode_len(current_data.top(), endianness, 4, pos);
-         } else {
-            value_len = 0;
-         }
-
-         if (vrtype == VR_TYPE::IMPLICIT || is_special_VR(repr)) {
-            pos += 4;
-         } else {
-            pos += 2;
-         }
          // Items and DelimitationItems do not have a VR or length field and are
          // to be treated separately.
          if (!is_item_attribute(tag)) {
@@ -169,7 +150,9 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             // data on the stack so it will be processed next. Store the current
             // state of the deserialization on appropriate stacks.
             if (repr == VR::SQ) {
-               value_len = value_len == 0xffff ? find_enclosing(current_data.top(), vrtype == VR_TYPE::EXPLICIT, endianness, pos, dict.get()) : value_len;
+               value_len = ((value_len & 0xffffffff)== 0xffffffff)
+                     ? find_enclosing(current_data.top(), pos)
+                     : value_len;
                current_data.push({current_data.top().begin()+pos, current_data.top().begin()+pos+value_len});
                current_sequence.push({dataset_type {}});
                positions.push(0);
@@ -234,6 +217,27 @@ VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, elemen
       }
    }
    return VR::NN;
+}
+
+std::size_t transfer_processor::deserialize_length(std::vector<unsigned char> dataset,
+                                                   attribute::elementfield::tag_type tag,
+                                                   VR repr, std::size_t& pos) const
+{
+   const std::size_t lengthfield_size
+         = (vrtype == VR_TYPE::IMPLICIT || is_special_VR(repr))
+         ? 4 : 2;
+
+   std::size_t value_len;
+   if (!is_item_attribute(tag)) {
+      value_len = decode_len(dataset, endianness, lengthfield_size, pos);
+   } else if (tag == Item) {
+      value_len = decode_len(dataset, endianness, 4, pos);
+   } else {
+      value_len = 0;
+   }
+   pos += lengthfield_size;
+
+   return value_len;
 }
 
 
