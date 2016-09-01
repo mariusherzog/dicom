@@ -39,13 +39,18 @@ bool rule_equals(std::size_t size, std::size_t current, std::size_t new_elements
 }
 
 
-
+/**
+ * The vrtype class represents the value field of an attribute. It holds the
+ * value(s) of type T and asserts the consistency of the appropriate value
+ * multiplicity with the value count.
+ * @tparam T type of the underlying data
+ */
 template <typename T>
 class vrtype
 {
     private:
         std::vector<T> value_sequence;
-        std::string multiplicity;
+        const std::string multiplicity;
 
         std::vector<std::function<bool(std::size_t, std::size_t)>> multiplicity_rules;
 
@@ -115,6 +120,20 @@ class vrtype
       {
           add(values);
       }
+
+      /**
+       * @brief serialize serializes the current instance into a byte stream
+       * @return serialized data
+       */
+      virtual std::vector<unsigned char> serialize() = 0;
+
+      /**
+       * @brief deserialize deserializes the raw byte data into a structured
+       *        representation.
+       * @param data serialized data
+       * @return reference to the instance which contains the data
+       */
+      virtual vrtype<T>& deserialize(std::vector<unsigned char> data) = 0;
 
 
     public:
