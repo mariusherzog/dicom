@@ -1,11 +1,13 @@
 #ifndef VRTYPE_HPP
 #define VRTYPE_HPP
 
+
+#include <functional>
+
 #include <vector>
 #include <string>
 #include <exception>
 #include <algorithm>
-#include <functional>
 
 #include <boost/algorithm/string.hpp>
 
@@ -18,22 +20,22 @@ namespace data
 namespace vrtype
 {
 
-bool rule_n(std::size_t multiplier, std::size_t current, std::size_t new_elements)
+inline bool rule_n(std::size_t multiplier, std::size_t current, std::size_t new_elements)
 {
     return (current + new_elements) % multiplier == 0;
 }
 
-bool rule_less(std::size_t size, std::size_t current, std::size_t new_elements)
+inline bool rule_less(std::size_t size, std::size_t current, std::size_t new_elements)
 {
     return current + new_elements <= size;
 }
 
-bool rule_more(std::size_t size, std::size_t current, std::size_t new_elements)
+inline bool rule_more(std::size_t size, std::size_t current, std::size_t new_elements)
 {
     return current + new_elements >= size;
 }
 
-bool rule_equals(std::size_t size, std::size_t current, std::size_t new_elements)
+inline bool rule_equals(std::size_t size, std::size_t current, std::size_t new_elements)
 {
     return current + new_elements == size;
 }
@@ -50,7 +52,7 @@ class vrtype
 {
     private:
         std::vector<T> value_sequence;
-        const std::string multiplicity;
+        std::string multiplicity;
 
         std::vector<std::function<bool(std::size_t, std::size_t)>> multiplicity_rules;
 
@@ -82,27 +84,28 @@ class vrtype
             std::vector<std::string> components;
             boost::split(components, multiplicity, boost::is_any_of("-"));
 
+            using namespace std::placeholders;
             if (components.size() > 1) {
                 if (std::all_of(components[0].begin(), components[0].end(), ::isdigit)) {
                     std::size_t lower = std::stoull(components[0]);
                     if (std::all_of(components[1].begin(), components[1].end(), ::isdigit)) {
                         std::size_t upper = std::stoull(components[1]);
-                        multiplicity_rules.push_back(std::bind1st(rule_more, lower));
-                        multiplicity_rules.push_back(std::bind1st(rule_less, upper));
+                        multiplicity_rules.push_back(std::bind(rule_more, lower, _1, _2));
+                        multiplicity_rules.push_back(std::bind(rule_less, upper, _1, _2));
                     } else if (components[1].find('n') != std::string::npos) {
-                        std::string multiplier {components[1].begin(), components[1].find_last_of('n')};
-                        multiplicity_rules.push_back(std::bind1st(rule_n, std::stoul(multiplier)));
-                        multiplicity_rules.push_back(std::bind1st(rule_more, lower));
+                        std::string multiplier {components[1].begin(), components[1].begin() + components[1].find_last_of('n')};
+                        multiplicity_rules.push_back(std::bind(rule_n, std::stoul(multiplier), _1, _2));
+                        multiplicity_rules.push_back(std::bind(rule_more, lower, _1, _2));
                     }
                 }
             } else {
                 if (std::all_of(components[0].begin(), components[0].end(), ::isdigit)) {
                     std::size_t value = std::stoull(components[0]);
-                    multiplicity_rules.push_back(std::bind1st(rule_equals, value));
+                    multiplicity_rules.push_back(std::bind(rule_equals, value, _1, _2));
                 } else if (components[0].find('n') != std::string::npos) {
-                    std::string multiplier {components[0].begin(), components[0].find_last_of('n')};
-                    multiplicity_rules.push_back(std::bind1st(rule_n, std::stoul(multiplier)));
-                    multiplicity_rules.push_back(std::bind1st(rule_more, 1));
+                    std::string multiplier {components[0].begin(), components[0].begin() + components[0].find_last_of('n')};
+                    multiplicity_rules.push_back(std::bind(rule_n, std::stoul(multiplier), _1, _2));
+                    multiplicity_rules.push_back(std::bind(rule_more, 1, _1, _2));
                 }
             }
         }
@@ -163,7 +166,6 @@ class vrtype
               throw new std::runtime_error("addition of " + values.size() +  " elements would violate the multiplicity rule: " + multiplicity);
           }
           std::copy(values.begin(), values.end(), std::back_inserter(value_sequence));
-          value_sequence.push_back(element);
       }
 };
 
