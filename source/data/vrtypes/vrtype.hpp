@@ -18,72 +18,25 @@ namespace data
 namespace vrtype
 {
 
-bool rule_zero(std::size_t current, std::size_t new_elements)
-{
-    return current == 0 && new_elements == 0;
-}
-
-bool rule_one(std::size_t current, std::size_t new_elements)
-{
-    return current + new_elements <= 1;
-}
-
 bool rule_n(std::size_t multiplier, std::size_t current, std::size_t new_elements)
 {
     return (current + new_elements) % multiplier == 0;
 }
 
-bool rule_s(std::size_t size, std::size_t current, std::size_t new_elements)
+bool rule_less(std::size_t size, std::size_t current, std::size_t new_elements)
 {
     return current + new_elements <= size;
 }
 
-
-
-template <char>
-struct multiplicity_rule
+bool rule_more(std::size_t size, std::size_t current, std::size_t new_elements)
 {
-        std::string name;
-        std::function<bool(std::size_t, std::size_t)> rule;
-};
+    return current + new_elements >= size;
+}
 
-template <>
-struct multiplicity_rule<'0'>
+bool rule_equals(std::size_t size, std::size_t current, std::size_t new_elements)
 {
-        const std::function<bool(std::size_t, std::size_t)> rule = rule_zero;
-};
-
-template <>
-struct multiplicity_rule<'1'>
-{
-        const std::function<bool(std::size_t, std::size_t)> rule = rule_one;
-};
-
-template <>
-struct multiplicity_rule<'n'>
-{
-        const std::function<bool(std::size_t, std::size_t)> rule;
-
-    public:
-        multiplicity_rule(std::size_t multiplier = 1):
-            rule { [=](std::size_t a, std::size_t b) { return rule_n(multiplier, a, b);} }
-        {
-
-        }
-};
-
-template <>
-struct multiplicity_rule<'s'>
-{
-        const std::function<bool(std::size_t, std::size_t)> rule;
-
-    public:
-        multiplicity_rule(std::size_t size):
-            rule { [=](std::size_t a, std::size_t b) { return rule_n(size, a, b);} }
-        {
-
-        }
-};
+    return current + new_elements == size;
+}
 
 
 
@@ -106,7 +59,7 @@ class vrtype
          */
         bool validate_multiplicity(std::size_t num_new_elements) const
         {
-            return std::any_of(multiplicity_rules.begin()
+            return std::all_of(multiplicity_rules.begin()
                                , multiplicity_rules.end()
                                , [=](std::function<bool(std::size_t, std::size_t)> rule)
                 { return rule(value_sequence.size(), num_new_elements); } );
@@ -124,20 +77,27 @@ class vrtype
             std::vector<std::string> components;
             boost::split(components, multiplicity, boost::is_any_of("-"));
 
-            for (const std::string c : components)
-            {
-                if (c == "0") {
-                    multiplicity_rules.push_back(multiplicity_rule<'0'>{});
-                } else if (c == "1") {
-                    multiplicity_rules.push_back(multiplicity_rule<'1'>{});
-                } else if (c.find('n') != std::string::npos) {
-                    std::string multiplier {c.begin(), c.find_last_of('n')};
-                    multiplicity_rules.push_back(multiplicity_rule<'n'>{std::stoul(multiplier)});
-                } else if (std::all_of(c.begin(), c.end(), ::isdigit)) {
-                    std::size_t size {std::stoul(c)};
-                    multiplicity_rules.push_back(multiplicity_rule<'s'>{std::stoul(size)});
-                } else {
-                    throw new std::runtime_error("invalid multiplier specification");
+            if (components.size() > 1) {
+                if (std::all_of(components[0].begin(), components[0].end(), ::isdigit)) {
+                    std::size_t lower = std::stoull(components[0]);
+                    if (std::all_of(components[1].begin(), components[1].end(), ::isdigit)) {
+                        std::size_t upper = std::stoull(components[1]);
+                        multiplicity_rules.push_back(std::bind1st(rule_more, lower));
+                        multiplicity_rules.push_back(std::bind1st(rule_less, upper));
+                    } else if (components[1].find('n') != std::string::npos) {
+                        std::string multiplier {components[1].begin(), components[1].find_last_of('n')};
+                        multiplicity_rules.push_back(std::bind1st(rule_n, std::stoul(multiplier)));
+                        multiplicity_rules.push_back(std::bind1st(rule_more, lower));
+                    }
+                }
+            } else {
+                if (std::all_of(components[0].begin(), components[0].end(), ::isdigit)) {
+                    std::size_t value = std::stoull(components[0]);
+                    multiplicity_rules.push_back(std::bind1st(rule_equals, value));
+                } else if (components[0].find('n') != std::string::npos) {
+                    std::string multiplier {components[0].begin(), components[0].find_last_of('n')};
+                    multiplicity_rules.push_back(std::bind1st(rule_n, std::stoul(multiplier)));
+                    multiplicity_rules.push_back(std::bind1st(rule_more, 1));
                 }
             }
         }
