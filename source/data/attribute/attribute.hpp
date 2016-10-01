@@ -10,6 +10,8 @@
 
 #include <boost/optional.hpp>
 
+#include "../vrtypes/vrtype.hpp"
+
 namespace dicom
 {
 
@@ -170,13 +172,13 @@ struct type_of {};
 template<>
 struct type_of<VR::AE>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::AS>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t len = 4;
 };
 template<>
@@ -188,25 +190,25 @@ struct type_of<VR::AT>
 template<>
 struct type_of<VR::CS>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::DA>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t len = 8;
 };
 template<>
 struct type_of<VR::DS>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::DT>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 26;
 };
 template<>
@@ -224,19 +226,19 @@ struct type_of<VR::FD>
 template<>
 struct type_of<VR::IS>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 12;
 };
 template<>
 struct type_of<VR::LO>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 64;
 };
 template<>
 struct type_of<VR::LT>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 10240;
 };
 template<>
@@ -244,13 +246,13 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
 struct type_of<VR::OF>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
@@ -258,13 +260,13 @@ struct type_of<VR::OW> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::PN>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 64;
 };
 template<>
 struct type_of<VR::SH>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
@@ -284,19 +286,19 @@ struct type_of<VR::SS>
 template<>
 struct type_of<VR::ST>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 1024;
 };
 template<>
 struct type_of<VR::TM>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::UI>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
@@ -304,7 +306,7 @@ struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::UR>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 4294967294; //2^32-2
 };
 template<>
@@ -318,7 +320,7 @@ struct type_of<VR::UL> { using type = unsigned int; };
 template<>
 struct type_of<VR::UT>
 {
-      using type = std::string;
+      using type = vrtype::vrtype<std::string>;
       static const std::size_t max_len = 4294967294; //2^32-2
 };
 template<>
@@ -390,7 +392,7 @@ class get_visitor : public attribute_visitor<vr>
 };
 
 /**
- * @brief get_value_field is used to retrieve the value of the value field
+ * @brief >_field is used to retrieve the value of the value field
  *        of an attribute.
  * @param e element field / attribute operated upon
  * @param out_data reference where the value will be stored

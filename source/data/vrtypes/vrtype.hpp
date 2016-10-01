@@ -267,16 +267,6 @@ class vrtype
       virtual ~vrtype();
 
       /**
-       * @brief is_sequence checks if the attribute can hold more than one value.
-       * @return
-       */
-      bool is_sequence() const
-      {
-          return !multiplicity == "0" &&
-                 !multiplicity == "1";
-      }
-
-      /**
        * @brief add adds all specified values to the attribute, if doing so
        *        does not break multiplicity conditions.
        * @param values list of values to be added.
@@ -297,9 +287,6 @@ class vrtype
       void insert(Iter begin, Iter end)
       {
           auto size = end-begin;
-          if (!is_sequence()) {
-              throw new std::runtime_error("can't add to a non-sequence!");
-          }
           if (!validate_multiplicity(size)) {
               throw new std::runtime_error("addition of " + std::to_string(size) +  " elements would violate the multiplicity rule: " + multiplicity);
           }

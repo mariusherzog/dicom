@@ -99,9 +99,13 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
    return os << "";
 }
 
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type const data)
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type /*const*/ data)
 {
-   std::copy_if(data.begin(), data.end(), std::ostream_iterator<char>(os), [](char c) { return c != '\0'; });
+   for (auto it = data.begin(); it != data.end(); ++it) {
+      auto value = *it;
+      std::copy_if(value.begin(), value.end(), std::ostream_iterator<char>(os), [](char c) { return c != '\0'; });
+      os << 0x5c;
+   }
    return os;
 }
 
