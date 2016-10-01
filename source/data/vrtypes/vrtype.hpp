@@ -54,9 +54,22 @@ class vrtype
 {
     public:
         vrtype(std::string multiplicity = "1"):
-          multiplicity {multiplicity}
-      {
-          populate_mult_rules();
+            multiplicity {multiplicity}
+        {
+            populate_mult_rules();
+        }
+
+        vrtype(std::string multiplicity, std::initializer_list<T> values):
+            vrtype(multiplicity)
+        {
+            insert(values);
+        }
+
+        template <typename Iter>
+        vrtype(std::string multiplicity, Iter begin, Iter end):
+            vrtype(multiplicity)
+        {
+            insert(begin, end);
         }
 
         /**
@@ -250,15 +263,6 @@ class vrtype
             }
         }
 
-
-   protected:
-      vrtype(std::string multiplicity, std::initializer_list<T> values):
-          vrtype(multiplicity)
-      {
-          add(values);
-      }
-
-
     public:
       virtual ~vrtype();
 
@@ -277,15 +281,29 @@ class vrtype
        *        does not break multiplicity conditions.
        * @param values list of values to be added.
        */
-      void add(std::initializer_list<T> values)
+      void insert(std::initializer_list<T> values)
       {
+          insert(values.begin(), values.end());
+      }
+
+
+      /**
+       * @brief insert inserts all values in the range specified by the
+       *        iterators.
+       * @param begin iterator pointing to the beginning of the range
+       * @param end iterator pointing to the end of the range
+       */
+      template <typename Iter>
+      void insert(Iter begin, Iter end)
+      {
+          auto size = end-begin;
           if (!is_sequence()) {
               throw new std::runtime_error("can't add to a non-sequence!");
           }
-          if (!validate_multiplicity(values.size())) {
-              throw new std::runtime_error("addition of " + values.size() +  " elements would violate the multiplicity rule: " + multiplicity);
+          if (!validate_multiplicity(size)) {
+              throw new std::runtime_error("addition of " + std::to_string(size) +  " elements would violate the multiplicity rule: " + multiplicity);
           }
-          std::copy(values.begin(), values.end(), std::back_inserter(value_sequence));
+          std::copy(begin, end, std::back_inserter(value_sequence));
       }
 };
 
