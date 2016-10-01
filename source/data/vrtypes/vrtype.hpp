@@ -8,6 +8,7 @@
 #include <string>
 #include <exception>
 #include <algorithm>
+#include <iterator>
 
 #include <boost/algorithm/string.hpp>
 
@@ -41,6 +42,7 @@ inline bool rule_equals(std::size_t size, std::size_t current, std::size_t new_e
 }
 
 
+
 /**
  * The vrtype class represents the value field of an attribute. It holds the
  * value(s) of type T and asserts the consistency of the appropriate value
@@ -50,6 +52,144 @@ inline bool rule_equals(std::size_t size, std::size_t current, std::size_t new_e
 template <typename T>
 class vrtype
 {
+    public:
+        vrtype(std::string multiplicity = "1"):
+          multiplicity {multiplicity}
+      {
+          populate_mult_rules();
+        }
+
+        /**
+        * @brief The iterator struct is the iterator to navigate through the
+        *        value field.
+        */
+        struct iterator : public std::iterator<std::random_access_iterator_tag, T>
+        {
+            private:
+                vrtype* container;
+                std::size_t index;
+
+            public:
+                iterator(vrtype* container, std::size_t index = 0):
+                    container {container},
+                    index {index}
+                {
+                }
+
+                iterator operator++(int)
+                {
+                    iterator temp = *this;
+                    index++;
+                    return temp;
+                }
+
+                iterator& operator++()
+                {
+                    index++;
+                    return *this;
+                }
+
+                iterator& operator+=(std::size_t s)
+                {
+                    index += s;
+                    return *this;
+                }
+
+                friend iterator operator+(const iterator& a, std::size_t s)
+                {
+                    return a += s;
+                }
+
+                friend iterator operator+(std::size_t s, const iterator& a)
+                {
+                    return a += s;
+                }
+
+                iterator operator--(int)
+                {
+                    iterator temp = *this;
+                    index--;
+                    return temp;
+                }
+
+                iterator& operator--()
+                {
+                    index--;
+                    return *this;
+                }
+
+                iterator& operator-=(std::size_t s)
+                {
+                    index -= s;
+                    return *this;
+                }
+
+                friend iterator operator-(const iterator& a, std::size_t s)
+                {
+                    return a -= s;
+                }
+
+                friend iterator operator-(std::size_t s, const iterator& a)
+                {
+                    return a -= s;
+                }
+
+                T& operator[](std::size_t s) const
+                {
+                    return container->value_sequence[s];
+                }
+
+                T operator*() const
+                {
+                    return container->value_sequence[index];
+                }
+
+                T* operator->() const
+                {
+                    return &container->value_sequence[index];
+                }
+
+                friend bool operator==(const iterator& lhs, const iterator& rhs)
+                {
+                    return lhs.container == rhs.container && lhs.index == rhs.index;
+                }
+
+                friend bool operator!=(const iterator& lhs, const iterator& rhs)
+                {
+                    return !(lhs == rhs);
+                }
+
+                friend bool operator<(const iterator& lhs, const iterator& rhs)
+                {
+                    return lhs.index < rhs.index;
+                }
+
+                friend bool operator>(const iterator& lhs, const iterator& rhs)
+                {
+                    return !(lhs < rhs || lhs == rhs);
+                }
+
+                friend bool operator<=(const iterator& lhs, const iterator& rhs)
+                {
+                    return lhs < rhs || lhs == rhs;
+                }
+
+                friend bool operator>=(const iterator& lhs, const iterator& rhs)
+                {
+                    return lhs > rhs || lhs == rhs;
+                }
+        };
+
+        iterator begin()
+        {
+            return iterator {this};
+        }
+
+        iterator end()
+        {
+            return iterator {this, value_sequence.size()};
+        }
+
     private:
         std::vector<T> value_sequence;
         std::string multiplicity;
@@ -112,35 +252,15 @@ class vrtype
 
 
    protected:
-        vrtype(std::string multiplicity):
-          multiplicity {multiplicity}
-      {
-          populate_mult_rules();
-      }
-
       vrtype(std::string multiplicity, std::initializer_list<T> values):
           vrtype(multiplicity)
       {
           add(values);
       }
 
-      /**
-       * @brief serialize serializes the current instance into a byte stream
-       * @return serialized data
-       */
-      virtual std::vector<unsigned char> serialize() = 0;
-
-      /**
-       * @brief deserialize deserializes the raw byte data into a structured
-       *        representation.
-       * @param data serialized data
-       * @return reference to the instance which contains the data
-       */
-      virtual vrtype<T>& deserialize(std::vector<unsigned char> data) = 0;
-
 
     public:
-      virtual ~vrtype() = 0;
+      virtual ~vrtype();
 
       /**
        * @brief is_sequence checks if the attribute can hold more than one value.
