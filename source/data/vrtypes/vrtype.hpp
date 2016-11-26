@@ -41,6 +41,17 @@ inline bool rule_equals(std::size_t size, std::size_t current, std::size_t new_e
     return current + new_elements == size;
 }
 
+struct multiplicity_data
+{
+        std::string multiplicity = "1";
+
+    public:
+        multiplicity_data(std::string mult):
+            multiplicity(mult)
+        {
+
+        }
+};
 
 
 /**
@@ -53,10 +64,23 @@ template <typename T>
 class vrtype
 {
     public:
-        vrtype(std::string multiplicity = "1"):
-            multiplicity {multiplicity}
+        using base_type = T;
+
+        vrtype(multiplicity_data mult):
+            multiplicity {mult.multiplicity}
         {
             populate_mult_rules();
+        }
+
+        vrtype(T value)
+        {
+            const T* value_addr = &value;
+            insert(value_addr, value_addr+1);
+        }
+
+        vrtype()
+        {
+
         }
 
         vrtype(std::string multiplicity, std::initializer_list<T> values):
@@ -67,7 +91,7 @@ class vrtype
 
         template <typename Iter>
         vrtype(std::string multiplicity, Iter begin, Iter end):
-            vrtype(multiplicity)
+            vrtype(multiplicity_data(multiplicity))
         {
             insert(begin, end);
         }
@@ -264,34 +288,39 @@ class vrtype
         }
 
     public:
-      virtual ~vrtype();
+        virtual ~vrtype();
 
-      /**
+        operator T()
+        {
+            return value_sequence[0];
+        }
+
+        /**
        * @brief add adds all specified values to the attribute, if doing so
        *        does not break multiplicity conditions.
        * @param values list of values to be added.
        */
-      void insert(std::initializer_list<T> values)
-      {
-          insert(values.begin(), values.end());
-      }
+        void insert(std::initializer_list<T> values)
+        {
+            insert(values.begin(), values.end());
+        }
 
 
-      /**
+        /**
        * @brief insert inserts all values in the range specified by the
        *        iterators.
        * @param begin iterator pointing to the beginning of the range
        * @param end iterator pointing to the end of the range
        */
-      template <typename Iter>
-      void insert(Iter begin, Iter end)
-      {
-          auto size = end-begin;
-          if (!validate_multiplicity(size)) {
-              throw new std::runtime_error("addition of " + std::to_string(size) +  " elements would violate the multiplicity rule: " + multiplicity);
-          }
-          std::copy(begin, end, std::back_inserter(value_sequence));
-      }
+        template <typename Iter>
+        void insert(Iter begin, Iter end)
+        {
+            auto size = end-begin;
+            if (!validate_multiplicity(size)) {
+                throw new std::runtime_error("addition of " + std::to_string(size) +  " elements would violate the multiplicity rule: " + multiplicity);
+            }
+            std::copy(begin, end, std::back_inserter(value_sequence));
+        }
 };
 
 template <typename T>

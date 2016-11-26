@@ -128,7 +128,7 @@ static std::vector<unsigned char> encode_byte_string(vrtype::vrtype<std::string>
          buf.push_back(0x5c);
       }
 
-      buf.reserve(buf.size() + value.size());
+      buf.resize(buf.size() + value.size());
       for (std::size_t i=0; i<value.size(); ++i) {
          buf[i] = static_cast<unsigned char>(value[i]);
       }
@@ -164,6 +164,7 @@ static vrtype::vrtype<std::string> decode_byte_string(const std::vector<unsigned
 
       buf[i-begin] = static_cast<unsigned char>(strdata[i]);
    }
+   strings.emplace_back(buf.begin(), buf.end());
    return vrtype::vrtype<std::string>("1", strings.begin(), strings.end()); ///todo: change to correct VM
 }
 

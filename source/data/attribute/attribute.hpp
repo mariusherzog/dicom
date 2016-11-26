@@ -404,6 +404,16 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data
    e.value_field->accept<vr>(getter);
 }
 
+template <VR vr>
+void get_value_field(const elementfield& e, typename type_of<vr>::type::base_type& out_data)
+{
+   typename type_of<vr>::type wrapper;
+
+   get_visitor<vr> getter(wrapper);
+   e.value_field->accept<vr>(getter);
+   out_data = *wrapper.begin();
+}
+
 
 /**
  * @brief The set_visitor class is used to set a specified value into the
@@ -441,6 +451,27 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
 
    set_visitor<vr> setter(data);
+   el.value_field->accept<vr>(setter);
+   return el;
+}
+
+/**
+ * @brief make_elementfield is a factory function to return a prepared attribute
+ *        / element field.
+ * @param data data for the value field
+ * @return prepared instance of elementfield
+ */
+template <VR vr>
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type::base_type &data)
+{
+   static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
+   elementfield el;
+   el.value_rep = vr;
+   el.value_len = data_len;
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   typename type_of<vr>::type wrapper(data);
+   set_visitor<vr> setter(wrapper);
    el.value_field->accept<vr>(setter);
    return el;
 }
