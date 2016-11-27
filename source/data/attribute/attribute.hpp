@@ -404,6 +404,7 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data
    e.value_field->accept<vr>(getter);
 }
 
+
 template <VR vr>
 void get_value_field(const elementfield& e, typename type_of<vr>::type::base_type& out_data)
 {

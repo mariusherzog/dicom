@@ -120,17 +120,19 @@ static void big_endian_to_float(const std::vector<unsigned char>& data
 static std::vector<unsigned char> encode_byte_string(vrtype::vrtype<std::string> str)
 {
    std::vector<unsigned char> buf;
+   int offset = 0;
    for (auto it = str.begin(); it != str.end(); ++it)
    {
       std::string value = *it;
       if (it != str.begin()) { //beginning from the 2nd element, start preceding
                                //with the separator backslash
          buf.push_back(0x5c);
+         offset = buf.size();
       }
 
       buf.resize(buf.size() + value.size());
       for (std::size_t i=0; i<value.size(); ++i) {
-         buf[i] = static_cast<unsigned char>(value[i]);
+         buf[offset + i] = static_cast<unsigned char>(value[i]);
       }
    }
    if (buf.size() % 2 != 0) {
@@ -155,14 +157,20 @@ static vrtype::vrtype<std::string> decode_byte_string(const std::vector<unsigned
 {
    std::vector<std::string> strings;
 
-   std::vector<unsigned char> buf(len);
+   //std::vector<unsigned char> buf(len);
+   std::vector<unsigned char> buf;
+   int size_segments = 0;
    for (int i=begin; i<begin+len; ++i) {
       if (strdata[i] == 0x5c) {
          strings.emplace_back(buf.begin(), buf.end());
          buf.clear();
+         ++i; //skip delimiter
+         //buf.resize(i-begin-size_segments);
+         size_segments = i-begin;
       }
 
-      buf[i-begin] = static_cast<unsigned char>(strdata[i]);
+      //buf[i-begin-size_segments] = static_cast<unsigned char>(strdata[i]);
+      buf.push_back(static_cast<unsigned char>(strdata[i]));
    }
    strings.emplace_back(buf.begin(), buf.end());
    return vrtype::vrtype<std::string>("1", strings.begin(), strings.end()); ///todo: change to correct VM
