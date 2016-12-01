@@ -142,6 +142,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          VR repr = deserialize_VR(current_data.top(), tag, pos);
          std::size_t value_len = deserialize_length(current_data.top(), tag, repr, pos);
 
+
          // Items and DelimitationItems do not have a VR or length field and are
          // to be treated separately.
          if (!is_item_attribute(tag)) {
@@ -158,7 +159,8 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                positions.push(0);
                lasttag.push({tag, value_len});
             } else {
-               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, pos);
+               auto multiplicity = get_dictionary().lookup(tag).vm;
+               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, multiplicity, pos);
                current_sequence.top().back()[tag] = e;
             }
             pos += value_len;
@@ -299,10 +301,10 @@ std::string transfer_processor::get_transfer_syntax() const
 elementfield commandset_processor::deserialize_attribute(std::vector<unsigned char>& data,
                                                          attribute::ENDIANNESS end,
                                                        std::size_t len,
-                                                       VR vr,
+                                                       VR vr, std::string vm,
                                                        std::size_t pos) const
 {
-   return decode_value_field(data, end, len, vr, pos);
+   return decode_value_field(data, end, len, vr, vm, pos);
 }
 
 
@@ -320,6 +322,11 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> 
       throw std::runtime_error("Uninitialized dictionary with "
                                "implicit VR type specificed!");
    }
+}
+
+data::dictionary::dictionary& transfer_processor::get_dictionary() const
+{
+   return *dict;
 }
 
 transfer_processor::transfer_processor(const transfer_processor& other):
@@ -378,9 +385,10 @@ std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfi
 elementfield little_endian_implicit::deserialize_attribute(std::vector<unsigned char>& data,
                                                            attribute::ENDIANNESS end,
                                                            std::size_t len, attribute::VR vr,
+                                                           std::string vm,
                                                            std::size_t pos) const
 {
-   return decode_value_field(data, end, len, vr, pos);
+   return decode_value_field(data, end, len, vr, vm, pos);
 }
 
 transfer_processor::vr_of_tag::vr_of_tag(elementfield::tag_type tag,
@@ -421,10 +429,10 @@ std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfi
 }
 
 elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
-                                                           std::size_t len, VR vr,
+                                                           std::size_t len, VR vr, std::string vm,
                                                            std::size_t pos) const
 {
-   return decode_value_field(data, end, len, vr, pos);
+   return decode_value_field(data, end, len, vr, vm, pos);
 }
 
 big_endian_explicit::big_endian_explicit():
@@ -453,10 +461,10 @@ std::vector<unsigned char> big_endian_explicit::serialize_attribute(elementfield
 }
 
 elementfield big_endian_explicit::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
-                                                           std::size_t len, VR vr,
+                                                           std::size_t len, VR vr, std::string vm,
                                                            std::size_t pos) const
 {
-   return decode_value_field(data, end, len, vr, pos);
+   return decode_value_field(data, end, len, vr, vm, pos);
 }
 
 

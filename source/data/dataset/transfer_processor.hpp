@@ -83,6 +83,8 @@ class transfer_processor
        */
       attribute::VR get_vr(attribute::elementfield::tag_type tag) const;
 
+      dicom::data::dictionary::dictionary& get_dictionary() const;
+
    public:
 
       /**
@@ -132,7 +134,7 @@ class transfer_processor
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
                             attribute::ENDIANNESS end,
-                            std::size_t len, attribute::VR vr,
+                            std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const = 0;
 
       /**
@@ -198,7 +200,7 @@ class commandset_processor: public transfer_processor
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
                             attribute::ENDIANNESS end,
-                            std::size_t len, attribute::VR vr,
+                            std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const override;
 };
 
@@ -219,7 +221,7 @@ class little_endian_implicit: public transfer_processor
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data, attribute::ENDIANNESS end,
-                            std::size_t len, attribute::VR vr,
+                            std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const;
 };
 
@@ -235,7 +237,7 @@ class little_endian_explicit: public transfer_processor
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
                             attribute::ENDIANNESS end,
-                            std::size_t len, attribute::VR vr,
+                            std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const;
 };
 
@@ -251,7 +253,7 @@ class big_endian_explicit: public transfer_processor
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
                             attribute::ENDIANNESS end,
-                            std::size_t len, attribute::VR vr,
+                            std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const;
 };
 

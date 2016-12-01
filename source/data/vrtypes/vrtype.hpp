@@ -263,6 +263,7 @@ class vrtype
 
             using namespace std::placeholders;
             if (components.size() > 1) {
+                if (components[1] == "") components[1] = "n";
                 if (std::all_of(components[0].begin(), components[0].end(), ::isdigit)) {
                     std::size_t lower = std::stoull(components[0]);
                     if (std::all_of(components[1].begin(), components[1].end(), ::isdigit)) {
@@ -271,6 +272,7 @@ class vrtype
                         multiplicity_rules.push_back(std::bind(rule_less, upper, _1, _2));
                     } else if (components[1].find('n') != std::string::npos) {
                         std::string multiplier {components[1].begin(), components[1].begin() + components[1].find_last_of('n')};
+                        if (multiplier == "") multiplier = "1";
                         multiplicity_rules.push_back(std::bind(rule_n, std::stoul(multiplier), _1, _2));
                         multiplicity_rules.push_back(std::bind(rule_more, lower, _1, _2));
                     }
@@ -281,6 +283,7 @@ class vrtype
                     multiplicity_rules.push_back(std::bind(rule_equals, value, _1, _2));
                 } else if (components[0].find('n') != std::string::npos) {
                     std::string multiplier {components[0].begin(), components[0].begin() + components[0].find_last_of('n')};
+                    if (multiplier == "") multiplier = "1";
                     multiplicity_rules.push_back(std::bind(rule_n, std::stoul(multiplier), _1, _2));
                     multiplicity_rules.push_back(std::bind(rule_more, 1, _1, _2));
                 }

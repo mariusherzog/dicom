@@ -39,7 +39,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
  * as a parameter, parses the respective value field, and returns an instance of
  * elementfield which contains all the data.
  */
-elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t len, VR vr, int begin);
+elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t len, VR vr, std::string vm, int begin);
 
 
 /**
