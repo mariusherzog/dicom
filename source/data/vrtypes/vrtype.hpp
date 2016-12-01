@@ -319,8 +319,7 @@ class vrtype
         void insert(Iter begin, Iter end)
         {
             auto size = end-begin;
-            //if (!validate_multiplicity(size)) {
-            if (false) {
+            if (!validate_multiplicity(size)) {
                 throw new std::runtime_error("addition of " + std::to_string(size) +  " elements would violate the multiplicity rule: " + multiplicity);
             }
             std::copy(begin, end, std::back_inserter(value_sequence));
