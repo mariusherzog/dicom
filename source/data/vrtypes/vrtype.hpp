@@ -96,6 +96,11 @@ class vrtype
             insert(begin, end);
         }
 
+        std::size_t size() const
+        {
+            return value_sequence.size();
+        }
+
         /**
         * @brief The iterator struct is the iterator to navigate through the
         *        value field.
@@ -329,6 +334,20 @@ class vrtype
 template <typename T>
 vrtype<T>::~vrtype()
 {
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, vrtype<T> data)
+{
+    bool more_elements = false;
+    for (const auto& field : data) {
+        if (more_elements) {
+            os << static_cast<char>(0x5c);
+        }
+        os << field;
+        more_elements = data.size() > 1;
+    }
+    return os;
 }
 
 }
