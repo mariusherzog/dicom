@@ -1,4 +1,4 @@
-#include "vrtype.hpp"
+#include "vmtype.hpp"
 
 namespace dicom
 {
@@ -6,11 +6,11 @@ namespace dicom
 namespace data
 {
 
-namespace vrtype
+namespace attribute
 {
 
 
-std::ostream& operator<<(std::ostream& os, vrtype<std::string> data)
+std::ostream& operator<<(std::ostream& os, vmtype<std::string> data)
 {
     bool more_elements = false;
     for (const auto& field : data) {
@@ -23,7 +23,7 @@ std::ostream& operator<<(std::ostream& os, vrtype<std::string> data)
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, vrtype<attribute::tag_type> tag)
+std::ostream& operator<<(std::ostream& os, vmtype<attribute::tag_type> tag)
 {
    std::ios state(nullptr);
    state.copyfmt(os);

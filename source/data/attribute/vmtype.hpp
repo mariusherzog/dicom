@@ -1,5 +1,5 @@
-#ifndef VRTYPE_HPP
-#define VRTYPE_HPP
+#ifndef VMTYPE_HPP
+#define VMTYPE_HPP
 
 
 #include <functional>
@@ -20,7 +20,7 @@ namespace dicom
 namespace data
 {
 
-namespace vrtype
+namespace attribute
 {
 
 inline bool rule_n(std::size_t multiplier, std::size_t current, std::size_t new_elements)
@@ -57,43 +57,43 @@ struct multiplicity_data
 
 
 /**
- * The vrtype class represents the value field of an attribute. It holds the
+ * The vmtype class represents the value field of an attribute. It holds the
  * value(s) of type T and asserts the consistency of the appropriate value
  * multiplicity with the value count.
  * @tparam T type of the underlying data
  */
 template <typename T>
-class vrtype
+class vmtype
 {
     public:
         using base_type = T;
 
-        vrtype(multiplicity_data mult):
+        vmtype(multiplicity_data mult):
             multiplicity {mult.multiplicity}
         {
             populate_mult_rules();
         }
 
-        vrtype(T value)
+        vmtype(T value)
         {
             const T* value_addr = &value;
             insert(value_addr, value_addr+1);
         }
 
-        vrtype()
+        vmtype()
         {
 
         }
 
-        vrtype(std::string multiplicity, std::initializer_list<T> values):
-            vrtype(multiplicity)
+        vmtype(std::string multiplicity, std::initializer_list<T> values):
+            vmtype(multiplicity)
         {
             insert(values);
         }
 
         template <typename Iter>
-        vrtype(std::string multiplicity, Iter begin, Iter end):
-            vrtype(multiplicity_data(multiplicity))
+        vmtype(std::string multiplicity, Iter begin, Iter end):
+            vmtype(multiplicity_data(multiplicity))
         {
             insert(begin, end);
         }
@@ -110,11 +110,11 @@ class vrtype
         struct iterator : public std::iterator<std::random_access_iterator_tag, T>
         {
             private:
-                vrtype* container;
+                vmtype* container;
                 std::size_t index;
 
             public:
-                iterator(vrtype* container, std::size_t index = 0):
+                iterator(vmtype* container, std::size_t index = 0):
                     container {container},
                     index {index}
                 {
@@ -298,7 +298,7 @@ class vrtype
         }
 
     public:
-        virtual ~vrtype();
+        virtual ~vmtype();
 /*
         operator T()
         {
@@ -334,17 +334,17 @@ class vrtype
 };
 
 template <typename T>
-vrtype<T>::~vrtype()
+vmtype<T>::~vmtype()
 {
 }
 
 
-std::ostream& operator<<(std::ostream& os, vrtype<std::string> data);
+std::ostream& operator<<(std::ostream& os, vmtype<std::string> data);
 
-std::ostream& operator<<(std::ostream& os, vrtype<attribute::tag_type> tag);
+std::ostream& operator<<(std::ostream& os, const vmtype<attribute::tag_type> tag);
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-std::ostream& operator<<(std::ostream& os, vrtype<T> data)
+std::ostream& operator<<(std::ostream& os, vmtype<T> data)
 {
     for (T num : data)
     {
@@ -354,7 +354,7 @@ std::ostream& operator<<(std::ostream& os, vrtype<T> data)
 }
 
 template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-std::ostream& operator<<(std::ostream& os, vrtype<T> data)
+std::ostream& operator<<(std::ostream& os, vmtype<T> data)
 {
     for (T num : data)
     {
@@ -369,4 +369,4 @@ std::ostream& operator<<(std::ostream& os, vrtype<T> data)
 
 }
 
-#endif // VRTYPE_HPP
+#endif // vmtype_HPP

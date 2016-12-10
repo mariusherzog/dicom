@@ -10,7 +10,7 @@
 
 #include <boost/optional.hpp>
 
-#include "../vrtypes/vrtype.hpp"
+#include "vmtype.hpp"
 #include "tag.hpp"
 
 namespace dicom
@@ -165,73 +165,73 @@ struct type_of {};
 template<>
 struct type_of<VR::AE>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::AS>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t len = 4;
 };
 template<>
 struct type_of<VR::AT>
 {
-      using type = vrtype::vrtype<tag_type>;
+      using type = attribute::vmtype<tag_type>;
       static const std::size_t len = 4;
 };
 template<>
 struct type_of<VR::CS>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::DA>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t len = 8;
 };
 template<>
 struct type_of<VR::DS>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::DT>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 26;
 };
 template<>
 struct type_of<VR::FL>
 {
-      using type = vrtype::vrtype<float>;
+      using type = attribute::vmtype<float>;
       static const std::size_t len = 4;
 };
 template<>
 struct type_of<VR::FD>
 {
-      using type = vrtype::vrtype<double>;
+      using type = attribute::vmtype<double>;
       static const std::size_t len = 8;
 };
 template<>
 struct type_of<VR::IS>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 12;
 };
 template<>
 struct type_of<VR::LO>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 64;
 };
 template<>
 struct type_of<VR::LT>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 10240;
 };
 template<>
@@ -239,13 +239,13 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
 struct type_of<VR::OF>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
@@ -253,19 +253,19 @@ struct type_of<VR::OW> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::PN>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 64;
 };
 template<>
 struct type_of<VR::SH>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::SL>
 {
-      using type = vrtype::vrtype<long>;
+      using type = attribute::vmtype<long>;
       static const std::size_t len = 4;
 };
 template<>
@@ -273,25 +273,25 @@ struct type_of<VR::SQ> { using type = std::vector<dataset::dataset_type>; };
 template<>
 struct type_of<VR::SS>
 {
-      using type = vrtype::vrtype<short>;
+      using type = attribute::vmtype<short>;
       static const std::size_t len = 2;
 };
 template<>
 struct type_of<VR::ST>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 1024;
 };
 template<>
 struct type_of<VR::TM>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
 struct type_of<VR::UI>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 16;
 };
 template<>
@@ -299,13 +299,13 @@ struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::UR>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 4294967294; //2^32-2
 };
 template<>
 struct type_of<VR::US>
 {
-      using type = vrtype::vrtype<unsigned short>;
+      using type = attribute::vmtype<unsigned short>;
       static const std::size_t len = 2;
 };
 template<>
@@ -313,7 +313,7 @@ struct type_of<VR::UL> { using type = unsigned int; };
 template<>
 struct type_of<VR::UT>
 {
-      using type = vrtype::vrtype<std::string>;
+      using type = attribute::vmtype<std::string>;
       static const std::size_t max_len = 4294967294; //2^32-2
 };
 template<>
@@ -328,8 +328,6 @@ struct type_of<VR::NI>
 };
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
-
-//std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 
@@ -500,14 +498,6 @@ elementfield make_elementfield(std::size_t len)
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
    return el;
 }
-
-
-
-bool operator<(const tag_type& lhs, const tag_type& rhs);
-
-bool operator==(const tag_type& lhs, const tag_type& rhs);
-
-bool operator!=(const tag_type& lhs, const tag_type& rhs);
 
 }
 

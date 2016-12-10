@@ -1,7 +1,7 @@
 project(dicom)
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
+#set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g -D BOOST_ASIO_HAS_STD_CHRONO -lboost_thread-mt")
 
 add_definitions(-DBOOST_LOG_DYN_LINK)
@@ -20,7 +20,6 @@ if(Boost_FOUND)
    aux_source_directory(./source/data/attribute SRC_LIST)
    aux_source_directory(./source/data/dictionary SRC_LIST)
    aux_source_directory(./source/data/dataset SRC_LIST)
-   aux_source_directory(./source/data/vrtypes SRC_LIST)
    aux_source_directory(./source/network/upperlayer SRC_LIST)
    aux_source_directory(./source/network/dimse SRC_LIST)
    aux_source_directory(./source/util SRC_LIST)

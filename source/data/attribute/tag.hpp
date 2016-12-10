@@ -20,8 +20,11 @@ struct tag_type
       tag_type(unsigned short gid = 0, unsigned short eid = 0);
 };
 
-std::ostream& operator<<(std::ostream& os, tag_type tag);
+std::ostream& operator<<(std::ostream& os, const tag_type tag);
 
+bool operator<(const tag_type& lhs, const tag_type& rhs);
+bool operator==(const tag_type& lhs, const tag_type& rhs);
+bool operator!=(const tag_type& lhs, const tag_type& rhs);
 }
 
 }

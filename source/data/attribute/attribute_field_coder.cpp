@@ -117,7 +117,7 @@ static void big_endian_to_float(const std::vector<unsigned char>& data
    out = *reinterpret_cast<T*>(floatbufout);
 }
 
-static std::vector<unsigned char> encode_byte_string(vrtype::vrtype<std::string> str)
+static std::vector<unsigned char> encode_byte_string(attribute::vmtype<std::string> str)
 {
    std::vector<unsigned char> buf;
    int offset = 0;
@@ -153,7 +153,7 @@ static std::vector<unsigned char> encode_word_array_le(const std::vector<unsigne
    return std::vector<unsigned char> {strdata};
 }
 
-static vrtype::vrtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, int begin, int len)
+static attribute::vmtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, int begin, int len)
 {
    std::vector<std::string> strings;
 
@@ -173,7 +173,7 @@ static vrtype::vrtype<std::string> decode_byte_string(const std::vector<unsigned
       buf.push_back(static_cast<unsigned char>(strdata[i]));
    }
    strings.emplace_back(buf.begin(), buf.end());
-   return vrtype::vrtype<std::string>(vm, strings.begin(), strings.end()); ///todo: change to correct VM
+   return attribute::vmtype<std::string>(vm, strings.begin(), strings.end()); ///todo: change to correct VM
 }
 
 static std::vector<unsigned char> decode_byte_array(const std::vector<unsigned char>& strdata, int begin, int len)
@@ -330,13 +330,13 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
    std::vector<unsigned char> data;
    switch (vr) {
       case VR::AE: {
-         vrtype::vrtype<std::string> ae;
+         attribute::vmtype<std::string> ae;
          get_value_field<VR::AE>(attr, ae);
          data = convhelper::encode_byte_string(ae);
          break;
       }
       case VR::AS: {
-         vrtype::vrtype<std::string> as;
+         attribute::vmtype<std::string> as;
          get_value_field<VR::AS>(attr, as);
          data = convhelper::encode_byte_string(as);
          break;
@@ -357,25 +357,25 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::CS: {
-         vrtype::vrtype<std::string> cs;
+         attribute::vmtype<std::string> cs;
          get_value_field<VR::CS>(attr, cs);
          data = convhelper::encode_byte_string(cs);
          break;
       }
       case VR::DA: {
-         vrtype::vrtype<std::string> da;
+         attribute::vmtype<std::string> da;
          get_value_field<VR::DA>(attr, da);
          data = convhelper::encode_byte_string(da);
          break;
       }
       case VR::DS: {
-         vrtype::vrtype<std::string> ds;
+         attribute::vmtype<std::string> ds;
          get_value_field<VR::DS>(attr, ds);
          data = convhelper::encode_byte_string(ds);
          break;
       }
       case VR::DT: {
-         vrtype::vrtype<std::string> dt;
+         attribute::vmtype<std::string> dt;
          get_value_field<VR::DT>(attr, dt);
          data = convhelper::encode_byte_string(dt);
       }
@@ -400,19 +400,19 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::IS: {
-         vrtype::vrtype<std::string> is;
+         attribute::vmtype<std::string> is;
          get_value_field<VR::IS>(attr, is);
          data = convhelper::encode_byte_string(is);
          break;
       }
       case VR::LO: {
-         vrtype::vrtype<std::string> lo;
+         attribute::vmtype<std::string> lo;
          get_value_field<VR::LO>(attr, lo);
          data = convhelper::encode_byte_string(lo);
          break;
       }
       case VR::LT: {
-         vrtype::vrtype<std::string> lt;
+         attribute::vmtype<std::string> lt;
          get_value_field<VR::LT>(attr, lt);
          data = convhelper::encode_byte_string(lt);
          break;
@@ -424,13 +424,13 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::OD: {
-         vrtype::vrtype<std::string> od;
+         attribute::vmtype<std::string> od;
          get_value_field<VR::OD>(attr, od);
          data = convhelper::encode_byte_string(od);
          break;
       }
       case VR::OF: {
-         vrtype::vrtype<std::string> of;
+         attribute::vmtype<std::string> of;
          get_value_field<VR::OF>(attr, of);
          data = convhelper::encode_byte_string(of);
          break;
@@ -442,13 +442,13 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::PN: {
-         vrtype::vrtype<std::string> pn;
+         attribute::vmtype<std::string> pn;
          get_value_field<VR::PN>(attr, pn);
          data = convhelper::encode_byte_string(pn);
          break;
       }
       case VR::SH: {
-         vrtype::vrtype<std::string> sh;
+         attribute::vmtype<std::string> sh;
          get_value_field<VR::SH>(attr, sh);
          data = convhelper::encode_byte_string(sh);
          break;
@@ -479,19 +479,19 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::ST: {
-         vrtype::vrtype<std::string> st;
+         attribute::vmtype<std::string> st;
          get_value_field<VR::ST>(attr, st);
          data = convhelper::encode_byte_string(st);
          break;
       }
       case VR::TM: {
-         vrtype::vrtype<std::string> tm;
+         attribute::vmtype<std::string> tm;
          get_value_field<VR::TM>(attr, tm);
          data = convhelper::encode_byte_string(tm);
          break;
       }
       case VR::UI: {
-         vrtype::vrtype<std::string> ui;
+         attribute::vmtype<std::string> ui;
          get_value_field<VR::UI>(attr, ui);
          data = convhelper::encode_byte_string(ui);
          break;
@@ -510,7 +510,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::UR: {
-         vrtype::vrtype<std::string> ur;
+         attribute::vmtype<std::string> ur;
          get_value_field<VR::UR>(attr, ur);
          data = convhelper::encode_byte_string(ur);
          break;
@@ -526,7 +526,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::UT: {
-         vrtype::vrtype<std::string> ut;
+         attribute::vmtype<std::string> ut;
          get_value_field<VR::UT>(attr, ut);
          data = convhelper::encode_byte_string(ut);
          break;

@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "constants.hpp"
-
 namespace dicom
 {
 
@@ -19,24 +17,6 @@ elementfield_base::~elementfield_base()
 {
 }
 
-
-
-bool operator<(const tag_type& lhs, const tag_type& rhs)
-{
-   // Item tag should be placed first in a (nested) set
-   if (lhs == Item) return true;
-   if (rhs == Item && lhs != Item) return false;
-   return lhs.group_id == rhs.group_id ?
-          lhs.element_id < rhs.element_id :
-          lhs.group_id < rhs.group_id;
-}
-
-
-bool operator==(const tag_type& lhs, const tag_type& rhs)
-{
-   return lhs.group_id == rhs.group_id &&
-         rhs.element_id == lhs.element_id;
-}
 
 elementfield::elementfield(const elementfield& other):
    value_rep {other.value_rep},
@@ -59,10 +39,6 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
-bool operator!=(const tag_type& lhs, const tag_type& rhs)
-{
-   return !(lhs == rhs);
-}
 
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
