@@ -12,6 +12,10 @@ namespace data
 namespace attribute
 {
 
+/**
+ * @brief The tag_type struct represents a tag used as the identifier in the
+ *        attribute and as a value field type for AT VRs.
+ */
 struct tag_type
 {
       unsigned short group_id;
