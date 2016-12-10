@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "constants.hpp"
-
 namespace dicom
 {
 
@@ -20,24 +18,6 @@ elementfield_base::~elementfield_base()
 }
 
 
-
-bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
-{
-   // Item tag should be placed first in a (nested) set
-   if (lhs == Item) return true;
-   if (rhs == Item && lhs != Item) return false;
-   return lhs.group_id == rhs.group_id ?
-          lhs.element_id < rhs.element_id :
-          lhs.group_id < rhs.group_id;
-}
-
-
-bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
-{
-   return lhs.group_id == rhs.group_id &&
-         rhs.element_id == lhs.element_id;
-}
-
 elementfield::elementfield(const elementfield& other):
    value_rep {other.value_rep},
    value_len {other.value_len},
@@ -51,12 +31,6 @@ elementfield& elementfield::operator=(elementfield other)
    return *this;
 }
 
-elementfield::tag_type::tag_type(unsigned short gid, unsigned short eid):
-   group_id {gid},
-   element_id {eid}
-{
-}
-
 void swap(elementfield& lhs, elementfield& rhs) noexcept
 {
    using std::swap;
@@ -65,23 +39,7 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
-bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
-{
-   return !(lhs == rhs);
-}
 
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const tag)
-{
-   std::ios state(nullptr);
-   state.copyfmt(os);
-
-   os << "(" << std::hex << std::setw(4) << std::setfill('0') << tag.group_id
-      << "," << std::hex << std::setw(4) << std::setfill('0') << tag.element_id
-      << ")";
-
-   os.copyfmt(state);
-   return os;
-}
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
 {
@@ -97,12 +55,6 @@ std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
 {
    return os << "";
-}
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type const data)
-{
-   std::copy_if(data.begin(), data.end(), std::ostream_iterator<char>(os), [](char c) { return c != '\0'; });
-   return os;
 }
 
 

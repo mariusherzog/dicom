@@ -30,12 +30,12 @@ dictionary_dyn& dictionary::get_dyn_datadic()
 }
 
 
-dictionary_entry dictionary::lookup_datadic(attribute::elementfield::tag_type tag)
+dictionary_entry dictionary::lookup_datadic(attribute::tag_type tag)
 {
    return datadic.lookup(tag);
 }
 
-dictionary_entry dictionary::lookup(attribute::elementfield::tag_type tag)
+dictionary_entry dictionary::lookup(attribute::tag_type tag)
 {
    try {
       return commanddic.lookup(tag);
@@ -48,7 +48,7 @@ dictionary_entry dictionary::lookup(attribute::elementfield::tag_type tag)
    }
 }
 
-dictionary_entry dictionary::lookup_commanddic(attribute::elementfield::tag_type tag)
+dictionary_entry dictionary::lookup_commanddic(attribute::tag_type tag)
 {
    return commanddic.lookup(tag);
 }

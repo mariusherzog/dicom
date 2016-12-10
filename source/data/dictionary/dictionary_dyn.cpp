@@ -78,7 +78,7 @@ dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
 }
 
 
-dictionary_entry dictionary_dyn::lookup(attribute::elementfield::tag_type tag)
+dictionary_entry dictionary_dyn::lookup(attribute::tag_type tag)
 {
    BOOST_SCOPE_EXIT(&dictionary_file) {
       dictionary_file.clear();
@@ -93,7 +93,7 @@ dictionary_entry dictionary_dyn::lookup(attribute::elementfield::tag_type tag)
    }
 }
 
-bool dictionary_dyn::comparetag(std::string strtag, attribute::elementfield::tag_type tag) const
+bool dictionary_dyn::comparetag(std::string strtag, attribute::tag_type tag) const
 {
    std::string gidstr {&strtag[1], &strtag[7]};
    std::string eidstr {&strtag[8], &strtag[14]};
@@ -102,7 +102,7 @@ bool dictionary_dyn::comparetag(std::string strtag, attribute::elementfield::tag
    return taggid == tag.group_id && tageid == tag.element_id;
 }
 
-dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type tag)
+dictionary_entry dictionary_dyn::lazylookup(attribute::tag_type tag)
 {
    const int num_fields = 6;
    std::string line;
@@ -134,7 +134,7 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::elementfield::tag_type ta
    throw std::runtime_error {"Tag not found"};
 }
 
-dictionary_entry dictionary_dyn::greedylookup(attribute::elementfield::tag_type tag)
+dictionary_entry dictionary_dyn::greedylookup(attribute::tag_type tag)
 {
    using namespace dicom::data::attribute;
    const int num_fields = 6;
@@ -165,7 +165,7 @@ dictionary_entry dictionary_dyn::greedylookup(attribute::elementfield::tag_type 
          }
          bool retired = fields[num_fields-2] == "RET";
 
-         dict_buffer.emplace(elementfield::tag_type {taggid, tageid}
+         dict_buffer.emplace(tag_type {taggid, tageid}
             , dictionary_entry {{vrs[0], vrs[1], vrs[2]}, fields[1], fields[2], fields[3], retired});
       }
    }

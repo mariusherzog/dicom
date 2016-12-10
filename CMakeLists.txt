@@ -10,9 +10,11 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost COMPONENTS system log REQUIRED)
 
+
 if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
    include_directories(${CMAKE_SOURCE_DIR}/source)
+   include_directories(${CMAKE_SOURCE_DIR}/source/data/vrtypes)
    aux_source_directory(. SRC_LIST)
    aux_source_directory(./source SRC_LIST)
    aux_source_directory(./source/data/attribute SRC_LIST)

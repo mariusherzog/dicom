@@ -46,7 +46,7 @@ class dictionary
        * @param tag
        * @return dictionary entry corresponding the tag
        */
-      dictionary_entry lookup_commanddic(attribute::elementfield::tag_type tag);
+      dictionary_entry lookup_commanddic(attribute::tag_type tag);
 
       /**
        * @brief lookup_datadic performs a dynamic lookup of the given tag in
@@ -54,7 +54,7 @@ class dictionary
        * @param tag
        * @return dictionary entry corresponding the tag
        */
-      dictionary_entry lookup_datadic(attribute::elementfield::tag_type tag);
+      dictionary_entry lookup_datadic(attribute::tag_type tag);
 
       /**
        * @brief lookup performs a lookup in the command dictionary and data
@@ -63,7 +63,7 @@ class dictionary
        * @param eid element id of the tag
        * @return dictionary entry corresponding the tag
        */
-      dictionary_entry lookup(attribute::elementfield::tag_type tag);
+      dictionary_entry lookup(attribute::tag_type tag);
 
       /**
        * @brief lookup_commanddic performs a compile-time lookup of the given tag

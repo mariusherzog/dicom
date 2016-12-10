@@ -41,9 +41,10 @@ int main()
          assert(data != nullptr);
          std::cout << "Received C_ECHO_RSP\n";
          std::cout << *data;
-//         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, *data, 0xff00});
-//         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, boost::none, 0x0000});
-         pm->release_association();
+
+         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, *data, 0xff00});
+         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, boost::none, 0x0000});
+//         pm->release_association();
       }}}
    };
 
@@ -97,11 +98,11 @@ int main()
    dimse::association_definition ascdef {"STORESCP", "ANY-SCU",
       {
 //          {echorq, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
-          {findrq, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
-          {echo, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
-          {echorsp, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
-          {findrsp, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
-          {findrsp2, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
+          {findrq, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
+          {echo, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
+          {echorsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
+          {findrsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
+          {findrsp2, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
       },
       4096
    };
@@ -110,8 +111,8 @@ int main()
    try
    {
       auto request_property = ascdef.get_initial_request();
-      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
-//      dicom::network::upperlayer::scp sc(dict, 11113);
+//      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
+      dicom::network::upperlayer::scp sc(dict, 11113);
       dicom::network::dimse::dimse_pm dpm(sc,
          ascdef,
          dict

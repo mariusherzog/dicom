@@ -113,7 +113,7 @@ void dimse_pm::send_response(response r)
 
    std::string sop_uid;
    for (auto e : dataset_iterator_adaptor(r.get_command())) {
-      if (e.first == elementfield::tag_type {0x0000, 0x0002}) {
+      if (e.first == tag_type {0x0000, 0x0002}) {
          get_value_field<VR::UI>(e.second, sop_uid);
       }
    }

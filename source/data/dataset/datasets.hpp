@@ -22,7 +22,7 @@ namespace dataset
  * @brief The dataset_type struct defines a new type for the dataset in the
  *        namespace to facilitate ADL (argument dependent lookup).
  */
-struct dataset_type : std::map<attribute::elementfield::tag_type, attribute::elementfield>
+struct dataset_type : std::map<attribute::tag_type, attribute::elementfield>
 {
 };
 
