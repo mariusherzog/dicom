@@ -207,13 +207,13 @@ struct type_of<VR::DT>
 template<>
 struct type_of<VR::FL>
 {
-      using type = float;
+      using type = vrtype::vrtype<float>;
       static const std::size_t len = 4;
 };
 template<>
 struct type_of<VR::FD>
 {
-      using type = double;
+      using type = vrtype::vrtype<double>;
       static const std::size_t len = 8;
 };
 template<>
@@ -265,7 +265,7 @@ struct type_of<VR::SH>
 template<>
 struct type_of<VR::SL>
 {
-      using type = long;
+      using type = vrtype::vrtype<long>;
       static const std::size_t len = 4;
 };
 template<>
@@ -273,7 +273,7 @@ struct type_of<VR::SQ> { using type = std::vector<dataset::dataset_type>; };
 template<>
 struct type_of<VR::SS>
 {
-      using type = short;
+      using type = vrtype::vrtype<short>;
       static const std::size_t len = 2;
 };
 template<>
@@ -305,7 +305,7 @@ struct type_of<VR::UR>
 template<>
 struct type_of<VR::US>
 {
-      using type = unsigned short;
+      using type = vrtype::vrtype<unsigned short>;
       static const std::size_t len = 2;
 };
 template<>

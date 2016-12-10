@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, vrtype<attribute::tag_type> tag)
 
    for (const auto& ctag : tag)
    {
-      os << tag;
+      os << ctag;
    }
 
    os.copyfmt(state);

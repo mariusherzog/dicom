@@ -3,7 +3,7 @@
 
 
 #include <functional>
-
+#include <type_traits>
 #include <vector>
 #include <string>
 #include <exception>
@@ -299,11 +299,11 @@ class vrtype
 
     public:
         virtual ~vrtype();
-
+/*
         operator T()
         {
             return value_sequence[0];
-        }
+        }*/
 
         /**
        * @brief add adds all specified values to the attribute, if doing so
@@ -342,6 +342,26 @@ vrtype<T>::~vrtype()
 std::ostream& operator<<(std::ostream& os, vrtype<std::string> data);
 
 std::ostream& operator<<(std::ostream& os, vrtype<attribute::tag_type> tag);
+
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+std::ostream& operator<<(std::ostream& os, vrtype<T> data)
+{
+    for (T num : data)
+    {
+        os << num << " ";
+    }
+    return os;
+}
+
+template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+std::ostream& operator<<(std::ostream& os, vrtype<T> data)
+{
+    for (T num : data)
+    {
+        os << num << " ";
+    }
+    return os;
+}
 
 }
 

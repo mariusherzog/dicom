@@ -63,19 +63,7 @@ bool operator!=(const tag_type& lhs, const tag_type& rhs)
 {
    return !(lhs == rhs);
 }
-/*
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const tag)
-{
-   std::ios state(nullptr);
-   state.copyfmt(os);
 
-   os << "(" << std::hex << std::setw(4) << std::setfill('0') << tag.group_id
-      << "," << std::hex << std::setw(4) << std::setfill('0') << tag.element_id
-      << ")";
-
-   os.copyfmt(state);
-   return os;
-}*/
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
 {
@@ -92,16 +80,6 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
 {
    return os << "";
 }
-/*
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type const data)
-{
-   for (auto it = data.begin(); it != data.end(); ++it) {
-      auto value = *it;
-      std::copy_if(value.begin(), value.end(), std::ostream_iterator<char>(os), [](char c) { return c != '\0'; });
-      os << 0x5c;
-   }
-   return os;
-}*/
 
 
 }
