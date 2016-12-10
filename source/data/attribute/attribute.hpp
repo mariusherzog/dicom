@@ -11,6 +11,7 @@
 #include <boost/optional.hpp>
 
 #include "../vrtypes/vrtype.hpp"
+#include "tag.hpp"
 
 namespace dicom
 {
@@ -142,14 +143,6 @@ struct elementfield_base
  */
 struct elementfield
 {
-      struct tag_type
-      {
-            unsigned short group_id;
-            unsigned short element_id;
-
-            tag_type(unsigned short gid = 0, unsigned short eid = 0);
-      };
-
       boost::optional<VR> value_rep;
       std::size_t value_len;
       std::unique_ptr<elementfield_base> value_field;
@@ -184,7 +177,7 @@ struct type_of<VR::AS>
 template<>
 struct type_of<VR::AT>
 {
-      using type = elementfield::tag_type;
+      using type = vrtype::vrtype<tag_type>;
       static const std::size_t len = 4;
 };
 template<>
@@ -336,9 +329,7 @@ struct type_of<VR::NI>
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
 
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const data);
-
-//std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type const data);
+//std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 
@@ -512,11 +503,11 @@ elementfield make_elementfield(std::size_t len)
 
 
 
-bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+bool operator<(const tag_type& lhs, const tag_type& rhs);
 
-bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+bool operator==(const tag_type& lhs, const tag_type& rhs);
 
-bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs);
+bool operator!=(const tag_type& lhs, const tag_type& rhs);
 
 }
 

@@ -48,13 +48,13 @@ class transfer_processor
        */
       struct vr_of_tag
       {
-            const attribute::elementfield::tag_type tag;
+            const attribute::tag_type tag;
             const unsigned eid_mask;
             const unsigned gid_mask;
 
             const attribute::VR vr;
 
-            vr_of_tag(attribute::elementfield::tag_type tag,
+            vr_of_tag(attribute::tag_type tag,
                       attribute::VR vr,
                       unsigned eid_mask = 0xffff,
                       unsigned gid_mask = 0xffff);
@@ -81,7 +81,7 @@ class transfer_processor
        * @param tag tag of the VR to be looked for
        * @return VR associated with the tag
        */
-      attribute::VR get_vr(attribute::elementfield::tag_type tag) const;
+      attribute::VR get_vr(attribute::tag_type tag) const;
 
       dicom::data::dictionary::dictionary& get_dictionary() const;
 
@@ -146,7 +146,7 @@ class transfer_processor
        * @return deserialized VR
        */
       attribute::VR deserialize_VR(std::vector<unsigned char> dataset,
-                                   attribute::elementfield::tag_type tag,
+                                   attribute::tag_type tag,
                                    std::size_t& pos) const;
 
       /**
@@ -158,7 +158,7 @@ class transfer_processor
        * @return length of the value field
        */
       std::size_t deserialize_length(std::vector<unsigned char> dataset,
-                                     attribute::elementfield::tag_type tag,
+                                     attribute::tag_type tag,
                                      attribute::VR repr,
                                      std::size_t& pos) const;
 

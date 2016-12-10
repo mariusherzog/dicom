@@ -49,7 +49,7 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
  * @param endianness endianness of the encoded stream
  * @return vector of bytes representing the tag
  */
-std::vector<unsigned char> encode_tag(elementfield::tag_type tag, ENDIANNESS endianness);
+std::vector<unsigned char> encode_tag(tag_type tag, ENDIANNESS endianness);
 
 /**
  * @brief encode_len converts a length of a value field into a 4-byte serialized
@@ -69,7 +69,7 @@ std::vector<unsigned char> encode_len(std::size_t lenbytes, std::size_t len, END
  * @param endianness of the encoded data
  * @return instance of tag_type with the tag elements
  */
-elementfield::tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNESS endianness);
+tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNESS endianness);
 
 /**
  * @brief decode_len transforms the serialized length data into a structured

@@ -21,7 +21,7 @@ dictionary::dictionary_dyn dataset_iterator::commanddic =
 dictionary::dictionary_dyn dataset_iterator::datadic =
 {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
 
-dataset_iterator::dataset_iterator(typename std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator it):
+dataset_iterator::dataset_iterator(typename std::map<attribute::tag_type, attribute::elementfield>::iterator it):
    cit {it}
 {
    nested_set_sizes.push({0, 0});
@@ -52,14 +52,14 @@ dataset_iterator dataset_iterator::operator--(int)
 }
 
 
-std::pair<attribute::elementfield::tag_type, attribute::elementfield>
+std::pair<attribute::tag_type, attribute::elementfield>
 dataset_iterator::operator*() const
 {
    return *cit;
 }
 
 
-std::pair<const attribute::elementfield::tag_type, attribute::elementfield> const*
+std::pair<const attribute::tag_type, attribute::elementfield> const*
 dataset_iterator::operator->() const
 {
    return &*cit;
@@ -75,8 +75,8 @@ bool operator!=(const dataset_iterator& lhs, const dataset_iterator& rhs)
    return !(lhs == rhs);
 }
 
-std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator
-dataset_iterator::step_into_nested(std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator curr)
+std::map<attribute::tag_type, attribute::elementfield>::iterator
+dataset_iterator::step_into_nested(std::map<attribute::tag_type, attribute::elementfield>::iterator curr)
 {
    parent_its.push(curr); // save current position of the iterator
    nested_set_sizes.push({0, curr->second.value_len});
@@ -92,7 +92,7 @@ dataset_iterator::step_into_nested(std::map<attribute::elementfield::tag_type, a
    }
 }
 
-std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator dataset_iterator::step_outof_nested()
+std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterator::step_outof_nested()
 {
    auto last = parent_its.top();
    parent_its.pop();
@@ -101,8 +101,8 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
    return ++last;
 }
 
-std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator
-dataset_iterator::step_backw_into_nested(std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator prev)
+std::map<attribute::tag_type, attribute::elementfield>::iterator
+dataset_iterator::step_backw_into_nested(std::map<attribute::tag_type, attribute::elementfield>::iterator prev)
 {
    bool explicitlength = true;
    parent_its.push(prev);
@@ -120,7 +120,7 @@ dataset_iterator::step_backw_into_nested(std::map<attribute::elementfield::tag_t
    return explicitlength ? curr : --curr;
 }
 
-std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator dataset_iterator::step_backw_outof_nested()
+std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterator::step_backw_outof_nested()
 {
    auto last = parent_its.top();
    parent_its.pop();
@@ -130,7 +130,7 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
    return last;
 }
 
-std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator dataset_iterator::next()
+std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterator::next()
 {
    // accumulate the size of the nested set's elements if a sequence size was
    // explicitly specified
@@ -168,7 +168,7 @@ std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator d
    return ++cit;
 }
 
-std::map<attribute::elementfield::tag_type, attribute::elementfield>::iterator dataset_iterator::previous()
+std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterator::previous()
 {
    auto curr = cit;
    --cit;
@@ -205,7 +205,7 @@ bool dataset_iterator::is_in_nested() const
    return parent_its.size() > 0;
 }
 
-dataset_iterator_adaptor::dataset_iterator_adaptor(std::map<elementfield::tag_type, elementfield> ds):
+dataset_iterator_adaptor::dataset_iterator_adaptor(std::map<tag_type, elementfield> ds):
    dataset {ds}
 {
 }

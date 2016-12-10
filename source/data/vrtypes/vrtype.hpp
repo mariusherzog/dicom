@@ -12,6 +12,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "../attribute/tag.hpp"
+
 namespace dicom
 {
 
@@ -336,19 +338,10 @@ vrtype<T>::~vrtype()
 {
 }
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, vrtype<T> data)
-{
-    bool more_elements = false;
-    for (const auto& field : data) {
-        if (more_elements) {
-            os << static_cast<char>(0x5c);
-        }
-        os << field;
-        more_elements = data.size() > 1;
-    }
-    return os;
-}
+
+std::ostream& operator<<(std::ostream& os, vrtype<std::string> data);
+
+std::ostream& operator<<(std::ostream& os, vrtype<attribute::tag_type> tag);
 
 }
 

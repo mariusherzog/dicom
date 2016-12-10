@@ -21,7 +21,7 @@ elementfield_base::~elementfield_base()
 
 
 
-bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
+bool operator<(const tag_type& lhs, const tag_type& rhs)
 {
    // Item tag should be placed first in a (nested) set
    if (lhs == Item) return true;
@@ -32,7 +32,7 @@ bool operator<(const elementfield::tag_type& lhs, const elementfield::tag_type& 
 }
 
 
-bool operator==(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
+bool operator==(const tag_type& lhs, const tag_type& rhs)
 {
    return lhs.group_id == rhs.group_id &&
          rhs.element_id == lhs.element_id;
@@ -51,12 +51,6 @@ elementfield& elementfield::operator=(elementfield other)
    return *this;
 }
 
-elementfield::tag_type::tag_type(unsigned short gid, unsigned short eid):
-   group_id {gid},
-   element_id {eid}
-{
-}
-
 void swap(elementfield& lhs, elementfield& rhs) noexcept
 {
    using std::swap;
@@ -65,11 +59,11 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
-bool operator!=(const elementfield::tag_type& lhs, const elementfield::tag_type& rhs)
+bool operator!=(const tag_type& lhs, const tag_type& rhs)
 {
    return !(lhs == rhs);
 }
-
+/*
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const tag)
 {
    std::ios state(nullptr);
@@ -81,7 +75,7 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::AT>::type const 
 
    os.copyfmt(state);
    return os;
-}
+}*/
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
 {
@@ -98,8 +92,8 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
 {
    return os << "";
 }
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type /*const*/ data)
+/*
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type const data)
 {
    for (auto it = data.begin(); it != data.end(); ++it) {
       auto value = *it;
@@ -107,7 +101,7 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::UI>::type /*cons
       os << 0x5c;
    }
    return os;
-}
+}*/
 
 
 }

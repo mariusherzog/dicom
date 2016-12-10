@@ -72,7 +72,7 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
 std::size_t dataset_size(dataset_type data, bool explicitvr)
 {
    return std::accumulate(data.begin(), data.end(), 0,
-      [explicitvr](int acc, const std::pair<const elementfield::tag_type, elementfield>& attr) {
+      [explicitvr](int acc, const std::pair<const tag_type, elementfield>& attr) {
       return acc += attr.second.value_len + 4 + 4
             + (explicitvr ? 2 : 0);
    });
