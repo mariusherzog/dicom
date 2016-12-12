@@ -165,13 +165,11 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
       }
    } else if (commanddic.lookup(cit->first).vr[0] == VR::SQ ||
               datadic.lookup(cit->first).vr[0] == VR::SQ) {
-      //last = cit->first;
       // found another sequence in the current set; step into it.
       cit = step_into_nested(cit);
       return cit;
    }
 
-   //last = cit->first;
    return ++cit;
 }
 
