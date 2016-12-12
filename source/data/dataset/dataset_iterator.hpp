@@ -48,6 +48,7 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, st
 
    private:
       std::map<attribute::tag_type, attribute::elementfield>::iterator cit;
+      std::map<attribute::tag_type, attribute::elementfield>::iterator delimiter;
 
       std::stack<typename attribute::type_of<attribute::VR::SQ>::type> nested_sets;
       std::stack<std::map<attribute::tag_type, attribute::elementfield>::iterator> parent_its;

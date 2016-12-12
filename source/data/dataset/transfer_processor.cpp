@@ -254,6 +254,10 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
    for (const auto attr : dataset_iterator_adaptor(data)) {
       if (attr.first == SequenceDelimitationItem
           || attr.first == ItemDelimitationItem) {
+         auto tag = encode_tag(attr.first, endianness);
+         auto len = encode_len(4, attr.second.value_len, endianness);
+         stream.insert(stream.end(), tag.begin(), tag.end());
+         stream.insert(stream.end(), len.begin(), len.end());
          continue;
       } else if (attr.first == Item) {
          auto tag = encode_tag(attr.first, endianness);

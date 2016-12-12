@@ -22,7 +22,8 @@ dictionary::dictionary_dyn dataset_iterator::datadic =
 {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
 
 dataset_iterator::dataset_iterator(typename std::map<attribute::tag_type, attribute::elementfield>::iterator it):
-   cit {it}
+   cit {it},
+   delimiter {it}
 {
    nested_set_sizes.push({0, 0});
 }
@@ -141,18 +142,22 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
       nested_set_sizes.top().curr_nestedset_size += cit->second.value_len + 4 + 4;
    }
 
+
    if (cit->first == SequenceDelimitationItem || cit->first == ItemDelimitationItem
        || (is_in_nested() && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
       // sequence delimitation item encountered, check if there are more items.
       // Otherwise, step out of the current sequence.
       auto& nes_items = items.top().nested_items_curr;
+      //last = cit->first;
       if (nes_items < items.top().nested_items_max-1) {
          nes_items++;
          return (cit = nested_sets.top()[nes_items].begin());
       } else {
-         return (cit = step_outof_nested());
+         delimiter = cit = step_outof_nested();
+         return delimiter;
       }
    } else if (cit->second.value_rep.is_initialized()) {
+      //last = cit->first;
       // found another sequence in the current set; step into it.
       if (cit->second.value_rep == VR::SQ) {
          cit = step_into_nested(cit);
@@ -160,11 +165,13 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
       }
    } else if (commanddic.lookup(cit->first).vr[0] == VR::SQ ||
               datadic.lookup(cit->first).vr[0] == VR::SQ) {
+      //last = cit->first;
       // found another sequence in the current set; step into it.
       cit = step_into_nested(cit);
       return cit;
    }
 
+   //last = cit->first;
    return ++cit;
 }
 

@@ -76,12 +76,16 @@ int main()
       [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Send C_FIND_RQ\n";
-         dataset::dataset_type dat;
+         dataset::dataset_type dat, dat2, dat3;
          dataset::iod seq;
-         dat[dicom::data::attribute::Item] = dicom::data::attribute::make_elementfield<VR::NI>();
+         dat[dicom::data::attribute::Item] = dicom::data::attribute::make_elementfield<VR::NI>(0xffffffff);
          dat[{0x0008, 0x0104}] = dicom::data::attribute::make_elementfield<VR::LO>(4, "meo");
-         dat[{0xfffe, 0xe0dd}] = dicom::data::attribute::make_elementfield<VR::NI>();
-         seq[{0x0032, 0x1064}] = dicom::data::attribute::make_elementfield<VR::SQ>(0xffffffff, {dat});
+         dat[{0xfffe, 0xe00d}] = dicom::data::attribute::make_elementfield<VR::NI>();
+         dat2[dicom::data::attribute::Item] = dicom::data::attribute::make_elementfield<VR::NI>(0xffffffff);
+         dat2[{0x0008, 0x0104}] = dicom::data::attribute::make_elementfield<VR::LO>(4, "mwo");
+         dat2[{0xfffe, 0xe00d}] = dicom::data::attribute::make_elementfield<VR::NI>();
+         dat3[dicom::data::attribute::SequenceDelimitationItem] = dicom::data::attribute::make_elementfield<VR::NI>();
+         seq[{0x0032, 0x1064}] = dicom::data::attribute::make_elementfield<VR::SQ>(0xffffffff, {dat, dat2, dat3});
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RQ, command, seq});
       }}}
    };
@@ -95,7 +99,7 @@ int main()
       }}}
    };
 
-   dimse::association_definition ascdef {"STORESCP", "ANY-SCU",
+   dimse::association_definition ascdef {"STORESCP", "OFFIS",
       {
 //          {echorq, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
           {findrq, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
@@ -111,8 +115,8 @@ int main()
    try
    {
       auto request_property = ascdef.get_initial_request();
-//      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
-      dicom::network::upperlayer::scp sc(dict, 11113);
+      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
+//      dicom::network::upperlayer::scp sc(dict, 11113);
       dicom::network::dimse::dimse_pm dpm(sc,
          ascdef,
          dict
