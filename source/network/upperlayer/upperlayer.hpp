@@ -272,10 +272,31 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 };
 
+class scp_connection: public scx
+{
+   public:
+      scp_connection(boost::asio::io_service& io_service,
+          boost::asio::ip::tcp::socket&& socket,
+          data::dictionary::dictionary& dict,
+          short port,
+          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+      scp_connection(const scp_connection&) = delete;
+      scp_connection& operator=(const scp_connection&) = delete;
+
+   private:
+      boost::asio::ip::tcp::socket& sock() override;
+      boost::asio::io_service& io_s() override;
+      boost::asio::steady_timer& artim_timer() override;
+
+      boost::asio::io_service& io_service;
+      boost::asio::ip::tcp::socket socket;
+      boost::asio::steady_timer artim;
+};
+
 /**
  * @brief The scp class acts as a service class provider
  */
-class scp: public scx
+class scp
 {
    public:
       scp(data::dictionary::dictionary& dict,
@@ -284,16 +305,14 @@ class scp: public scx
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
-   private:
-      boost::asio::ip::tcp::socket& sock() override;
-      boost::asio::io_service& io_s() override;
-      boost::asio::steady_timer& artim_timer() override;
+      void run();
 
+   private:
+      std::vector<std::unique_ptr<scp_connection>> connections;
       boost::asio::io_service io_service;
-      boost::asio::ip::tcp::socket socket;
       boost::asio::ip::tcp::acceptor acptr;
-      boost::asio::steady_timer artim;
 };
+
 
 /**
  * @brief The scu class acts as a service class user

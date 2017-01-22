@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <chrono>
 #include <deque>
+#include <functional>
 #include <exception>
 
 #include <boost/optional.hpp>
@@ -447,26 +448,53 @@ statemachine::CONN_STATE scx::get_state()
 }
 
 
-scp::scp(data::dictionary::dictionary& dict,
+scp_connection::scp_connection(boost::asio::io_service& io_service,
+         boost::asio::ip::tcp::socket&& socket,
+         data::dictionary::dictionary& dict,
          short port,
          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {dict, l},
-   io_service {},
-   socket {io_service},
-   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
+   io_service {io_service},
+   socket {std::move(socket)},
    artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 {
    artim.cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
-   acptr.async_accept(socket,
-      [=](boost::system::error_code ec) {
-         if (!ec) {
-            do_read();
-         } else {
-            throw boost::system::system_error(ec);
-         }
-      });
 }
+
+scp::scp(data::dictionary::dictionary& dict,
+         short port,
+         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   io_service {},
+   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)}
+
+{
+   using namespace std::placeholders;
+   boost::asio::ip::tcp::socket socket{io_service};
+
+   std::function<void(boost::asio::ip::tcp::socket&, boost::system::error_code)> acceptor
+         = [&](boost::asio::ip::tcp::socket& sock, boost::system::error_code ec) {
+      if (!ec) {
+         connections.emplace_back(new scp_connection {io_service, std::move(sock), dict, port, l});
+      } else {
+         throw boost::system::system_error(ec);
+      }
+      boost::asio::ip::tcp::socket newsock {io_service};
+      acptr.async_accept(newsock, std::bind(acceptor, std::ref(newsock), _1));
+   };
+
+
+   acptr.async_accept(socket, std::bind(acceptor, std::ref(socket), _1));
+}
+
+void scp::run()
+{
+   io_service.run();
+}
+
+
+
+
 
 scu::scu(data::dictionary::dictionary& dict,
          std::string host, std::string port,
@@ -513,17 +541,17 @@ scu::scu(data::dictionary::dictionary& dict,
    });
 }
 
-boost::asio::ip::tcp::socket& scp::sock()
+boost::asio::ip::tcp::socket& scp_connection::sock()
 {
    return socket;
 }
 
-boost::asio::io_service&scp::io_s()
+boost::asio::io_service&scp_connection::io_s()
 {
    return io_service;
 }
 
-boost::asio::steady_timer&scp::artim_timer()
+boost::asio::steady_timer&scp_connection::artim_timer()
 {
    return artim;
 }
