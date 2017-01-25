@@ -64,7 +64,7 @@ using namespace dicom::util::log;
 
 
 scx::scx(data::dictionary::dictionary& dict,
-         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
    logger {"upperlayer"},
    proc {data::dataset::commandset_processor {dict}},
@@ -171,12 +171,13 @@ void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
 
    if (get_state() == statemachine::CONN_STATE::STA13) {
       close_connection();
+   } else {
+      // be ready for new data
+      if (!io_s().stopped()) {
+         do_read();
+      }
    }
 
-   // be ready for new data
-   if (!io_s().stopped()) {
-      do_read();
-   }
 }
 
 void scx::handle_pdu_conf(property* p, TYPE ptype)
@@ -414,8 +415,8 @@ void scx::ignore_next()
 void scx::close_connection()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
-   io_s().reset();
-   io_s().stop();
+   //io_s().reset();
+   //io_s().stop();
 }
 
 void scx::run()
@@ -449,42 +450,48 @@ statemachine::CONN_STATE scx::get_state()
 
 
 scp_connection::scp_connection(boost::asio::io_service& io_service,
-         boost::asio::ip::tcp::socket&& socket,
+         boost::asio::ip::tcp::socket& socket,
          data::dictionary::dictionary& dict,
          short port,
-         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {dict, l},
    io_service {io_service},
-   socket {std::move(socket)},
+   socket {socket},
    artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 {
    artim.cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
+   do_read();
 }
 
 scp::scp(data::dictionary::dictionary& dict,
          short port,
-         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    io_service {},
-   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)}
+   port {port},
+   dict {dict},
+   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
+   handlers {l}
 
 {
    using namespace std::placeholders;
-   boost::asio::ip::tcp::socket socket{io_service};
+   //static boost::asio::ip::tcp::socket socket{io_service};
+   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
+   sockets.push_back(socket);
+   acptr.async_accept(*socket, std::bind(&scp::accept_new, this, socket.get(), _1));
+}
 
-   std::function<void(boost::asio::ip::tcp::socket&, boost::system::error_code)> acceptor
-         = [&](boost::asio::ip::tcp::socket& sock, boost::system::error_code ec) {
-      if (!ec) {
-         connections.emplace_back(new scp_connection {io_service, std::move(sock), dict, port, l});
-      } else {
-         throw boost::system::system_error(ec);
-      }
-      boost::asio::ip::tcp::socket newsock {io_service};
-      acptr.async_accept(newsock, std::bind(acceptor, std::ref(newsock), _1));
-   };
-
-
-   acptr.async_accept(socket, std::bind(acceptor, std::ref(socket), _1));
+void scp::accept_new(boost::asio::ip::tcp::socket* sock, boost::system::error_code ec)
+{
+   using namespace std::placeholders;
+   if (!ec) {
+      connections.push_back(std::unique_ptr<scp_connection> {new scp_connection {io_service, *sock, dict, port, handlers}});
+   } else {
+      throw boost::system::system_error(ec);
+   }
+   auto newsock = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
+   sockets.push_back(newsock);
+   acptr.async_accept(*newsock, std::bind(&scp::accept_new, this, newsock.get(), _1));
 }
 
 void scp::run()
@@ -492,6 +499,25 @@ void scp::run()
    io_service.run();
 }
 
+void scp::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
+{
+//   for (auto it = handlers.begin(); it != handlers.end(); ++it) {
+//      if (it->first == t) {
+//         it->second = f;
+//      }
+//   }
+//   if (std::find(handlers.begin(), handlers.end(),
+//                 [t](std::pair<TYPE, std::function<void (scx*, std::unique_ptr<property>)>> p) { return p.first == t; }) != handlers.end())
+//   {
+//      for (auto it = handlers.begin(); it != handlers.end(); ++it) {
+//         if (it->first == t) {
+//            it->second = f;
+//         }
+//      }
+//   } else {
+      handlers.push_back(std::make_pair(t, f));
+//   }
+}
 
 
 
@@ -499,7 +525,7 @@ void scp::run()
 scu::scu(data::dictionary::dictionary& dict,
          std::string host, std::string port,
          a_associate_rq& rq,
-         std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {dict, l},
    io_service {},
    resolver {io_service},

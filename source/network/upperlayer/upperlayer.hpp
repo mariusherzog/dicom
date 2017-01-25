@@ -74,6 +74,15 @@ struct Iupperlayer_comm_ops
       virtual ~Iupperlayer_comm_ops() = 0;
 };
 
+/**
+ * @brief The Iupperlayer_sethandlers struct
+ */
+struct Iupperlayer_sethandlers
+{
+      virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
+      //virtual void inject_conf(TYPE t, std::function<void(scx*, property* f)>) = 0;
+};
+
 
 
 /**
@@ -90,12 +99,12 @@ struct Iupperlayer_comm_ops
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
+class scx: public Istate_trans_ops, public Iupperlayer_comm_ops, Iupperlayer_sethandlers
 {
    public:
 
       explicit scx(data::dictionary::dictionary& dict,
-                   std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
+                   std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       scx(const scx&) = delete;
       scx& operator=(const scx&) = delete;
       virtual ~scx() = 0;
@@ -276,10 +285,10 @@ class scp_connection: public scx
 {
    public:
       scp_connection(boost::asio::io_service& io_service,
-          boost::asio::ip::tcp::socket&& socket,
+          boost::asio::ip::tcp::socket& socket,
           data::dictionary::dictionary& dict,
           short port,
-          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       scp_connection(const scp_connection&) = delete;
       scp_connection& operator=(const scp_connection&) = delete;
 
@@ -289,28 +298,44 @@ class scp_connection: public scx
       boost::asio::steady_timer& artim_timer() override;
 
       boost::asio::io_service& io_service;
-      boost::asio::ip::tcp::socket socket;
+      boost::asio::ip::tcp::socket& socket;
       boost::asio::steady_timer artim;
 };
 
 /**
  * @brief The scp class acts as a service class provider
  */
-class scp
+class scp: public Iupperlayer_sethandlers
 {
    public:
       scp(data::dictionary::dictionary& dict,
           short port,
-          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
       void run();
 
+      /**
+       * @brief inject sets a handler for a received property type t.
+       * @param[in] t
+       * @param[in] f
+       */
+      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) override;
+
+
    private:
+
+      void accept_new(boost::asio::ip::tcp::socket*, boost::system::error_code);
+
       std::vector<std::unique_ptr<scp_connection>> connections;
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::acceptor acptr;
+      short port;
+      data::dictionary::dictionary& dict;
+
+      std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> handlers;
+      std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>> sockets;
 };
 
 
@@ -325,7 +350,7 @@ class scu: public scx
       scu(data::dictionary::dictionary& dict,
           std::string host, std::string port,
           a_associate_rq& rq,
-          std::initializer_list<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
 

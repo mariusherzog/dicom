@@ -43,7 +43,7 @@ class dimse_pm
          IDLE, CONNECTED
       };
 
-      dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
+      dimse_pm(upperlayer::Iupperlayer_sethandlers& sc,
                association_definition operations,
                data::dictionary::dictionary& dict);
       ~dimse_pm();
@@ -173,7 +173,8 @@ class dimse_pm
        */
       data::dataset::transfer_processor& find_transfer_processor();
 
-      upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
+      upperlayer::Iupperlayer_sethandlers& upperlayer_handlers;
+      upperlayer::Iupperlayer_comm_ops* upperlayer_impl;
       CONN_STATE state;
 
       boost::optional<upperlayer::a_associate_rq> connection_request;

@@ -118,7 +118,7 @@ int main()
       //dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
       dicom::network::upperlayer::scp sc(dict, 11113);
       dicom::network::dimse::dimse_pm dpm(sc,
-         ascdef,
+                                          ascdef,
          dict
       );
       sc.run();
