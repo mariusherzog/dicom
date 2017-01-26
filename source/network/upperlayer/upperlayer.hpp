@@ -99,7 +99,7 @@ struct Iupperlayer_sethandlers
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx: public Istate_trans_ops, public Iupperlayer_comm_ops, Iupperlayer_sethandlers
+class scx: public Istate_trans_ops, public Iupperlayer_comm_ops, public Iupperlayer_sethandlers
 {
    public:
 
@@ -322,6 +322,8 @@ class scp: public Iupperlayer_sethandlers
        * @param[in] f
        */
       void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) override;
+
+      std::function<void(scp_connection*)> new_connection;
 
 
    private:

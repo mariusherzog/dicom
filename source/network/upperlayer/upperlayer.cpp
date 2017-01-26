@@ -486,6 +486,7 @@ void scp::accept_new(boost::asio::ip::tcp::socket* sock, boost::system::error_co
    using namespace std::placeholders;
    if (!ec) {
       connections.push_back(std::unique_ptr<scp_connection> {new scp_connection {io_service, *sock, dict, port, handlers}});
+      new_connection(connections.back().get());
    } else {
       throw boost::system::system_error(ec);
    }

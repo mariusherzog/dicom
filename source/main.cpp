@@ -117,10 +117,16 @@ int main()
       auto request_property = ascdef.get_initial_request();
       //dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
       dicom::network::upperlayer::scp sc(dict, 11113);
-      dicom::network::dimse::dimse_pm dpm(sc,
-                                          ascdef,
-         dict
-      );
+//      dicom::network::dimse::dimse_pm dpm(sc,
+//                                          ascdef,
+//         dict
+//      );
+
+      std::vector<dicom::network::dimse::dimse_pm*> dimses;
+      sc.new_connection = [&](dicom::network::upperlayer::scp_connection* new_conn) {
+         dimses.push_back(new dicom::network::dimse::dimse_pm {*new_conn, ascdef, dict});
+      };
+
       sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
