@@ -75,12 +75,14 @@ struct Iupperlayer_comm_ops
 };
 
 /**
- * @brief The Iupperlayer_sethandlers struct
+ * @brief The Iupperlayer_connection_handlers struct defines an interface to inject callbacks
+ *        for the start / termination of a connection.
  */
-struct Iupperlayer_sethandlers
+struct Iupperlayer_connection_handlers
 {
-      virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
-      //virtual void inject_conf(TYPE t, std::function<void(scx*, property* f)>) = 0;
+      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)>) = 0;
+      virtual ~Iupperlayer_connection_handlers() = 0;
 };
 
 
@@ -99,7 +101,7 @@ struct Iupperlayer_sethandlers
  * negotiation. This has to be done by the user of this class (either a facade
  * or the DIMSE_PM).
  */
-class scx: public Istate_trans_ops, public Iupperlayer_comm_ops, public Iupperlayer_sethandlers
+class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 {
    public:
 
@@ -305,30 +307,27 @@ class scp_connection: public scx
 /**
  * @brief The scp class acts as a service class provider
  */
-class scp: public Iupperlayer_sethandlers
+class scp: public Iupperlayer_connection_handlers
 {
    public:
       scp(data::dictionary::dictionary& dict,
-          short port,
-          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+          short port);
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
+      ~scp();
+
       void run();
 
-      /**
-       * @brief inject sets a handler for a received property type t.
-       * @param[in] t
-       * @param[in] f
-       */
-      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) override;
-
-      std::function<void(scp_connection*)> new_connection;
-
+      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
 
    private:
 
       void accept_new(boost::asio::ip::tcp::socket*, boost::system::error_code);
+
+      std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
+      std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       std::vector<std::unique_ptr<scp_connection>> connections;
       boost::asio::io_service io_service;
@@ -336,7 +335,6 @@ class scp: public Iupperlayer_sethandlers
       short port;
       data::dictionary::dictionary& dict;
 
-      std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> handlers;
       std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>> sockets;
 };
 

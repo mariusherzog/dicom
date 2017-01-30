@@ -59,6 +59,10 @@ Iupperlayer_comm_ops::~Iupperlayer_comm_ops()
 {
 }
 
+Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
+{
+}
+
 using namespace dicom::util::log;
 
 
@@ -453,7 +457,7 @@ scp_connection::scp_connection(boost::asio::io_service& io_service,
          boost::asio::ip::tcp::socket& socket,
          data::dictionary::dictionary& dict,
          short port,
-         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}}):
    scx {dict, l},
    io_service {io_service},
    socket {socket},
@@ -465,13 +469,11 @@ scp_connection::scp_connection(boost::asio::io_service& io_service,
 }
 
 scp::scp(data::dictionary::dictionary& dict,
-         short port,
-         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+         short port):
    io_service {},
    port {port},
    dict {dict},
-   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
-   handlers {l}
+   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)}
 
 {
    using namespace std::placeholders;
@@ -481,12 +483,16 @@ scp::scp(data::dictionary::dictionary& dict,
    acptr.async_accept(*socket, std::bind(&scp::accept_new, this, socket.get(), _1));
 }
 
+scp::~scp()
+{
+}
+
 void scp::accept_new(boost::asio::ip::tcp::socket* sock, boost::system::error_code ec)
 {
    using namespace std::placeholders;
    if (!ec) {
-      connections.push_back(std::unique_ptr<scp_connection> {new scp_connection {io_service, *sock, dict, port, handlers}});
-      new_connection(connections.back().get());
+      connections.push_back(std::unique_ptr<scp_connection> {new scp_connection {io_service, *sock, dict, port}});
+      handler_new_connection(connections.back().get());
    } else {
       throw boost::system::system_error(ec);
    }
@@ -499,7 +505,7 @@ void scp::run()
 {
    io_service.run();
 }
-
+/*
 void scp::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
 {
 //   for (auto it = handlers.begin(); it != handlers.end(); ++it) {
@@ -518,9 +524,17 @@ void scp::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f
 //   } else {
       handlers.push_back(std::make_pair(t, f));
 //   }
+}*/
+
+void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
+{
+   handler_new_connection = handler;
 }
 
-
+void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
+{
+   handler_end_connection = handler;
+}
 
 
 scu::scu(data::dictionary::dictionary& dict,

@@ -29,11 +29,10 @@ using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
 
-dimse_pm::dimse_pm(upperlayer::Iupperlayer_sethandlers& sc,
+dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
                    dictionary& dict):
-   upperlayer_impl(nullptr),
-   upperlayer_handlers(sc),
+   upperlayer_impl(sc),
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
@@ -80,7 +79,7 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_sethandlers& sc,
    sc.inject(upperlayer::TYPE::A_ABORT,
              std::bind(&dimse_pm::abort_handler, this, _1, _2));
 
-   /*
+
    sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_AC,
              std::bind(&dimse_pm::sent_association_ac, this, _1, _2));
    sc.inject_conf(upperlayer::TYPE::A_ASSOCIATE_RQ,
@@ -92,7 +91,7 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_sethandlers& sc,
    sc.inject_conf(upperlayer::TYPE::A_RELEASE_RP,
              std::bind(&dimse_pm::sent_release_rp, this, _1, _2));
    sc.inject_conf(upperlayer::TYPE::A_ABORT,
-             std::bind(&dimse_pm::sent_abort, this, _1, _2));*/
+             std::bind(&dimse_pm::sent_abort, this, _1, _2));
 
    transfer_processors["1.2.840.10008.1.2"]
          = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
@@ -157,7 +156,7 @@ void dimse_pm::send_response(response r)
       dataset = tfproc.serialize(r.get_data().get());
    }
    data.data_set = dataset;
-   upperlayer_impl->queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new p_data_tf {data}));
 }
 
 void dimse_pm::abort_association()
@@ -165,7 +164,7 @@ void dimse_pm::abort_association()
    using namespace upperlayer;
    using namespace util::log;
    BOOST_LOG_SEV(logger, info) << "User requested association abortion";
-   upperlayer_impl->queue_for_write(std::unique_ptr<property>(new a_abort {}));
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_abort {}));
 }
 
 void dimse_pm::release_association()
@@ -173,15 +172,14 @@ void dimse_pm::release_association()
    using namespace upperlayer;
    using namespace util::log;
    BOOST_LOG_SEV(logger, info) << "User requested association release";
-   upperlayer_impl->queue_for_write(std::unique_ptr<property>(new a_release_rq {}));
+   upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_release_rq {}));
 }
 
 
 void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
 {
    using namespace dicom::util::log;
-   upperlayer_impl = sc;
-//   assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received a_associate_rq pdu from upperlayer implementation";
 
    using namespace upperlayer;
@@ -246,8 +244,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
 void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> ac)
 {
    using namespace dicom::util::log;
-   upperlayer_impl = sc;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received a_associate_ac pdu from upperlayer implementation";
 
    using namespace upperlayer;

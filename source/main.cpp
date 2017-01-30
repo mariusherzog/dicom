@@ -123,9 +123,15 @@ int main()
 //      );
 
       std::vector<dicom::network::dimse::dimse_pm*> dimses;
-      sc.new_connection = [&](dicom::network::upperlayer::scp_connection* new_conn) {
+
+      auto new_conn = [&](dicom::network::upperlayer::Iupperlayer_comm_ops* new_conn) {
          dimses.push_back(new dicom::network::dimse::dimse_pm {*new_conn, ascdef, dict});
       };
+
+//      sc.new_connection2 = [&](dicom::network::upperlayer::scp_connection* new_conn) {
+//         dimses.push_back(new dicom::network::dimse::dimse_pm {*new_conn, ascdef, dict});
+//      };
+      sc.new_connection(new_conn);
 
       sc.run();
    } catch (std::exception& ec) {
