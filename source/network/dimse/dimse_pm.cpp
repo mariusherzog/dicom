@@ -29,6 +29,22 @@ using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
 
+dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
+                                   association_definition operations,
+                                   dictionary& dict):
+   connection {conn},
+   operations {operations},
+   dict {dict}
+{
+   //conn.new_connection(std::mem_fn(&dimse_pm_manager::create_dimse));
+   conn.new_connection([&](upperlayer::Iupperlayer_comm_ops* scx) {this->create_dimse(scx);});
+}
+
+void dimse_pm_manager::create_dimse(upperlayer::Iupperlayer_comm_ops* scx)
+{
+   protocol_machines.push_back(std::unique_ptr<dimse_pm> {new dimse_pm {*scx, operations, dict} });
+}
+
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
                    dictionary& dict):

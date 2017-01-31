@@ -505,26 +505,6 @@ void scp::run()
 {
    io_service.run();
 }
-/*
-void scp::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
-{
-//   for (auto it = handlers.begin(); it != handlers.end(); ++it) {
-//      if (it->first == t) {
-//         it->second = f;
-//      }
-//   }
-//   if (std::find(handlers.begin(), handlers.end(),
-//                 [t](std::pair<TYPE, std::function<void (scx*, std::unique_ptr<property>)>> p) { return p.first == t; }) != handlers.end())
-//   {
-//      for (auto it = handlers.begin(); it != handlers.end(); ++it) {
-//         if (it->first == t) {
-//            it->second = f;
-//         }
-//      }
-//   } else {
-      handlers.push_back(std::make_pair(t, f));
-//   }
-}*/
 
 void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {

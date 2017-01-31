@@ -81,7 +81,7 @@ struct Iupperlayer_comm_ops
 struct Iupperlayer_connection_handlers
 {
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
-      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)>) = 0;
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
       virtual ~Iupperlayer_connection_handlers() = 0;
 };
 
