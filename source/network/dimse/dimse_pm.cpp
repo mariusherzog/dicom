@@ -47,7 +47,7 @@ void dimse_pm_manager::create_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 
 void dimse_pm_manager::remove_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
-   //protocol_machines.erase(scx);
+   protocol_machines.erase(scx);
 }
 
 

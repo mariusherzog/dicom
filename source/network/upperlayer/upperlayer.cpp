@@ -419,9 +419,12 @@ void scx::ignore_next()
 void scx::close_connection()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
-   sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-   sock().close();
-   handler_end_connection(this);
+
+   io_s().post([this]() {
+      sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+      sock().close();
+      handler_end_connection(this);
+   });
 }
 
 void scx::run()
@@ -523,7 +526,14 @@ void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
-   handler_end_connection = handler;
+   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
+      handler(conn);
+      for (auto& sock : connections) {
+         if (sock.get() == conn) {
+            sock.release();
+         }
+      }
+   };
 }
 
 
