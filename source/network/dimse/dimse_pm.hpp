@@ -48,11 +48,11 @@ class dimse_pm_manager
 
 
    private:
-      std::vector<std::unique_ptr<dimse_pm>> protocol_machines;
+      std::map<upperlayer::Iupperlayer_comm_ops*, std::unique_ptr<dimse_pm>> protocol_machines;
 
       void create_dimse(upperlayer::Iupperlayer_comm_ops* scx);
+      void remove_dimse(upperlayer::Iupperlayer_comm_ops* scx);
 
-      upperlayer::Iupperlayer_connection_handlers& connection;
       association_definition operations;
       data::dictionary::dictionary& dict;
 };

@@ -184,7 +184,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       void close_connection() override;
 
 
-
    protected:
       statemachine statem;
 
@@ -281,6 +280,10 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       std::deque<std::unique_ptr<property>> send_queue;
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
+
+   protected:
+      std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
+      std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 };
 
 class scp_connection: public scx
@@ -290,6 +293,8 @@ class scp_connection: public scx
           boost::asio::ip::tcp::socket& socket,
           data::dictionary::dictionary& dict,
           short port,
+          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
           std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       scp_connection(const scp_connection&) = delete;
       scp_connection& operator=(const scp_connection&) = delete;

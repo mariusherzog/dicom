@@ -419,8 +419,9 @@ void scx::ignore_next()
 void scx::close_connection()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
-   //io_s().reset();
-   //io_s().stop();
+   sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+   sock().close();
+   handler_end_connection(this);
 }
 
 void scx::run()
@@ -457,14 +458,21 @@ scp_connection::scp_connection(boost::asio::io_service& io_service,
          boost::asio::ip::tcp::socket& socket,
          data::dictionary::dictionary& dict,
          short port,
+         std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+         std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}}):
    scx {dict, l},
    io_service {io_service},
    socket {socket},
    artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
+//   handler_new_connection {handler_new_conn},
+//   handler_end_connection {handler_end_conn}
 {
+   handler_new_connection = handler_new_conn;
+   handler_end_connection = handler_end_conn;
    artim.cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
+   handler_new_connection(this);
    do_read();
 }
 
@@ -491,8 +499,10 @@ void scp::accept_new(boost::asio::ip::tcp::socket* sock, boost::system::error_co
 {
    using namespace std::placeholders;
    if (!ec) {
-      connections.push_back(std::unique_ptr<scp_connection> {new scp_connection {io_service, *sock, dict, port}});
-      handler_new_connection(connections.back().get());
+      connections.push_back(std::unique_ptr<scp_connection>
+         {
+            new scp_connection {io_service, *sock, dict, port, handler_new_connection, handler_end_connection}
+         });
    } else {
       throw boost::system::system_error(ec);
    }
