@@ -290,7 +290,7 @@ class scp_connection: public scx
 {
    public:
       scp_connection(boost::asio::io_service& io_service,
-          boost::asio::ip::tcp::socket& socket,
+          std::shared_ptr<boost::asio::ip::tcp::socket> socket,
           data::dictionary::dictionary& dict,
           short port,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
@@ -305,7 +305,7 @@ class scp_connection: public scx
       boost::asio::steady_timer& artim_timer() override;
 
       boost::asio::io_service& io_service;
-      boost::asio::ip::tcp::socket& socket;
+      std::shared_ptr<boost::asio::ip::tcp::socket> socket;
       boost::asio::steady_timer artim;
 };
 
@@ -329,7 +329,7 @@ class scp: public Iupperlayer_connection_handlers
 
    private:
 
-      void accept_new(boost::asio::ip::tcp::socket*, boost::system::error_code);
+      void accept_new(std::shared_ptr<boost::asio::ip::tcp::socket>, boost::system::error_code);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
@@ -339,8 +339,6 @@ class scp: public Iupperlayer_connection_handlers
       boost::asio::ip::tcp::acceptor acptr;
       short port;
       data::dictionary::dictionary& dict;
-
-      std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>> sockets;
 };
 
 

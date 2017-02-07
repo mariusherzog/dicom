@@ -460,7 +460,7 @@ statemachine::CONN_STATE scx::get_state()
 
 
 scp_connection::scp_connection(boost::asio::io_service& io_service,
-         boost::asio::ip::tcp::socket& socket,
+         std::shared_ptr<boost::asio::ip::tcp::socket> socket,
          data::dictionary::dictionary& dict,
          short port,
          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
@@ -489,30 +489,27 @@ scp::scp(data::dictionary::dictionary& dict,
    dict {dict}
 {
    using namespace std::placeholders;
-   //static boost::asio::ip::tcp::socket socket{io_service};
    auto socket = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   sockets.push_back(socket);
-   acptr.async_accept(*socket, std::bind(&scp::accept_new, this, socket.get(), _1));
+   acptr.async_accept(*socket, [socket, this](boost::system::error_code ec) { accept_new(socket, ec); });
 }
 
 scp::~scp()
 {
 }
 
-void scp::accept_new(boost::asio::ip::tcp::socket* sock, boost::system::error_code ec)
+void scp::accept_new(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code ec)
 {
    using namespace std::placeholders;
    if (!ec) {
       connections.push_back(std::unique_ptr<scp_connection>
          {
-            new scp_connection {io_service, *sock, dict, port, handler_new_connection, handler_end_connection}
+            new scp_connection {io_service, sock, dict, port, handler_new_connection, handler_end_connection}
          });
    } else {
       throw boost::system::system_error(ec);
    }
    auto newsock = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   sockets.push_back(newsock);
-   acptr.async_accept(*newsock, std::bind(&scp::accept_new, this, newsock.get(), _1));
+   acptr.async_accept(*newsock, [newsock, this](boost::system::error_code ec) { accept_new(newsock, ec); });
 }
 
 void scp::run()
@@ -585,7 +582,7 @@ scu::scu(data::dictionary::dictionary& dict,
 
 boost::asio::ip::tcp::socket& scp_connection::sock()
 {
-   return socket;
+   return *socket;
 }
 
 boost::asio::io_service&scp_connection::io_s()
