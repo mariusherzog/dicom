@@ -420,6 +420,8 @@ void scx::close_connection()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
 
+   // closing of the connection may only be done when there are no
+   // outstanding operations
    io_s().post([this]() {
       sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
       sock().close();
@@ -482,10 +484,9 @@ scp_connection::scp_connection(boost::asio::io_service& io_service,
 scp::scp(data::dictionary::dictionary& dict,
          short port):
    io_service {},
+   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
    port {port},
-   dict {dict},
-   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)}
-
+   dict {dict}
 {
    using namespace std::placeholders;
    //static boost::asio::ip::tcp::socket socket{io_service};
@@ -528,9 +529,9 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
    handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
       handler(conn);
-      for (auto& sock : connections) {
-         if (sock.get() == conn) {
-            sock.release();
+      for (auto& connection : connections) {
+         if (connection.get() == conn) {
+            connection.reset();
          }
       }
    };
