@@ -483,18 +483,23 @@ scp_connection::scp_connection(boost::asio::io_service& io_service,
 
 
 
-scu::scu(data::dictionary::dictionary& dict,
+scu_connection::scu_connection(boost::asio::io_service& io_service,
+         data::dictionary::dictionary& dict,
          std::string host, std::string port,
          a_associate_rq& rq,
+         std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+         std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {dict, l},
-   io_service {},
+   io_service {io_service},
    resolver {io_service},
    query {host, port},
    endpoint_iterator {resolver.resolve(query)},
    socket {io_service},
    artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 {
+   handler_new_connection = handler_new_conn;
+   handler_end_connection = handler_end_conn;
    statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
 
    boost::asio::ip::tcp::resolver::iterator end;
@@ -510,6 +515,8 @@ scu::scu(data::dictionary::dictionary& dict,
    }
 
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
+
+   handler_new_connection(this);
 
    auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
    boost::asio::async_write(socket, boost::asio::buffer(*pdu),
@@ -528,15 +535,6 @@ scu::scu(data::dictionary::dictionary& dict,
    });
 }
 
-void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
-{
-   handler_new_connection = handler;
-}
-
-void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
-{
-   handler_end_connection = handler;
-}
 
 boost::asio::ip::tcp::socket& scp_connection::sock()
 {
@@ -553,17 +551,17 @@ boost::asio::steady_timer&scp_connection::artim_timer()
    return artim;
 }
 
-boost::asio::ip::tcp::socket& scu::sock()
+boost::asio::ip::tcp::socket& scu_connection::sock()
 {
    return socket;
 }
 
-boost::asio::io_service& scu::io_s()
+boost::asio::io_service& scu_connection::io_s()
 {
    return io_service;
 }
 
-boost::asio::steady_timer&scu::artim_timer()
+boost::asio::steady_timer&scu_connection::artim_timer()
 {
    return artim;
 }

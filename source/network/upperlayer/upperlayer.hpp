@@ -24,7 +24,8 @@ namespace upperlayer
 {
 
 /**
- * @brief The scp class acts as a service class provider
+ * @brief The scp class acts as a service class provider which can have
+ *        and manages multiple connections simultaneously.
  */
 class scp: public Iupperlayer_connection_handlers
 {
@@ -52,6 +53,37 @@ class scp: public Iupperlayer_connection_handlers
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::acceptor acptr;
       short port;
+      data::dictionary::dictionary& dict;
+};
+
+
+class scu: public Iupperlayer_connection_handlers
+{
+   public:
+      scu(data::dictionary::dictionary& dict,
+          std::string host, std::string port,
+          a_associate_rq& rq);
+      scu(const scu&) = delete;
+      scu& operator=(const scu&) = delete;
+
+      ~scu();
+
+      void run();
+
+      void accept_new();
+
+      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+
+   private:
+      std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
+      std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+
+      std::vector<std::unique_ptr<scu_connection>> connections;
+      boost::asio::io_service io_service;
+      std::string host;
+      std::string port;
+      a_associate_rq& request;
       data::dictionary::dictionary& dict;
 };
 

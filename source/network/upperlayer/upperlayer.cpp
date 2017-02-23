@@ -66,6 +66,56 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
    };
 }
 
+
+scu::scu(data::dictionary::dictionary& dict,
+         std::string host, std::string port,
+         a_associate_rq& rq):
+   io_service {},
+   host {host},
+   port {port},
+   request {rq},
+   dict {dict}
+{
+   using namespace std::placeholders;
+}
+
+scu::~scu()
+{
+}
+
+void scu::accept_new()
+{
+
+   connections.push_back(std::unique_ptr<scu_connection>
+   {
+      new scu_connection {io_service, dict, host, port, request, handler_new_connection, handler_end_connection}
+   });
+}
+
+void scu::run()
+{
+   accept_new();
+   io_service.run();
+}
+
+void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
+{
+   handler_new_connection = handler;
+}
+
+void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
+{
+   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
+      handler(conn);
+      for (auto& connection : connections) {
+         if (connection.get() == conn) {
+            connection.reset();
+         }
+      }
+   };
+}
+
+
 }
 
 }

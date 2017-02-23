@@ -309,33 +309,26 @@ class scp_connection: public scx
       boost::asio::steady_timer artim;
 };
 
-/**
- * @brief The scu class acts as a service class user
- *
- *
- */
-class scu: public scx, public Iupperlayer_connection_handlers
+
+class scu_connection: public scx
 {
    public:
-      scu(data::dictionary::dictionary& dict,
+      scu_connection(boost::asio::io_service& io_service,
+          data::dictionary::dictionary& dict,
           std::string host, std::string port,
           a_associate_rq& rq,
+          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
           std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
-      scu(const scu&) = delete;
-      scu& operator=(const scu&) = delete;
-
-      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
-      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      scu_connection(const scu_connection&) = delete;
+      scu_connection& operator=(const scu_connection&) = delete;
 
    private:
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
 
-      std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
-      std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
-
-      boost::asio::io_service io_service;
+      boost::asio::io_service& io_service;
       boost::asio::ip::tcp::resolver resolver;
       boost::asio::ip::tcp::resolver::query query;
       boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
