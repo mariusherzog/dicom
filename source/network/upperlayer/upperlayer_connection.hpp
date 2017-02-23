@@ -295,7 +295,7 @@ class scp_connection: public scx
           short port,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
           std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scp_connection(const scp_connection&) = delete;
       scp_connection& operator=(const scp_connection&) = delete;
 
@@ -308,39 +308,6 @@ class scp_connection: public scx
       std::shared_ptr<boost::asio::ip::tcp::socket> socket;
       boost::asio::steady_timer artim;
 };
-
-/**
- * @brief The scp class acts as a service class provider
- */
-class scp: public Iupperlayer_connection_handlers
-{
-   public:
-      scp(data::dictionary::dictionary& dict,
-          short port);
-      scp(const scp&) = delete;
-      scp& operator=(const scp&) = delete;
-
-      ~scp();
-
-      void run();
-
-      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
-      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
-
-   private:
-
-      void accept_new(std::shared_ptr<boost::asio::ip::tcp::socket>, boost::system::error_code);
-
-      std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
-      std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
-
-      std::vector<std::unique_ptr<scp_connection>> connections;
-      boost::asio::io_service io_service;
-      boost::asio::ip::tcp::acceptor acptr;
-      short port;
-      data::dictionary::dictionary& dict;
-};
-
 
 /**
  * @brief The scu class acts as a service class user
