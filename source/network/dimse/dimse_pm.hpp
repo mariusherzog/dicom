@@ -15,7 +15,7 @@
 #include "response.hpp"
 #include "association_definition.hpp"
 #include "sop_class.hpp"
-#include "network/upperlayer/upperlayer.hpp"
+#include "network/upperlayer/upperlayer_connection.hpp"
 #include "data/dataset/transfer_processor.hpp"
 #include "data/dictionary/dictionary.hpp"
 

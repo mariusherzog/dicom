@@ -3,7 +3,7 @@
 #include <tuple>
 
 #include "network/dimse/dimse_pm.hpp"
-#include "network/upperlayer/upperlayer.hpp"
+#include "network/upperlayer/upperlayer_connection.hpp"
 
 #include "data/dataset/dataset_iterator.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"

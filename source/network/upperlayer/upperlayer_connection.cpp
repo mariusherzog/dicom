@@ -1,4 +1,4 @@
-#include "upperlayer.hpp"
+#include "upperlayer_connection.hpp"
 
 
 #include <utility>
@@ -578,6 +578,16 @@ scu::scu(data::dictionary::dictionary& dict,
             throw boost::system::system_error(error);
          }
    });
+}
+
+void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
+{
+   handler_new_connection = handler;
+}
+
+void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
+{
+   handler_end_connection = handler;
 }
 
 boost::asio::ip::tcp::socket& scp_connection::sock()

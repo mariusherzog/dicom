@@ -347,20 +347,26 @@ class scp: public Iupperlayer_connection_handlers
  *
  *
  */
-class scu: public scx
+class scu: public scx, public Iupperlayer_connection_handlers
 {
    public:
       scu(data::dictionary::dictionary& dict,
           std::string host, std::string port,
           a_associate_rq& rq,
-          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
+          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
+
+      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
 
    private:
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
+
+      std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
+      std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       boost::asio::io_service io_service;
       boost::asio::ip::tcp::resolver resolver;

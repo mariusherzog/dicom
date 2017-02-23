@@ -6,7 +6,7 @@
 #include <boost/log/trivial.hpp>
 
 #include "upperlayer_properties.hpp"
-#include "upperlayer.hpp"
+#include "upperlayer_connection.hpp"
 
 namespace dicom
 {
