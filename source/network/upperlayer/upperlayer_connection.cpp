@@ -59,10 +59,6 @@ Iupperlayer_comm_ops::~Iupperlayer_comm_ops()
 {
 }
 
-Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
-{
-}
-
 using namespace dicom::util::log;
 
 

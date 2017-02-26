@@ -13,6 +13,11 @@ namespace network
 namespace upperlayer
 {
 
+Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
+{
+}
+
+
 scp::scp(data::dictionary::dictionary& dict,
          short port):
    io_service {},

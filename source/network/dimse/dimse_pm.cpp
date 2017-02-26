@@ -8,7 +8,7 @@
 #include <numeric>
 
 #include "network/upperlayer/upperlayer_properties.hpp"
-#include "network/upperlayer/upperlayer_connection.hpp"
+#include "network/upperlayer/upperlayer.hpp"
 
 #include "data/dataset/datasets.hpp"
 #include "data/dataset/dataset_iterator.hpp"

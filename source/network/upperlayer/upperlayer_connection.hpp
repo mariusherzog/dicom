@@ -74,18 +74,6 @@ struct Iupperlayer_comm_ops
       virtual ~Iupperlayer_comm_ops() = 0;
 };
 
-/**
- * @brief The Iupperlayer_connection_handlers struct defines an interface to inject callbacks
- *        for the start / termination of a connection.
- */
-struct Iupperlayer_connection_handlers
-{
-      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
-      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
-      virtual ~Iupperlayer_connection_handlers() = 0;
-};
-
-
 
 /**
  * @brief The scx class implements basic functionality used both by the specialed scp and scu
@@ -286,6 +274,10 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 };
 
+/**
+ * @brief The scp_connection class represents a single association between the
+ *        scp and a remote scu.
+ */
 class scp_connection: public scx
 {
    public:
@@ -295,7 +287,7 @@ class scp_connection: public scx
           short port,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
           std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
       scp_connection(const scp_connection&) = delete;
       scp_connection& operator=(const scp_connection&) = delete;
 
@@ -309,7 +301,10 @@ class scp_connection: public scx
       boost::asio::steady_timer artim;
 };
 
-
+/**
+ * @brief The scu_connection class represents a single associaton between the
+ *        local scu and the remote scp.
+ */
 class scu_connection: public scx
 {
    public:

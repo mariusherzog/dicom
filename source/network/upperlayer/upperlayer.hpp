@@ -23,6 +23,33 @@ namespace network
 namespace upperlayer
 {
 
+
+/**
+ * @brief The Iupperlayer_connection_handlers struct defines an interface to inject callbacks
+ *        for the start / termination of a connection.
+ */
+struct Iupperlayer_connection_handlers
+{
+      /**
+       * @brief new_connection is the handler that will be invoked when a new
+       *        connection is established.
+       * @param f function which receives a pointer to the communication object
+       *        as a parameter
+       */
+      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
+
+      /**
+       * @brief end_connection is the handler when an existing association is
+       *        terminated.
+       * @param f function with the communication instance as parameter which
+       *        has ended.
+       */
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
+
+      virtual ~Iupperlayer_connection_handlers() = 0;
+};
+
+
 /**
  * @brief The scp class acts as a service class provider which can have
  *        and manages multiple connections simultaneously.
@@ -37,6 +64,9 @@ class scp: public Iupperlayer_connection_handlers
 
       ~scp();
 
+      /**
+       * @brief run() instructs the server to start listening for associations
+       */
       void run();
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
@@ -56,7 +86,9 @@ class scp: public Iupperlayer_connection_handlers
       data::dictionary::dictionary& dict;
 };
 
-
+/**
+ * @brief The scu class
+ */
 class scu: public Iupperlayer_connection_handlers
 {
    public:
@@ -68,8 +100,15 @@ class scu: public Iupperlayer_connection_handlers
 
       ~scu();
 
+      /**
+       * @brief run() instructs to client to start transmitting
+       */
       void run();
 
+      /**
+       * @brief accept_new starts a new association with the parameters
+       *        specified in the constructor.
+       */
       void accept_new();
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;

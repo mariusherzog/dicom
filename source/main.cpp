@@ -3,7 +3,6 @@
 #include <tuple>
 
 #include "network/dimse/dimse_pm.hpp"
-#include "network/upperlayer/upperlayer_connection.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 
 #include "data/dataset/dataset_iterator.hpp"
@@ -31,6 +30,7 @@ int main()
       [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RSP\n";
+         std::cout << command;
 //         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, command});
          pm->release_association();
       }}}
@@ -116,8 +116,8 @@ int main()
    try
    {
       auto request_property = ascdef.get_initial_request();
-      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
-      //dicom::network::upperlayer::scp sc(dict, 11113);
+      //dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
+      dicom::network::upperlayer::scp sc(dict, 11113);
       dicom::network::dimse::dimse_pm_manager dpm(sc, ascdef, dict);
 
       sc.run();
