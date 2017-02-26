@@ -30,8 +30,9 @@ int main()
       [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
          std::cout << "Received C_ECHO_RSP\n";
-         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, command});
-//         pm->release_association();
+         std::cout << command;
+//         pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_ECHO_RQ, command});
+         pm->release_association();
       }}}
    };
 
@@ -101,8 +102,8 @@ int main()
 
    dimse::association_definition ascdef {"STORESCP", "OFFIS",
       {
-//          {echorq, {"1.2.840.10008.1.2.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
-          {findrq, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
+          {echorq, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
+//          {findrq, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
           {echo, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
           {echorsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
           {findrsp, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE},
@@ -115,12 +116,10 @@ int main()
    try
    {
       auto request_property = ascdef.get_initial_request();
-      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
-//      dicom::network::upperlayer::scp sc(dict, 11113);
-      dicom::network::dimse::dimse_pm dpm(sc,
-         ascdef,
-         dict
-      );
+      //dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
+      dicom::network::upperlayer::scp sc(dict, 11113);
+      dicom::network::dimse::dimse_pm_manager dpm(sc, ascdef, dict);
+
       sc.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();

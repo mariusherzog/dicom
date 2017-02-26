@@ -6,7 +6,7 @@
 #include <boost/log/trivial.hpp>
 
 #include "upperlayer_properties.hpp"
-#include "upperlayer.hpp"
+#include "upperlayer_connection.hpp"
 
 namespace dicom
 {
@@ -227,7 +227,7 @@ void statemachine::ar7()
 void statemachine::ar8()
 {
    BOOST_LOG_SEV(logger, trace) << "AR-8";
-   if (dynamic_cast<upperlayer::scu*>(ul)) {
+   if (dynamic_cast<upperlayer::scu_connection*>(ul)) {
       BOOST_LOG_SEV(logger, trace) << "Next state is Sta9";
       state = CONN_STATE::STA9;
    } else {

@@ -31,6 +31,33 @@ namespace network
 namespace dimse
 {
 
+class dimse_pm;
+
+/**
+ * @brief The dimse_pm_manager class is used to handle new connections and
+ *        create instances of the dimse protocol machine.
+ * This is mainly relevant for SCPs which can have multiple connections open
+ * simultaneously.
+ */
+class dimse_pm_manager
+{
+   public:
+      dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
+                       association_definition operations,
+                       data::dictionary::dictionary& dict);
+
+
+   private:
+      std::map<upperlayer::Iupperlayer_comm_ops*, std::unique_ptr<dimse_pm>> protocol_machines;
+
+      void create_dimse(upperlayer::Iupperlayer_comm_ops* scx);
+      void remove_dimse(upperlayer::Iupperlayer_comm_ops* scx);
+
+      association_definition operations;
+      data::dictionary::dictionary& dict;
+};
+
+
 /**
  * @brief The dimse_pm class implements the DIMSE protocol machine as specified
  *        in chapter 3.7 of the DICOM standard.
@@ -173,6 +200,7 @@ class dimse_pm
        */
       data::dataset::transfer_processor& find_transfer_processor();
 
+      //upperlayer::Iupperlayer_sethandlers& upperlayer_handlers;
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
       CONN_STATE state;
 
