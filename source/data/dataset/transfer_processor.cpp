@@ -422,8 +422,8 @@ transfer_processor::vr_of_tag::vr_of_tag(tag_type tag,
 {
 }
 
-little_endian_explicit::little_endian_explicit():
-   transfer_processor {boost::none,
+little_endian_explicit::little_endian_explicit(dictionary::dictionary& dict):
+   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
                        "1.2.840.10008.1.2.1",
                        VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE,
                        {
@@ -455,8 +455,9 @@ elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned 
    return decode_value_field(data, end, len, vr, vm, pos);
 }
 
-big_endian_explicit::big_endian_explicit():
-   transfer_processor {boost::none, "1.2.840.10008.1.2.1",
+big_endian_explicit::big_endian_explicit(dictionary::dictionary& dict):
+   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
+                       "1.2.840.10008.1.2.1",
                        VR_TYPE::EXPLICIT, ENDIANNESS::BIG,
                        {
                            {{0x7fe0, 0x0010}, VR::OW},

@@ -118,9 +118,9 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    transfer_processors["1.2.840.10008.1.2"]
          = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
    transfer_processors["1.2.840.10008.1.2.1"]
-         = std::unique_ptr<transfer_processor> {new little_endian_explicit};
+         = std::unique_ptr<transfer_processor> {new little_endian_explicit(dict)};
    transfer_processors["1.2.840.10008.1.2.2"]
-         = std::unique_ptr<transfer_processor> {new big_endian_explicit};
+         = std::unique_ptr<transfer_processor> {new big_endian_explicit(dict)};
 }
 
 dimse_pm::~dimse_pm()
@@ -325,6 +325,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    iod dataset;
    if (!d->data_set.empty()) {
       auto& tfproc = find_transfer_processor();
+
       dataset = tfproc.deserialize(d->data_set);
    }
 
