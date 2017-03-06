@@ -236,7 +236,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param p property being written (stored in the write queue)
        * @param data serialized property being written
        */
-      void write_complete_dataset(property* p, std::vector<unsigned char> data);
+      void write_complete_dataset(property* p, std::shared_ptr<std::vector<unsigned char>> data, std::size_t begin = 0);
 
       /**
        * @brief sock is used by send() and receive() to access the socket of the
