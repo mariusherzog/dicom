@@ -228,7 +228,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        *        in the property's dataset member.
        * @param[in] data
        */
-      void get_complete_dataset(std::vector<unsigned char> data);
+      void get_complete_dataset(std::shared_ptr<std::vector<unsigned char> > data);
 
 
       /**

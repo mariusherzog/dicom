@@ -192,7 +192,7 @@ void scx::handle_pdu_conf(property* p, TYPE ptype)
    }
 }
 
-void scx::get_complete_dataset(std::vector<unsigned char> data)
+void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
 {
    auto nextbuflen = std::make_shared<std::vector<unsigned char>>(6);
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
@@ -218,12 +218,12 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
             nextbufcompl->reserve(len+6);
             nextbufcompl->insert(nextbufcompl->end(), nextbuflen->begin(), nextbuflen->end());
             nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
-            data.insert(data.end(), nextbufcompl->begin(), nextbufcompl->end());
+            data->insert(data->end(), nextbufcompl->begin(), nextbufcompl->end());
 
             bool lastsegment = ((*nextbufcompl)[11] & 0x02);
             if (lastsegment) {
                BOOST_LOG_SEV(logger, trace) << "Last data fragment";
-               auto pdu = make_property(data);
+               auto pdu = make_property(*data);
                handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
             } else {
                BOOST_LOG_SEV(logger, trace) << "More data fragments expected";
@@ -346,7 +346,7 @@ void scx::do_read()
                         if (datasetpresent != 0x0101) {
                            BOOST_LOG_SEV(logger, trace) << "Dataset present in the PDU ("
                                                         << "(0000,0800) = " << datasetpresent << ")";
-                           get_complete_dataset(*compl_data);
+                           get_complete_dataset(compl_data);
                         } else {
                            handle_pdu(std::move(property), TYPE::P_DATA_TF);
                         }
