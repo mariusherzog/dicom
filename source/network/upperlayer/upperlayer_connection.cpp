@@ -238,9 +238,7 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
    std::size_t len = be_char_to_32b({data->begin()+begin+2, data->begin()+begin+6}) + 6;
             // 6 bytes header + length
 
-   //auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+len);
-
-   void* data_offset = ((void*)(data->data()+begin));
+   void* data_offset = (static_cast<void*>(data->data()+begin));
 
    boost::asio::async_write(sock(), boost::asio::buffer(data_offset, len),
       [this, p, data, len, begin, data_offset](const boost::system::error_code& error, std::size_t bytes) {
@@ -250,7 +248,7 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
 
          BOOST_LOG_SEV(logger, trace) << "Sent data fragment of size " << bytes;
 
-         bool lastsegment = (((unsigned char*)(data_offset))[11] & 0x02);
+         bool lastsegment = ((static_cast<unsigned char*>(data_offset))[11] & 0x02);
          if (lastsegment) {
             BOOST_LOG_SEV(logger, trace) << "Last data fragment";
             handle_pdu_conf(p, TYPE::P_DATA_TF);
