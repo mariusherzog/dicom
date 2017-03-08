@@ -611,7 +611,7 @@ upperlayer::p_data_tf dimse_pm::assemble_cstore_rq(response r, int pres_context_
    get_value_field<VR::AE>(cs.at(MoveOriginatorApplicationEntityTitle), move_orig_ae);
    get_value_field<VR::US>(cs.at(MoveOriginatorMessageID), move_orig_id);
 
-   cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(SOP_uid.length(), SOP_uid);
+   cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(26, SOP_uid);
    cresp[CommandField]           = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
    cresp[MessageID]              = make_elementfield<VR::US>(2, message_id);
    cresp[Priority]               = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_priority()));
