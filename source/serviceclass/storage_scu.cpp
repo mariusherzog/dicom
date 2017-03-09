@@ -17,16 +17,26 @@ using namespace dicom::network;
 using handlermap = std::map<dicom::data::dataset::DIMSE_SERVICE_GROUP,
 std::function<void(dicom::network::dimse::dimse_pm* pm, dicom::data::dataset::commandset_data cdata, std::unique_ptr<dicom::data::dataset::iod> data)>>;
 
-storage_scu::storage_scu(std::string calling_ae, std::string called_ae, int max_message_len, dicom::data::dictionary::dictionary& dict):
+storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
+                         int max_message_len, dicom::data::dictionary::dictionary& dict,
+                         std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):
    sop_class { "1.2.840.10008.5.1.4.1.1.1", handlermap {
 {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
                }
              },
-   assoc_def { calling_ae, called_ae, {{sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR}}, max_message_len },
+   assoc_def
+   {
+      calling_ae, called_ae, {
+         {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
+         {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
+      }, max_message_len
+   },
    initial_rq {assoc_def.get_initial_request()},
    scu { dict, "localhost", "1113", initial_rq},
    dimse_pm {scu, assoc_def, dict},
-   senddata {}
+   senddata {},
+   handler {handler},
+   do_release {false}
 {
    senddata[{0x0010, 0x0010}] = attribute::make_elementfield<VR::PN>(4, "tes");
 }
@@ -41,6 +51,11 @@ upperlayer::scu& storage_scu::get_scu()
    return scu;
 }
 
+void storage_scu::release()
+{
+   do_release = true;
+}
+
 void storage_scu::send_next_request(dataset::iod data)
 {
    senddata = data;
@@ -50,6 +65,13 @@ void storage_scu::send_next_request(dataset::iod data)
 void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data)
 {
    assert(data == nullptr);
+
+   handler(this, command, std::move(data));
+
+   if (do_release) {
+      pm->release_association();
+   }
+
    std::cout << "Send C_STORE_RQ\n";
    dataset::dataset_type dat, dat2, dat3;
    dataset::iod seq;

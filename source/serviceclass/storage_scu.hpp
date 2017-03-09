@@ -2,6 +2,7 @@
 #define STORAGE_SCU_HPP
 
 #include <string>
+#include <functional>
 
 #include "network/upperlayer/upperlayer.hpp"
 #include "network/dimse/dimse_pm.hpp"
@@ -12,11 +13,17 @@
 class storage_scu
 {
    public:
-      storage_scu(std::string calling_ae, std::string called_ae, int max_message_len, dicom::data::dictionary::dictionary& dict);
+      storage_scu(std::string calling_ae, std::string called_ae,
+                  int max_message_len, dicom::data::dictionary::dictionary& dict,
+                  std::function<void(storage_scu*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       ~storage_scu();
 
       void send_next_request(dicom::data::dataset::iod data);
+
+      void release();
+
+      // void abort();
 
       //TODO: deprecate this!
       dicom::network::upperlayer::scu& get_scu();
@@ -33,6 +40,10 @@ class storage_scu
       void send_store_request(dicom::network::dimse::dimse_pm* pm,
                               dicom::data::dataset::commandset_data command,
                               std::unique_ptr<dicom::data::dataset::iod> data);
+
+      std::function<void(storage_scu*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler;
+
+      bool do_release;
 };
 
 #endif // STORAGE_SCU_HPP

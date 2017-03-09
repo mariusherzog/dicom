@@ -124,7 +124,13 @@ int main()
 
       //sc.run();
 
-      storage_scu storage("STORESCU", "STORESCP", 4096, dict);
+      int x = 0;
+      storage_scu storage("STORESCU", "STORESCP", 4096, dict,
+                          [&x](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+         std::cout << cmd << "##";
+         if (x > 0) st->release();
+         x++;
+      });
       storage.get_scu().run();
 
    } catch (std::exception& ec) {
