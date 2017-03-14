@@ -174,7 +174,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                   current_sequence.top().push_back(dataset_type {});
                }
                current_sequence.top().back()[tag]
-                     = make_elementfield<VR::NI>(value_len);
+                     = make_elementfield<VR::NI>(value_len, VR::NI);
 
             } else if (tag == ItemDelimitationItem) {
                current_sequence.top().back()[ItemDelimitationItem]

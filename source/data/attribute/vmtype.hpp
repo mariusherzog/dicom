@@ -322,7 +322,8 @@ class vmtype
 
       std::size_t byte_size() const
       {
-         return std::accumulate(value_sequence.begin(), value_sequence.end(), 0, [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+         return std::accumulate(value_sequence.begin(), value_sequence.end(), 0,
+                                [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
       }
 
    private:

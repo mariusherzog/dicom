@@ -575,11 +575,11 @@ upperlayer::p_data_tf dimse_pm::assemble_cfind_rsp(response r, int pres_context_
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
    get_value_field<VR::US>(cs.at(MessageID), message_id);
 
-   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(22, SOP_uid);
-   cresp[CommandField]              = make_elementfield<VR::US>(2, static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(2, message_id);
-   cresp[CommandDataSetType]        = make_elementfield<VR::US>(2, hasdata ? 0x0102 : 0x0101);
-   cresp[Status]                    = make_elementfield<VR::US>(2, r.get_status());
+   cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid);
+   cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(message_id);
+   cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
+   cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
 
    auto size = dataset_size(cresp);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(4, size);

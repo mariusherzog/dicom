@@ -450,6 +450,15 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    return el;
 }
 
+template <VR vr>
+elementfield make_elementfield(const typename type_of<vr>::type &data)
+{
+   std::size_t len = byte_length(data);
+   return make_elementfield(len, data);
+}
+
+
+
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute
  *        / element field.
@@ -475,6 +484,13 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    return el;
 }
 
+template <VR vr>
+elementfield make_elementfield(const typename type_of<vr>::type::base_type &data)
+{
+   std::size_t len = byte_length(data);
+   return make_elementfield<vr>(len, data);
+}
+
 
 /**
  * @brief make_elementfield overload for attributes that do not have a value
@@ -498,7 +514,7 @@ elementfield make_elementfield()
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t len)
+elementfield make_elementfield(std::size_t len, VR vr_)
 {
    static_assert(std::is_same<typename type_of<vr>::type, empty_t>::value, "Expected sequence info type (VR == NI)");
    elementfield el;
