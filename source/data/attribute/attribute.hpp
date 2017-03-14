@@ -61,6 +61,7 @@ enum class ENDIANNESS
 
 
 
+
 /**
  * @brief The VR enum defines the value representations of an attribute
  * a Value Representation can be described as a data type.
@@ -438,7 +439,11 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
+   if (vr != VR::SQ)
+      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   if (el.value_len != data_len) assert(false);
 
    set_visitor<vr> setter(data);
    el.value_field->accept<vr>(setter);
@@ -458,7 +463,11 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
+   if (vr != VR::SQ)
+      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   if (el.value_len != data_len) assert(false);
 
    typename type_of<vr>::type wrapper(data);
    set_visitor<vr> setter(wrapper);

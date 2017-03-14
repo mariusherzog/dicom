@@ -14,6 +14,30 @@
 
 #include "../attribute/tag.hpp"
 
+
+
+namespace dicom
+{
+
+namespace data
+{
+
+namespace dataset
+{
+   /**
+    * forward declaration of the dataset defined in the dataset namespace. This
+    * circular dependency is intrinsic to the DICOM dataset, as an attribute
+    * may be defined as another - nested - set.
+    */
+   struct dataset_type;
+}
+
+}
+
+}
+
+
+
 namespace dicom
 {
 
@@ -58,6 +82,40 @@ struct multiplicity_data
 
       }
 };
+
+
+
+
+template <typename T>
+class vmtype;
+
+template <typename T>
+std::size_t byte_length(const vmtype<T>& value_field)
+{
+   return value_field.byte_size();
+}
+
+std::size_t byte_length(std::vector<unsigned char> value_field);
+
+std::size_t byte_length(const std::string& value_field);
+
+std::size_t byte_length(unsigned char);
+
+std::size_t byte_length(unsigned short);
+
+std::size_t byte_length(short);
+
+std::size_t byte_length(unsigned int);
+
+std::size_t byte_length(long);
+
+std::size_t byte_length(float);
+
+std::size_t byte_length(double);
+
+std::size_t byte_length(tag_type);
+
+std::size_t byte_length(std::vector<dataset::dataset_type>);
 
 
 /**
@@ -262,6 +320,11 @@ class vmtype
          return iterator {this, value_sequence.size()};
       }
 
+      std::size_t byte_size() const
+      {
+         return std::accumulate(value_sequence.begin(), value_sequence.end(), 0, [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+      }
+
    private:
       std::vector<T> value_sequence;
       std::string multiplicity;
@@ -365,6 +428,8 @@ template <typename T>
 vmtype<T>::~vmtype()
 {
 }
+
+
 
 
 std::ostream& operator<<(std::ostream& os, vmtype<std::string> data);
