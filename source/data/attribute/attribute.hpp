@@ -454,7 +454,7 @@ template <VR vr>
 elementfield make_elementfield(const typename type_of<vr>::type &data)
 {
    std::size_t len = byte_length(data);
-   return make_elementfield(len, data);
+   return make_elementfield<vr>(len, data);
 }
 
 
