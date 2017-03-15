@@ -296,8 +296,8 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
          auto request = sop.sop_class;
          for (auto sg : request.get_service_groups()) {
             commandset_data header;
-            header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, request.get_SOP_class_UID());
-            header[{0x0000, 0x0120}] = make_elementfield<VR::US>(2, next_message_id());
+            header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(request.get_SOP_class_UID());
+            header[{0x0000, 0x0120}] = make_elementfield<VR::US>(next_message_id());
             request(this, sg, header, nullptr);
          }
       }

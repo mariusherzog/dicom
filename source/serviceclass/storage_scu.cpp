@@ -20,7 +20,7 @@ std::function<void(dicom::network::dimse::dimse_pm* pm, dicom::data::dataset::co
 storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
                          int max_message_len, dicom::data::dictionary::dictionary& dict,
                          std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):
-   sop_class { "1.2.840.10008.5.1.4.1.1.1", handlermap {
+   sop_class { "1.2.840.10008.5.1.4.1.1.1\0", handlermap {
 {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
                }
              },
@@ -38,7 +38,7 @@ storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
    handler {handler},
    do_release {false}
 {
-   senddata[{0x0010, 0x0010}] = attribute::make_elementfield<VR::PN>(4, "tes");
+   senddata[{0x0010, 0x0010}] = attribute::make_elementfield<VR::PN>("test");
 }
 
 storage_scu::~storage_scu()
@@ -85,9 +85,9 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
 //   seq[{0x0032, 0x1064}] = dicom::data::attribute::make_elementfield<VR::SQ>(0xffffffff, {dat, dat2, dat3});
 
 
-   command[AffectedSOPInstanceUID] = dicom::data::attribute::make_elementfield<VR::UI>(6, "111111");
-   command[MoveOriginatorApplicationEntityTitle] = dicom::data::attribute::make_elementfield<VR::AE>(6, "move22");
-   command[MoveOriginatorMessageID] = dicom::data::attribute::make_elementfield<VR::US>(2, 1);
+   command[AffectedSOPInstanceUID] = dicom::data::attribute::make_elementfield<VR::UI>("111111");
+   command[MoveOriginatorApplicationEntityTitle] = dicom::data::attribute::make_elementfield<VR::AE>("move22");
+   command[MoveOriginatorMessageID] = dicom::data::attribute::make_elementfield<VR::US>(1);
 
    pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, command, senddata});
 

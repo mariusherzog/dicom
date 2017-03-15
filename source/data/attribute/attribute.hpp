@@ -472,8 +472,6 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
-   if (vr != VR::SQ)
-      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
 
    if (el.value_len != data_len) assert(false);
