@@ -69,7 +69,7 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
    return os;
 }
 
-std::size_t dataset_size(dataset_type data, bool explicitvr)
+std::size_t dataset_size(dicom::data::dataset::dataset_type data, bool explicitvr)
 {
    return std::accumulate(data.begin(), data.end(), 0,
       [explicitvr](int acc, const std::pair<const tag_type, elementfield>& attr) {

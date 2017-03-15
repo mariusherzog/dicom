@@ -378,6 +378,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          attribute::vmtype<std::string> dt;
          get_value_field<VR::DT>(attr, dt);
          data = convhelper::encode_byte_string(dt);
+         break;
       }
       case VR::FL: {
          float field;

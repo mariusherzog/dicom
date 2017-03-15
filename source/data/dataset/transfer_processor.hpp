@@ -228,7 +228,7 @@ class little_endian_implicit: public transfer_processor
 class little_endian_explicit: public transfer_processor
 {
    public:
-      explicit little_endian_explicit();
+      explicit little_endian_explicit(dictionary::dictionary& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -244,7 +244,7 @@ class little_endian_explicit: public transfer_processor
 class big_endian_explicit: public transfer_processor
 {
    public:
-      explicit big_endian_explicit();
+      explicit big_endian_explicit(dictionary::dictionary& dict);
 
    private:
       virtual std::vector<unsigned char>

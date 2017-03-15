@@ -152,7 +152,8 @@ void scx::send(property* p)
                   unsigned short datasetpresent;
                   get_value_field<VR::US>(commandset.at({0x0000, 0x0800}), datasetpresent);
                   if (datasetpresent != 0x0101) {
-                     write_complete_dataset(p, {pdu->begin()+10+len, pdu->end()});
+                     auto dataset = std::make_shared<std::vector<unsigned char>>(pdu->begin()+10+len, pdu->end());
+                     write_complete_dataset(p, dataset);
                   } else {
                      handle_pdu_conf(p, TYPE::P_DATA_TF);
                   }
@@ -191,7 +192,7 @@ void scx::handle_pdu_conf(property* p, TYPE ptype)
    }
 }
 
-void scx::get_complete_dataset(std::vector<unsigned char> data)
+void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
 {
    auto nextbuflen = std::make_shared<std::vector<unsigned char>>(6);
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
@@ -217,12 +218,12 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
             nextbufcompl->reserve(len+6);
             nextbufcompl->insert(nextbufcompl->end(), nextbuflen->begin(), nextbuflen->end());
             nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
-            data.insert(data.end(), nextbufcompl->begin(), nextbufcompl->end());
+            data->insert(data->end(), nextbufcompl->begin(), nextbufcompl->end());
 
             bool lastsegment = ((*nextbufcompl)[11] & 0x02);
             if (lastsegment) {
                BOOST_LOG_SEV(logger, trace) << "Last data fragment";
-               auto pdu = make_property(data);
+               auto pdu = make_property(*data);
                handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
             } else {
                BOOST_LOG_SEV(logger, trace) << "More data fragments expected";
@@ -232,28 +233,29 @@ void scx::get_complete_dataset(std::vector<unsigned char> data)
    });
 }
 
-void scx::write_complete_dataset(property* p, std::vector<unsigned char> data)
+void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsigned char>> data, std::size_t begin)
 {
-   std::size_t len = be_char_to_32b({data.begin()+2, data.begin()+6}) + 6;
+   std::size_t len = be_char_to_32b({data->begin()+begin+2, data->begin()+begin+6}) + 6;
             // 6 bytes header + length
 
-   auto pdu = std::make_shared<std::vector<unsigned char>>(data.begin(), data.begin()+len);
+   void* data_offset = (static_cast<void*>(data->data()+begin));
 
-   boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
-      [this, p, data, len, pdu](const boost::system::error_code& error, std::size_t bytes) {
+   boost::asio::async_write(sock(), boost::asio::buffer(data_offset, len),
+      [this, p, data, len, begin, data_offset](const boost::system::error_code& error, std::size_t bytes) {
          if (error) {
             throw boost::system::system_error(error);
          }
 
          BOOST_LOG_SEV(logger, trace) << "Sent data fragment of size " << bytes;
 
-         bool lastsegment = ((*pdu)[11] & 0x02);
+         bool lastsegment = ((static_cast<unsigned char*>(data_offset))[11] & 0x02);
          if (lastsegment) {
             BOOST_LOG_SEV(logger, trace) << "Last data fragment";
             handle_pdu_conf(p, TYPE::P_DATA_TF);
          } else {
             BOOST_LOG_SEV(logger, trace) << "More data fragments to be sent";
-            write_complete_dataset(p, {data.begin()+len, data.end()});
+            std::size_t newbegin = begin + len;
+            write_complete_dataset(p, data, newbegin);
          }
    });
 
@@ -344,7 +346,7 @@ void scx::do_read()
                         if (datasetpresent != 0x0101) {
                            BOOST_LOG_SEV(logger, trace) << "Dataset present in the PDU ("
                                                         << "(0000,0800) = " << datasetpresent << ")";
-                           get_complete_dataset(*compl_data);
+                           get_complete_dataset(compl_data);
                         } else {
                            handle_pdu(std::move(property), TYPE::P_DATA_TF);
                         }

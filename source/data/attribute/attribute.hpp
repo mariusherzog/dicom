@@ -61,6 +61,7 @@ enum class ENDIANNESS
 
 
 
+
 /**
  * @brief The VR enum defines the value representations of an attribute
  * a Value Representation can be described as a data type.
@@ -438,12 +439,25 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
+   if (vr != VR::SQ)
+      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   if (el.value_len != data_len) assert(false);
 
    set_visitor<vr> setter(data);
    el.value_field->accept<vr>(setter);
    return el;
 }
+
+template <VR vr>
+elementfield make_elementfield(const typename type_of<vr>::type &data)
+{
+   std::size_t len = byte_length(data);
+   return make_elementfield<vr>(len, data);
+}
+
+
 
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute
@@ -458,12 +472,23 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
+   if (vr != VR::SQ)
+      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   if (el.value_len != data_len) assert(false);
 
    typename type_of<vr>::type wrapper(data);
    set_visitor<vr> setter(wrapper);
    el.value_field->accept<vr>(setter);
    return el;
+}
+
+template <VR vr>
+elementfield make_elementfield(const typename type_of<vr>::type::base_type &data)
+{
+   std::size_t len = byte_length(data);
+   return make_elementfield<vr>(len, data);
 }
 
 
@@ -489,7 +514,7 @@ elementfield make_elementfield()
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t len)
+elementfield make_elementfield(std::size_t len, VR vr_)
 {
    static_assert(std::is_same<typename type_of<vr>::type, empty_t>::value, "Expected sequence info type (VR == NI)");
    elementfield el;
