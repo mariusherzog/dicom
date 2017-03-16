@@ -16,7 +16,7 @@ std::size_t byte_length(std::vector<unsigned char> value_field)
 
 std::size_t byte_length(const std::string& value_field)
 {
-   return value_field.size();
+   return std::distance(value_field.begin(), value_field.end());
 }
 
 std::size_t byte_length(unsigned char)

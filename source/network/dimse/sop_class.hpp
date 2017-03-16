@@ -50,7 +50,7 @@ class SOP_class
                           data::dataset::commandset_data cdata,
                           std::unique_ptr<data::dataset::iod> data) const;
 
-      const char* get_SOP_class_UID() const;
+      std::string get_SOP_class_UID() const;
 
       /**
        * @brief get_service_groups retrieves the service groups defined for this

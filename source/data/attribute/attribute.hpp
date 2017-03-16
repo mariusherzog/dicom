@@ -334,6 +334,28 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const 
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const data);
 
+template <VR vr>
+std::size_t validate(typename type_of<vr>::type& value_field)
+{
+   assert(false);
+   return 0;
+}
+
+template <>
+inline std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
+{
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto uid = *it;
+      if (uid.length() > 64) {
+         uid.resize(64);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+   }
+   return byte_length(value_field);
+}
+
 
 
 /**
@@ -439,11 +461,7 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
-   if (vr != VR::SQ)
-      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
-
-   if (el.value_len != data_len) assert(false);
 
    set_visitor<vr> setter(data);
    el.value_field->accept<vr>(setter);
@@ -454,6 +472,8 @@ template <VR vr>
 elementfield make_elementfield(const typename type_of<vr>::type &data)
 {
    std::size_t len = byte_length(data);
+   // if len is uneven, validate
+   // validate<VR::UI>(data);
    return make_elementfield<vr>(len, data);
 }
 
@@ -472,11 +492,7 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    elementfield el;
    el.value_rep = vr;
    el.value_len = data_len;
-   if (vr != VR::SQ)
-      el.value_len = byte_length(data);
    el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
-
-   if (el.value_len != data_len) assert(false);
 
    typename type_of<vr>::type wrapper(data);
    set_visitor<vr> setter(wrapper);
@@ -487,8 +503,14 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
 template <VR vr>
 elementfield make_elementfield(const typename type_of<vr>::type::base_type &data)
 {
-   std::size_t len = byte_length(data);
-   return make_elementfield<vr>(len, data);
+   typename type_of<vr>::type wrapper(data);
+   std::size_t len;
+   if (vr == VR::UI) {
+      len = validate<vr>(wrapper);
+   } else {
+      len = byte_length(wrapper);
+   }
+   return make_elementfield<vr>(len, wrapper);
 }
 
 

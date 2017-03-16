@@ -22,9 +22,9 @@ void SOP_class::operator()(dimse_pm* pm, DIMSE_SERVICE_GROUP op, data::dataset::
    operations.at(op)(pm, std::move(cdata), std::move(data));
 }
 
-const char* SOP_class::get_SOP_class_UID() const
+std::string SOP_class::get_SOP_class_UID() const
 {
-   return sop_uid.c_str();
+   return sop_uid;
 }
 
 std::set<DIMSE_SERVICE_GROUP> SOP_class::get_service_groups() const
