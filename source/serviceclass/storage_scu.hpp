@@ -30,6 +30,7 @@ class storage_scu
 
    private:
       dicom::network::dimse::SOP_class sop_class;
+      dicom::network::dimse::SOP_class sop_class_response;
       dicom::network::dimse::association_definition assoc_def;
       dicom::network::upperlayer::a_associate_rq initial_rq;
       dicom::network::upperlayer::scu scu;

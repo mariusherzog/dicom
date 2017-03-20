@@ -24,11 +24,14 @@ storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
 {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
                }
              },
+   sop_class_response {"1.2.840.10008.5.1.4.1.1.1\0", handlermap {
+         {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { }}
+                        }},
    assoc_def
    {
       calling_ae, called_ae, {
          {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
-         {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
+         {sop_class_response, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
       }, max_message_len
    },
    initial_rq {assoc_def.get_initial_request()},
