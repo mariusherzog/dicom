@@ -12,6 +12,7 @@
 #include "data/attribute/constants.hpp"
 
 #include "serviceclass/storage_scu.hpp"
+#include "serviceclass/queryretrieve_scp.hpp"
 
 #include "util/channel_sev_logger.hpp"
 
@@ -126,14 +127,20 @@ int main()
 
       //sc.run();
 
-      int x = 0;
-      storage_scu storage("STORESCU", "STORESCP", 4096, dict,
-                          [&x](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
-         std::cout << cmd << "##";
-         if (x > 2) st->release();
-         x++;
+//      int x = 0;
+//      storage_scu storage("STORESCU", "STORESCP", 4096, dict,
+//                          [&x](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+//         std::cout << cmd << "##";
+//         if (x > 2) st->release();
+//         x++;
+//      });
+//      storage.get_scu().run();
+
+      queryretrieve_scp qr("QRSCP", "QRSCU", 4096, dict,
+                           [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+
       });
-      storage.get_scu().run();
+      qr.get_scp().run();
 
    } catch (std::exception& ec) {
       std::cout << ec.what();

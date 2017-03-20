@@ -32,7 +32,7 @@ storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
       }, max_message_len
    },
    initial_rq {assoc_def.get_initial_request()},
-   scu { dict, "localhost", "1113", initial_rq},
+   scu { dict, "localhost", "1114", initial_rq},
    dimse_pm {scu, assoc_def, dict},
    senddata {},
    handler {handler},
