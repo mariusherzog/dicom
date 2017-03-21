@@ -25,7 +25,7 @@ storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
                }
              },
    sop_class_response {"1.2.840.10008.5.1.4.1.1.1\0", handlermap {
-         {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { }}
+         {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
                         }},
    assoc_def
    {
@@ -69,7 +69,6 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
 {
    assert(data == nullptr);
 
-
    std::cout << "Send C_STORE_RQ\n";
    dataset::dataset_type dat, dat2, dat3;
    dataset::iod seq;
@@ -87,12 +86,16 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
    command[MoveOriginatorApplicationEntityTitle] = dicom::data::attribute::make_elementfield<VR::AE>("move22");
    command[MoveOriginatorMessageID] = dicom::data::attribute::make_elementfield<VR::US>(1);
 
+
    pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, command, senddata});
 
    handler(this, command, std::move(data));
 
+   // handler requested release
    if (do_release) {
       pm->release_association();
    }
+
+
 
 }
