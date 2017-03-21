@@ -23,6 +23,8 @@ namespace network
 namespace upperlayer
 {
 
+void run();
+
 
 /**
  * @brief The Iupperlayer_connection_handlers struct defines an interface to inject callbacks
@@ -80,7 +82,7 @@ class scp: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       std::vector<std::unique_ptr<scp_connection>> connections;
-      boost::asio::io_service& io_service;
+      boost::asio::io_service io_service;
       boost::asio::ip::tcp::acceptor acptr;
       short port;
       data::dictionary::dictionary& dict;
@@ -119,7 +121,7 @@ class scu: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       std::vector<std::unique_ptr<scu_connection>> connections;
-      boost::asio::io_service& io_service;
+      boost::asio::io_service io_service;
       std::string host;
       std::string port;
       a_associate_rq& request;

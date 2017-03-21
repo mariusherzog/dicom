@@ -69,11 +69,6 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
 {
    assert(data == nullptr);
 
-   handler(this, command, std::move(data));
-
-   if (do_release) {
-      pm->release_association();
-   }
 
    std::cout << "Send C_STORE_RQ\n";
    dataset::dataset_type dat, dat2, dat3;
@@ -93,5 +88,11 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
    command[MoveOriginatorMessageID] = dicom::data::attribute::make_elementfield<VR::US>(1);
 
    pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, command, senddata});
+
+   handler(this, command, std::move(data));
+
+   if (do_release) {
+      pm->release_association();
+   }
 
 }

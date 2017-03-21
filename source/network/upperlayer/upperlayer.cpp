@@ -14,20 +14,6 @@ namespace upperlayer
 {
 
 
-static boost::asio::io_service io_s;
-
-/**
- * @brief get_io_service returns the global io_service event loop used by all
- *        connections.
- * @return global io_service object
- */
-static boost::asio::io_service& get_io_service()
-{
-   return io_s;
-}
-
-
-
 Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 {
 }
@@ -35,7 +21,7 @@ Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 
 scp::scp(data::dictionary::dictionary& dict,
          short port):
-   io_service {get_io_service()},
+   io_service {},
    acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
    port {port},
    dict {dict}
@@ -90,7 +76,7 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 scu::scu(data::dictionary::dictionary& dict,
          std::string host, std::string port,
          a_associate_rq& rq):
-   io_service {get_io_service()},
+   io_service {},
    host {host},
    port {port},
    request {rq},

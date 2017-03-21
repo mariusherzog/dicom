@@ -14,7 +14,7 @@ class queryretrieve_scp
 {
    public:
       queryretrieve_scp(std::string calling_ae, std::string called_ae,
-                        std::size_t max_message_len, dicom::data::dictionary::dictionary& dict,
+                        int max_message_len, dicom::data::dictionary::dictionary& dict,
                         std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       void start_listen();
