@@ -3,6 +3,8 @@
 
 #include <string>
 #include <functional>
+#include <memory>
+#include <thread>
 
 #include "network/upperlayer/upperlayer.hpp"
 #include "network/dimse/dimse_pm.hpp"
@@ -37,6 +39,8 @@ class queryretrieve_scp
       dicom::network::dimse::association_definition assoc_def;
       dicom::network::upperlayer::scp scp;
       dicom::network::dimse::dimse_pm_manager dimse_pm;
+
+      std::unique_ptr<std::thread> storage_thread;
 
       std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler;
 

@@ -67,6 +67,7 @@ queryretrieve_scp::queryretrieve_scp(std::string calling_ae, std::string called_
    },
    scp {dict, 1113},
    dimse_pm {scp, assoc_def, dict},
+   storage_thread {nullptr},
    handler {handler}
 {
 
@@ -92,21 +93,31 @@ void queryretrieve_scp::handle_cfind(dimse::dimse_pm *pm, dataset::commandset_da
    dicom::data::dataset::iod resp;
    //resp[{0x0008,0x0005}] = attribute::make_elementfield<VR::CS>("ISO_IR 6");
    resp[{0x0010,0x0010}] = attribute::make_elementfield<VR::PN>("meow");
-
+/*
    storage_scu st {"QRSCP", "QRSCU", 4096, dict, [this, command, pm](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
          std::cout << "#sent#" << std::flush;
          pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0xff00});
       }
                   };
 
-//   st.send_next_request(resp);
+   st.get_scu().run();*/
+
+   //st.send_next_request(resp);
+
+   storage_thread.reset(new std::thread {[this, command, pm]()
+                                         {
+                                            storage_scu st {"QRSCP", "QRSCU", 4096, dict, [this, command, pm](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+                                                               std::cout << "#sent#" << std::flush;
+                                                               pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0xff00});
+                                                            }
+                                            };
+                                            st.get_scu().run();
+                                         }
+                        });
 
 
-      st.get_scu().run();
-
-
-      pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0x00ff});
-      pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0x0000});
+//      pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0x00ff});
+//      pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0x0000});
 }
 
 dicom::network::upperlayer::scp& queryretrieve_scp::get_scp()
