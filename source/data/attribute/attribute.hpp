@@ -337,15 +337,15 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const 
 template <VR vr>
 std::size_t validate(typename type_of<vr>::type& value_field)
 {
-   assert(false);
-   return 0;
+   auto size = byte_length(value_field);
+   return size;
 }
 
 template <>
 inline std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
 {
    for (auto it = value_field.begin(); it != value_field.end(); ++it) {
-      auto uid = *it;
+      auto& uid = *it;
       if (uid.length() > 64) {
          uid.resize(64);
       }
@@ -353,9 +353,9 @@ inline std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
          uid.resize(uid.length()+1);
       }
    }
-   return byte_length(value_field);
+   auto size = byte_length(value_field);
+   return size;
 }
-
 
 
 /**
@@ -504,12 +504,7 @@ template <VR vr>
 elementfield make_elementfield(const typename type_of<vr>::type::base_type &data)
 {
    typename type_of<vr>::type wrapper(data);
-   std::size_t len;
-   if (vr == VR::UI) {
-      len = validate<vr>(wrapper);
-   } else {
-      len = byte_length(wrapper);
-   }
+   std::size_t len = validate<vr>(wrapper);
    return make_elementfield<vr>(len, wrapper);
 }
 
