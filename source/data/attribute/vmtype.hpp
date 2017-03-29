@@ -269,6 +269,11 @@ class vmtype
                return container->value_sequence[s];
             }
 
+            T& operator*()
+            {
+               return container->value_sequence[index];
+            }
+
             T operator*() const
             {
                return container->value_sequence[index];
@@ -322,8 +327,9 @@ class vmtype
 
       std::size_t byte_size() const
       {
-         return std::accumulate(value_sequence.begin(), value_sequence.end(), 0,
+         auto size = std::accumulate(value_sequence.begin(), value_sequence.end(), 0,
                                 [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+         return size;
       }
 
    private:
