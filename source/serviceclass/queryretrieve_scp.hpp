@@ -26,7 +26,10 @@ class storage_scu_thread
          cfind_pm {cfind_pm},
          dict {dict}
       {
+         n = 0;
       }
+
+      int n;
 
       void operator()()
       {
@@ -36,6 +39,12 @@ class storage_scu_thread
                   [this](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
                   {
                      cfind_pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, cmove_cmd, boost::none, 0xff00});
+                     if (n >= 20)
+                     {
+                        st->release();
+                        cfind_pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, cmove_cmd, boost::none, 0x0000});
+                     }
+                     ++n;
                   }
          };
          st.get_scu().run();
@@ -54,6 +63,8 @@ class queryretrieve_scp
       queryretrieve_scp(std::string calling_ae, std::string called_ae,
                         int max_message_len, dicom::data::dictionary::dictionary& dict,
                         std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
+
+      ~queryretrieve_scp();
 
       void start_listen();
 
