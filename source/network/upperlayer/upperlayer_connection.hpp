@@ -269,6 +269,8 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       boost::optional<std::vector<unsigned char>*> received_pdu;
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 
+      bool shutdown_requested;
+
    protected:
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
