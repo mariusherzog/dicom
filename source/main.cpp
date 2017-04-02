@@ -141,7 +141,6 @@ int main()
 
       });
       qr.get_scp().run();
-
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }

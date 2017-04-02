@@ -69,7 +69,8 @@ scx::scx(data::dictionary::dictionary& dict,
    logger {"upperlayer"},
    proc {data::dataset::commandset_processor {dict}},
    received_pdu {boost::none},
-   handlers {}
+   handlers {},
+   shutdown_requested {false}
 {
    for (const auto p : l) {
       handlers[p.first] = p.second;
@@ -78,6 +79,8 @@ scx::scx(data::dictionary::dictionary& dict,
 
 scx::~scx()
 {
+   // closing of the connection may only be done when there are no
+   // outstanding operations
 }
 
 
@@ -174,7 +177,7 @@ void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
       close_connection();
    } else {
       // be ready for new data
-      if (!io_s().stopped()) {
+      if (!io_s().stopped() && !shutdown_requested) {
          do_read();
       }
    }
@@ -418,12 +421,15 @@ void scx::close_connection()
 {
    statem.transition(statemachine::EVENT::TRANS_CONN_CLOSED);
 
+   shutdown_requested = true;
+
    // closing of the connection may only be done when there are no
    // outstanding operations
    io_s().post([this]() {
       sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
       sock().close();
       handler_end_connection(this);
+      shutdown_requested = false;
    });
 }
 
