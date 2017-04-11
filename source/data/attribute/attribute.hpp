@@ -232,7 +232,7 @@ struct type_of<VR::LO>
 template<>
 struct type_of<VR::LT>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::string;
       static const std::size_t max_len = 10240;
 };
 template<>
@@ -280,7 +280,7 @@ struct type_of<VR::SS>
 template<>
 struct type_of<VR::ST>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::string;
       static const std::size_t max_len = 1024;
 };
 template<>
@@ -293,7 +293,7 @@ template<>
 struct type_of<VR::UI>
 {
       using type = attribute::vmtype<std::string>;
-      static const std::size_t max_len = 16;
+      static const std::size_t max_len = 64;
 };
 template<>
 struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
@@ -314,7 +314,7 @@ struct type_of<VR::UL> { using type = unsigned int; };
 template<>
 struct type_of<VR::UT>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::string;
       static const std::size_t max_len = 4294967294; //2^32-2
 };
 template<>
@@ -344,10 +344,175 @@ std::size_t validate(typename type_of<vr>::type& value_field)
 template <>
 inline std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
 {
+   auto max_len = type_of<VR::UI>::max_len;
    for (auto it = value_field.begin(); it != value_field.end(); ++it) {
       auto& uid = *it;
-      if (uid.length() > 64) {
-         uid.resize(64);
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::UT>(typename type_of<VR::UT>::type& value_field)
+{
+   auto size = byte_length(value_field);
+   if (size > type_of<VR::UT>::max_len) {
+      value_field.resize(type_of<VR::UT>::max_len);
+   }
+   if (value_field.length() % 2 != 0) {
+      value_field.resize(value_field.length()+1);
+   }
+   return byte_length(value_field);
+}
+
+template <>
+inline std::size_t validate<VR::ST>(typename type_of<VR::ST>::type& value_field)
+{
+   auto size = byte_length(value_field);
+   if (size > type_of<VR::ST>::max_len) {
+      value_field.resize(type_of<VR::ST>::max_len);
+   }
+   if (value_field.length() % 2 != 0) {
+      value_field.resize(value_field.length()+1);
+   }
+   return byte_length(value_field);
+}
+
+template <>
+inline std::size_t validate<VR::PN>(typename type_of<VR::PN>::type& value_field)
+{
+   // todo: complete this
+   auto max_len = type_of<VR::PN>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field)
+{
+   auto max_len = type_of<VR::IS>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+      // todo: any_of for all chars not supported?
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::LO>(typename type_of<VR::LO>::type& value_field)
+{
+   auto max_len = type_of<VR::LO>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::LT>(typename type_of<VR::LT>::type& value_field)
+{
+   auto size = byte_length(value_field);
+   if (size > type_of<VR::LT>::max_len) {
+      value_field.resize(type_of<VR::ST>::max_len);
+   }
+   if (value_field.length() % 2 != 0) {
+      value_field.resize(value_field.length()+1);
+   }
+   return byte_length(value_field);
+}
+
+template <>
+inline std::size_t validate<VR::DS>(typename type_of<VR::DS>::type& value_field)
+{
+   auto max_len = type_of<VR::DS>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+      // todo: any_of for all chars not supported?
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::CS>(typename type_of<VR::CS>::type& value_field)
+{
+   auto max_len = type_of<VR::CS>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+      // todo: any_of for all chars not supported?
+      // todo: ?trim?
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::AS>(typename type_of<VR::AS>::type& value_field)
+{
+   auto max_len = type_of<VR::AS>::len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
+      }
+      if (uid.length() % 2 != 0) {
+         uid.resize(uid.length()+1);
+      }
+      // todo: any_of for all chars not supported?
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+template <>
+inline std::size_t validate<VR::AE>(typename type_of<VR::AE>::type& value_field)
+{
+   auto max_len = type_of<VR::AE>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& uid = *it;
+      if (uid.length() > max_len) {
+         uid.resize(max_len);
       }
       if (uid.length() % 2 != 0) {
          uid.resize(uid.length()+1);
