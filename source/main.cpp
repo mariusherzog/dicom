@@ -43,6 +43,8 @@ int main()
          std::cout << "Received C_ECHO_RSP\n";
 //         std::cout << *data;
 
+         (*data)[{0x0008,0x4000}] = dicom::data::attribute::make_elementfield<VR::LT>("h\x12qej\x13");
+
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, *data, 0xff00});
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, boost::none, 0x0000});
 //         pm->release_association();

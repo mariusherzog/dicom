@@ -57,6 +57,37 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
    return os << "";
 }
 
+/**
+ * @brief validate_internal_texts ensures that the content of the value_field
+ *        is standard conformant for the VRs LT, ST and UT.
+ * @param value_field string containing value field data
+ * @return length of the corrected value field
+ */
+template <VR vr>
+std::size_t validate_internal_texts(std::string value_field)
+{
+   static_assert((vr == VR::LT || vr == VR::ST || vr == VR::UT), "");
+
+   auto is_allowed_char = [](const char c)
+   {
+      return !std::iscntrl(c) || static_cast<unsigned char>(c) == 0x0d ||
+            static_cast<unsigned char>(c) == 0x0c ||
+            static_cast<unsigned char>(c) == 0x0a ||
+            static_cast<unsigned char>(c) == 0x1b;
+
+   };
+   value_field.erase(std::remove_if(value_field.begin(), value_field.end(), is_allowed_char), value_field.end());
+
+   auto size = byte_length(value_field);
+   if (size > type_of<vr>::max_len) {
+      value_field.resize(type_of<vr>::max_len);
+   }
+   if (value_field.length() % 2 != 0) {
+      value_field.resize(value_field.length()+1);
+   }
+
+   return byte_length(value_field);
+}
 
 template <>
 std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
@@ -78,27 +109,13 @@ std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
 template <>
 std::size_t validate<VR::UT>(typename type_of<VR::UT>::type& value_field)
 {
-   auto size = byte_length(value_field);
-   if (size > type_of<VR::UT>::max_len) {
-      value_field.resize(type_of<VR::UT>::max_len);
-   }
-   if (value_field.length() % 2 != 0) {
-      value_field.resize(value_field.length()+1);
-   }
-   return byte_length(value_field);
+return validate_internal_texts<VR::UT>(value_field);
 }
 
 template <>
 std::size_t validate<VR::ST>(typename type_of<VR::ST>::type& value_field)
 {
-   auto size = byte_length(value_field);
-   if (size > type_of<VR::ST>::max_len) {
-      value_field.resize(type_of<VR::ST>::max_len);
-   }
-   if (value_field.length() % 2 != 0) {
-      value_field.resize(value_field.length()+1);
-   }
-   return byte_length(value_field);
+   return validate_internal_texts<VR::ST>(value_field);
 }
 
 template <>
@@ -157,14 +174,7 @@ std::size_t validate<VR::LO>(typename type_of<VR::LO>::type& value_field)
 template <>
 std::size_t validate<VR::LT>(typename type_of<VR::LT>::type& value_field)
 {
-   auto size = byte_length(value_field);
-   if (size > type_of<VR::LT>::max_len) {
-      value_field.resize(type_of<VR::ST>::max_len);
-   }
-   if (value_field.length() % 2 != 0) {
-      value_field.resize(value_field.length()+1);
-   }
-   return byte_length(value_field);
+   return validate_internal_texts<VR::LT>(value_field);
 }
 
 template <>
