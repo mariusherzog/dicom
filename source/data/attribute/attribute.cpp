@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <iterator>
+#include <functional>
 
 namespace dicom
 {
@@ -64,19 +65,19 @@ std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
  * @return length of the corrected value field
  */
 template <VR vr>
-std::size_t validate_internal_texts(std::string value_field)
+std::size_t validate_internal_texts(std::string& value_field)
 {
    static_assert((vr == VR::LT || vr == VR::ST || vr == VR::UT), "");
 
-   auto is_allowed_char = [](const char c)
+   auto not_allowed_char = [](const char c)
    {
-      return !std::iscntrl(c) || static_cast<unsigned char>(c) == 0x0d ||
-            static_cast<unsigned char>(c) == 0x0c ||
-            static_cast<unsigned char>(c) == 0x0a ||
-            static_cast<unsigned char>(c) == 0x1b;
+      return std::iscntrl(c) && static_cast<unsigned char>(c) != 0x0d &&
+            static_cast<unsigned char>(c) != 0x0c &&
+            static_cast<unsigned char>(c) != 0x0a &&
+            static_cast<unsigned char>(c) != 0x1b;
 
    };
-   value_field.erase(std::remove_if(value_field.begin(), value_field.end(), is_allowed_char), value_field.end());
+   value_field.erase(std::remove_if(value_field.begin(), value_field.end(), not_allowed_char), value_field.end());
 
    auto size = byte_length(value_field);
    if (size > type_of<vr>::max_len) {
@@ -87,6 +88,34 @@ std::size_t validate_internal_texts(std::string value_field)
    }
 
    return byte_length(value_field);
+}
+
+
+template <VR vr>
+std::size_t validate_internal_numstrings(vmtype<std::string>& value_field, std::vector<char> allowed)
+{
+   static_assert((vr == VR::IS || vr == VR::DS), "");
+
+   auto max_len = type_of<vr>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& val = *it;
+
+      auto is_allowed_char = [allowed](const char c)
+      {
+         return !std::isdigit(c) && (std::find(allowed.begin(), allowed.end(), c) == allowed.end());
+
+      };
+      val.erase(std::remove_if(val.begin(), val.end(), is_allowed_char), val.end());
+
+      if (val.length() > max_len) {
+         val.resize(max_len);
+      }
+      if (val.length() % 2 != 0) {
+         val.resize(val.length()+1);
+      }
+   }
+   auto size = byte_length(value_field);
+   return size;
 }
 
 template <>
@@ -109,7 +138,7 @@ std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
 template <>
 std::size_t validate<VR::UT>(typename type_of<VR::UT>::type& value_field)
 {
-return validate_internal_texts<VR::UT>(value_field);
+   return validate_internal_texts<VR::UT>(value_field);
 }
 
 template <>
@@ -137,21 +166,9 @@ std::size_t validate<VR::PN>(typename type_of<VR::PN>::type& value_field)
 }
 
 template <>
-inline std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field)
+std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field)
 {
-   auto max_len = type_of<VR::IS>::max_len;
-   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
-      auto& uid = *it;
-      if (uid.length() > max_len) {
-         uid.resize(max_len);
-      }
-      if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
-      }
-      // todo: any_of for all chars not supported?
-   }
-   auto size = byte_length(value_field);
-   return size;
+   return validate_internal_numstrings<VR::IS>(value_field, {'+', '-', 0x20});
 }
 
 template <>
@@ -180,19 +197,7 @@ std::size_t validate<VR::LT>(typename type_of<VR::LT>::type& value_field)
 template <>
 std::size_t validate<VR::DS>(typename type_of<VR::DS>::type& value_field)
 {
-   auto max_len = type_of<VR::DS>::max_len;
-   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
-      auto& uid = *it;
-      if (uid.length() > max_len) {
-         uid.resize(max_len);
-      }
-      if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
-      }
-      // todo: any_of for all chars not supported?
-   }
-   auto size = byte_length(value_field);
-   return size;
+   return validate_internal_numstrings<VR::DS>(value_field, {'+', '-', 0x20, '.', 'e', 'E'});
 }
 
 template <>

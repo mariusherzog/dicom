@@ -44,6 +44,7 @@ int main()
 //         std::cout << *data;
 
          (*data)[{0x0008,0x4000}] = dicom::data::attribute::make_elementfield<VR::LT>("h\x12qej\x13");
+         (*data)[{0x0018,0x1150}] = dicom::data::attribute::make_elementfield<VR::IS>("292w9292");
 
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, *data, 0xff00});
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RSP, command, boost::none, 0x0000});
