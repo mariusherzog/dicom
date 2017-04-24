@@ -46,6 +46,10 @@ class dimse_pm_manager
                        association_definition operations,
                        data::dictionary::dictionary& dict);
 
+      /**
+       * @brief run starts handling connections
+       */
+      void run();
 
    private:
       std::map<upperlayer::Iupperlayer_comm_ops*, std::unique_ptr<dimse_pm>> protocol_machines;
@@ -53,6 +57,7 @@ class dimse_pm_manager
       void create_dimse(upperlayer::Iupperlayer_comm_ops* scx);
       void remove_dimse(upperlayer::Iupperlayer_comm_ops* scx);
 
+      upperlayer::Iupperlayer_connection_handlers& conn;
       association_definition operations;
       data::dictionary::dictionary& dict;
 };

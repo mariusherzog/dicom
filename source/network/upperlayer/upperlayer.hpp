@@ -46,6 +46,11 @@ struct Iupperlayer_connection_handlers
        */
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
 
+      /**
+       * @brief run starts the handling of the connections
+       */
+      virtual void run() = 0;
+
       virtual ~Iupperlayer_connection_handlers() = 0;
 };
 
@@ -67,7 +72,7 @@ class scp: public Iupperlayer_connection_handlers
       /**
        * @brief run() instructs the server to start listening for associations
        */
-      void run();
+      virtual void run() override;
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
@@ -103,7 +108,7 @@ class scu: public Iupperlayer_connection_handlers
       /**
        * @brief run() instructs to client to start transmitting
        */
-      void run();
+      virtual void run() override;
 
       /**
        * @brief accept_new starts a new association with the parameters

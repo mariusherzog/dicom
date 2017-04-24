@@ -32,6 +32,7 @@ using namespace data::dataset;
 dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                                    association_definition operations,
                                    dictionary& dict):
+   conn {conn},
    operations {operations},
    dict {dict}
 {
@@ -48,6 +49,11 @@ void dimse_pm_manager::create_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 void dimse_pm_manager::remove_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
    protocol_machines.erase(scx);
+}
+
+void dimse_pm_manager::run()
+{
+   conn.run();
 }
 
 
