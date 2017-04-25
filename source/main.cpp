@@ -143,7 +143,7 @@ int main()
                            [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
 
       });
-      qr.get_scp().run();
+      qr.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }

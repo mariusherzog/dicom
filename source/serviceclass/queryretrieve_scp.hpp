@@ -10,6 +10,7 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/dimse/sop_class.hpp"
 #include "network/dimse/association_definition.hpp"
+#include "serviceclass.hpp"
 #include "storage_scu.hpp"
 
 class queryretrieve_scp;
@@ -57,7 +58,7 @@ class storage_scu_thread
       dicom::data::dictionary::dictionary& dict;
 };
 
-class queryretrieve_scp
+class queryretrieve_scp : public serviceclass
 {
    public:
       queryretrieve_scp(std::string calling_ae, std::string called_ae,
@@ -69,6 +70,8 @@ class queryretrieve_scp
       void start_listen();
 
       dicom::network::upperlayer::scp& get_scp();
+
+      virtual void run() override;
 
       void send_image(dicom::data::dataset::iod data);
 

@@ -93,6 +93,11 @@ dicom::network::upperlayer::scp& queryretrieve_scp::get_scp()
    return scp;
 }
 
+void queryretrieve_scp::run()
+{
+   dimse_pm.run();
+}
+
 void queryretrieve_scp::send_image(dataset::iod data)
 {
 
