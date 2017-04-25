@@ -9,6 +9,62 @@ namespace data
 namespace attribute
 {
 
+std::size_t byte_length(std::vector<unsigned char> value_field)
+{
+   return value_field.size();
+}
+
+std::size_t byte_length(const std::string& value_field)
+{
+   auto size = value_field.length();
+   return size;
+}
+
+std::size_t byte_length(unsigned char)
+{
+   return 1;
+}
+
+std::size_t byte_length(unsigned short)
+{
+   return 2;
+}
+
+std::size_t byte_length(short)
+{
+   return 2;
+}
+
+std::size_t byte_length(unsigned int)
+{
+   return 4;
+}
+
+std::size_t byte_length(long)
+{
+   return 4;
+}
+
+std::size_t byte_length(float)
+{
+   return 4;
+}
+
+std::size_t byte_length(double)
+{
+   return 4;
+}
+
+std::size_t byte_length(tag_type)
+{
+   return 4;
+}
+
+std::size_t byte_length(std::vector<dataset::dataset_type>)
+{
+   return 0xffffffff;
+}
+
 
 std::ostream& operator<<(std::ostream& os, vmtype<std::string> data)
 {

@@ -11,6 +11,7 @@ namespace data
 namespace dictionary
 {
 
+static dictionary_entry unknown {{attribute::VR::UN}, "UNKNOWN", "UNKNOWN", "*", false};
 
 dictionary::dictionary(std::string cmddic_path,
                        std::string datadic_path):
@@ -43,7 +44,7 @@ dictionary_entry dictionary::lookup(attribute::tag_type tag)
       try {
          return datadic.lookup(tag);
       } catch (...) {
-         std::cerr << tag << "#\n";
+         return unknown;
       }
    }
 }

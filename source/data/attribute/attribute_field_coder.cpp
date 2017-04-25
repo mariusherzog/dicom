@@ -413,7 +413,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::LT: {
-         attribute::vmtype<std::string> lt;
+         std::string lt;
          get_value_field<VR::LT>(attr, lt);
          data = convhelper::encode_byte_string(lt);
          break;
@@ -480,7 +480,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::ST: {
-         attribute::vmtype<std::string> st;
+         std::string st;
          get_value_field<VR::ST>(attr, st);
          data = convhelper::encode_byte_string(st);
          break;
@@ -507,7 +507,10 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          }
          break;
       }
-      case VR::UN: { /** @todo */
+      case VR::UN: {
+         std::vector<unsigned char> un;
+         get_value_field<VR::UN>(attr, un);
+         data = convhelper::encode_byte_array(un);
          break;
       }
       case VR::UR: {
@@ -527,7 +530,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::UT: {
-         attribute::vmtype<std::string> ut;
+         std::string ut;
          get_value_field<VR::UT>(attr, ut);
          data = convhelper::encode_byte_string(ut);
          break;
@@ -708,6 +711,11 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
       case VR::UT: {
          auto ut = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::UT>(len, ut);
+      }
+      case VR::UN: {
+         std::vector<unsigned char> un;
+         un = convhelper::decode_byte_array(data, begin, len);
+         return make_elementfield<VR::UN>(len, un);
       }
       default:
          assert(false);
