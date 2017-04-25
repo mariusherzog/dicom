@@ -84,13 +84,55 @@ std::size_t validate_internal_texts(std::string& value_field)
       value_field.resize(type_of<vr>::max_len);
    }
    if (value_field.length() % 2 != 0) {
-      value_field.resize(value_field.length()+1);
+      value_field.push_back(' ');
    }
 
    return byte_length(value_field);
 }
 
+/**
+ * @brief validate_internal_multitext ensures that content of the value_field
+ *        is standard conformant to the VRs AE and LO which represent text
+ *        with multiple values allowed
+ * @param value_field value_field containing data
+ * @param not_allowed set of characters not allowed
+ * @return byte length of the potentially corrected value field
+ */
+template <VR vr>
+std::size_t validate_internal_multitext(vmtype<std::string>& value_field, std::vector<char> not_allowed)
+{
+   static_assert((vr == VR::LO || vr == VR::AE), "");
 
+   auto max_len = type_of<vr>::max_len;
+   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
+      auto& val = *it;
+
+      auto not_allowed_char = [not_allowed](const char c)
+      {
+         return std::find(not_allowed.begin(), not_allowed.end(), c) == not_allowed.end();
+
+      };
+      val.erase(std::remove_if(val.begin(), val.end(), not_allowed_char), val.end());
+
+      if (val.length() > max_len) {
+         val.resize(max_len);
+      }
+      if (val.length() % 2 != 0) {
+         val.push_back(' ');
+      }
+   }
+   auto size = byte_length(value_field);
+   return size;
+}
+
+
+/**
+ * @brief validate_internal_numstrings ensures that the VRs IS and DS, which
+ *        represent a number in a string, are conforming to the standard.
+ * @param value_field value field containing data
+ * @param allowed set of allowed characters, like +, -, ., e, etc.
+ * @return byte length of the potentially corrected value field
+ */
 template <VR vr>
 std::size_t validate_internal_numstrings(vmtype<std::string>& value_field, std::vector<char> allowed)
 {
@@ -111,12 +153,13 @@ std::size_t validate_internal_numstrings(vmtype<std::string>& value_field, std::
          val.resize(max_len);
       }
       if (val.length() % 2 != 0) {
-         val.resize(val.length()+1);
+         val.push_back(' ');
       }
    }
    auto size = byte_length(value_field);
    return size;
 }
+
 
 template <>
 std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
@@ -124,14 +167,24 @@ std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
    auto max_len = type_of<VR::UI>::max_len;
    for (auto it = value_field.begin(); it != value_field.end(); ++it) {
       auto& uid = *it;
+
+      auto not_allowed_char = [](const char c)
+      {
+         return !std::isdigit(c) && c != '.';
+
+      };
+      uid.erase(std::remove_if(uid.begin(), uid.end(), not_allowed_char), uid.end());
+
       if (uid.length() > max_len) {
          uid.resize(max_len);
       }
-      if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
-      }
    }
    auto size = byte_length(value_field);
+   if (size % 2 != 0)
+   {
+      value_field.back().resize(size+1);
+      return size+1;
+   }
    return size;
 }
 
@@ -158,7 +211,7 @@ std::size_t validate<VR::PN>(typename type_of<VR::PN>::type& value_field)
          uid.resize(max_len);
       }
       if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
+         uid.push_back(' ');
       }
    }
    auto size = byte_length(value_field);
@@ -174,18 +227,7 @@ std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field)
 template <>
 std::size_t validate<VR::LO>(typename type_of<VR::LO>::type& value_field)
 {
-   auto max_len = type_of<VR::LO>::max_len;
-   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
-      auto& uid = *it;
-      if (uid.length() > max_len) {
-         uid.resize(max_len);
-      }
-      if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
-      }
-   }
-   auto size = byte_length(value_field);
-   return size;
+   return validate_internal_multitext<VR::LO>(value_field, {});
 }
 
 template <>
@@ -206,14 +248,21 @@ std::size_t validate<VR::CS>(typename type_of<VR::CS>::type& value_field)
    auto max_len = type_of<VR::CS>::max_len;
    for (auto it = value_field.begin(); it != value_field.end(); ++it) {
       auto& uid = *it;
+
+      std::transform(uid.begin(), uid.end(), uid.begin(), ::toupper);
+      auto not_allowed_char = [](const char c)
+      {
+         return !std::isdigit(c) && c != '_' && c != '_';
+
+      };
+      uid.erase(std::remove_if(uid.begin(), uid.end(), not_allowed_char), uid.end());
+
       if (uid.length() > max_len) {
          uid.resize(max_len);
       }
       if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
+         uid.push_back(' ');
       }
-      // todo: any_of for all chars not supported?
-      // todo: ?trim?
    }
    auto size = byte_length(value_field);
    return size;
@@ -231,7 +280,6 @@ std::size_t validate<VR::AS>(typename type_of<VR::AS>::type& value_field)
       if (uid.length() % 2 != 0) {
          uid.resize(uid.length()+1);
       }
-      // todo: any_of for all chars not supported?
    }
    auto size = byte_length(value_field);
    return size;
@@ -240,18 +288,7 @@ std::size_t validate<VR::AS>(typename type_of<VR::AS>::type& value_field)
 template <>
 std::size_t validate<VR::AE>(typename type_of<VR::AE>::type& value_field)
 {
-   auto max_len = type_of<VR::AE>::max_len;
-   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
-      auto& uid = *it;
-      if (uid.length() > max_len) {
-         uid.resize(max_len);
-      }
-      if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
-      }
-   }
-   auto size = byte_length(value_field);
-   return size;
+   return validate_internal_multitext<VR::AE>(value_field, {0x0a, 0x0c, 0x0d, 0x1b});
 }
 
 
