@@ -32,6 +32,7 @@ using namespace data::dataset;
 dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                                    association_definition operations,
                                    dictionary& dict):
+   conn {conn},
    operations {operations},
    dict {dict}
 {
@@ -48,6 +49,11 @@ void dimse_pm_manager::create_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 void dimse_pm_manager::remove_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
    protocol_machines.erase(scx);
+}
+
+void dimse_pm_manager::run()
+{
+   conn.run();
 }
 
 
@@ -232,17 +238,26 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
       if (!operations.get_SOP_class(pc.abstract_syntax).empty()) {
 
          bool have_common_ts = false;
-         auto pres_cont = operations.get_SOP_class(pc.abstract_syntax)[0];
-         auto transfer_syntaxes = pres_cont.transfer_syntaxes;
-         for (const auto ts : transfer_syntaxes) {
-            if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
-                != transfer_syntaxes.end() /* &&
-                std::find_if(transfer_processors.begin(), transfer_processors.end(),)*/) {
-               ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
-               have_common_ts = true;
-               break;
+         auto pres_conts = operations.get_SOP_class(pc.abstract_syntax);
+         auto have_pres_cont = std::find_if(pres_conts.begin(), pres_conts.end(),
+                                            [](association_definition::presentation_context pc)
+         { return pc.msg_type == association_definition::DIMSE_MSG_TYPE::RESPONSE; });
+
+         if (have_pres_cont != pres_conts.end())
+         {
+            auto pres_cont = *have_pres_cont;
+            auto transfer_syntaxes = pres_cont.transfer_syntaxes;
+            for (const auto ts : transfer_syntaxes) {
+               if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
+                   != transfer_syntaxes.end() /* &&
+                   std::find_if(transfer_processors.begin(), transfer_processors.end(),)*/) {
+                  ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
+                  have_common_ts = true;
+                  break;
+               }
             }
          }
+
          if (!have_common_ts) {
             ac.pres_contexts.push_back({pc.id, RESULT::TRANSF_SYNT_NOT_SUPP, pc.abstract_syntax});
             BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << pc.id << "\n";

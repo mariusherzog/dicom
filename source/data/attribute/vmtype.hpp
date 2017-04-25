@@ -413,6 +413,11 @@ class vmtype
          insert(values.begin(), values.end());
       }
 
+      T& back()
+      {
+         return value_sequence.back();
+      }
+
 
       /**
        * @brief insert inserts all values in the range specified by the

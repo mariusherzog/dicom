@@ -232,7 +232,7 @@ struct type_of<VR::LO>
 template<>
 struct type_of<VR::LT>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::string;
       static const std::size_t max_len = 10240;
 };
 template<>
@@ -280,7 +280,7 @@ struct type_of<VR::SS>
 template<>
 struct type_of<VR::ST>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::string;
       static const std::size_t max_len = 1024;
 };
 template<>
@@ -293,10 +293,15 @@ template<>
 struct type_of<VR::UI>
 {
       using type = attribute::vmtype<std::string>;
-      static const std::size_t max_len = 16;
+      static const std::size_t max_len = 64;
 };
 template<>
-struct type_of<VR::UN> { using type = std::vector<unsigned char>; };
+struct type_of<VR::UN>
+{
+      using type = std::vector<unsigned char>;
+      static const std::size_t max_len = 4294967294; //2^32-2
+      // size only demilited by size of value length field (4 bytes)
+};
 template<>
 struct type_of<VR::UR>
 {
@@ -314,7 +319,7 @@ struct type_of<VR::UL> { using type = unsigned int; };
 template<>
 struct type_of<VR::UT>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::string;
       static const std::size_t max_len = 4294967294; //2^32-2
 };
 template<>
@@ -342,20 +347,37 @@ std::size_t validate(typename type_of<vr>::type& value_field)
 }
 
 template <>
-inline std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field)
-{
-   for (auto it = value_field.begin(); it != value_field.end(); ++it) {
-      auto& uid = *it;
-      if (uid.length() > 64) {
-         uid.resize(64);
-      }
-      if (uid.length() % 2 != 0) {
-         uid.resize(uid.length()+1);
-      }
-   }
-   auto size = byte_length(value_field);
-   return size;
-}
+std::size_t validate<VR::UI>(typename type_of<VR::UI>::type& value_field);
+
+template <>
+std::size_t validate<VR::UT>(typename type_of<VR::UT>::type& value_field);
+
+template <>
+std::size_t validate<VR::ST>(typename type_of<VR::ST>::type& value_field);
+
+template <>
+std::size_t validate<VR::PN>(typename type_of<VR::PN>::type& value_field);
+
+template <>
+std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field);
+
+template <>
+std::size_t validate<VR::LO>(typename type_of<VR::LO>::type& value_field);
+
+template <>
+std::size_t validate<VR::LT>(typename type_of<VR::LT>::type& value_field);
+
+template <>
+std::size_t validate<VR::DS>(typename type_of<VR::DS>::type& value_field);
+
+template <>
+std::size_t validate<VR::CS>(typename type_of<VR::CS>::type& value_field);
+
+template <>
+std::size_t validate<VR::AS>(typename type_of<VR::AS>::type& value_field);
+
+template <>
+std::size_t validate<VR::AE>(typename type_of<VR::AE>::type& value_field);
 
 
 /**
@@ -531,7 +553,7 @@ elementfield make_elementfield()
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t len, VR vr_)
+elementfield make_elementfield(std::size_t len, VR)
 {
    static_assert(std::is_same<typename type_of<vr>::type, empty_t>::value, "Expected sequence info type (VR == NI)");
    elementfield el;
