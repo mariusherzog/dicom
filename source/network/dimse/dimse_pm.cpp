@@ -311,8 +311,8 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
          auto request = sop.sop_class;
          for (auto sg : request.get_service_groups()) {
             commandset_data header;
-            header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(18, request.get_SOP_class_UID());
-            header[{0x0000, 0x0120}] = make_elementfield<VR::US>(2, next_message_id());
+            header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(request.get_SOP_class_UID());
+            header[{0x0000, 0x0120}] = make_elementfield<VR::US>(next_message_id());
             request(this, sg, header, nullptr);
          }
       }
@@ -635,7 +635,7 @@ upperlayer::p_data_tf dimse_pm::assemble_cstore_rq(response r, int pres_context_
    cresp[Status]                 = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID] = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
    cresp[MoveOriginatorApplicationEntityTitle] = make_elementfield<VR::AE>(move_orig_ae.length(), move_orig_ae);
-   cresp[MoveOriginatorMessageID]              = make_elementfield<VR::US>(2, move_orig_id);
+   cresp[MoveOriginatorMessageID]              = make_elementfield<VR::US>(move_orig_id);
 
    auto size = dataset_size(cresp);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
@@ -814,21 +814,21 @@ upperlayer::p_data_tf dimse_pm::assemble_cmove_rsp(response r, int pres_context_
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageID), message_id);
+   get_value_field<VR::US>(cs.at(MessageID), message_id);/*
    get_value_field<VR::US>(cs.at(NumberOfRemainingSuboperations), num_remaining_sub);
    get_value_field<VR::US>(cs.at(NumberOfCompletedSuboperations), num_completed_sub);
    get_value_field<VR::US>(cs.at(NumberOfFailedSuboperations), num_failed_sub);
-   get_value_field<VR::US>(cs.at(NumberOfWarningSuboperations), num_warning_sub);
+   get_value_field<VR::US>(cs.at(NumberOfWarningSuboperations), num_warning_sub);*/
 
    cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
    cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(message_id);
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
-   cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
+   cresp[Status]                    = make_elementfield<VR::US>(r.get_status());/*
    cresp[NumberOfRemainingSuboperations] = make_elementfield<VR::US>(num_remaining_sub);
    cresp[NumberOfCompletedSuboperations] = make_elementfield<VR::US>(num_completed_sub);
    cresp[NumberOfFailedSuboperations]    = make_elementfield<VR::US>(num_failed_sub);
-   cresp[NumberOfWarningSuboperations]   = make_elementfield<VR::US>(num_warning_sub);
+   cresp[NumberOfWarningSuboperations]   = make_elementfield<VR::US>(num_warning_sub);*/
 
    auto size = dataset_size(cresp);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);

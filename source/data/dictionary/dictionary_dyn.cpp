@@ -80,6 +80,9 @@ dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
 
 dictionary_entry dictionary_dyn::lookup(attribute::tag_type tag)
 {
+   std::lock_guard<std::mutex> lock {access_lock};
+   dictionary_file.clear();
+   dictionary_file.seekg(0, std::ios_base::beg);
    BOOST_SCOPE_EXIT(&dictionary_file) {
       dictionary_file.clear();
       dictionary_file.seekg(0, std::ios_base::beg);

@@ -23,6 +23,8 @@ namespace network
 namespace upperlayer
 {
 
+void run();
+
 
 /**
  * @brief The Iupperlayer_connection_handlers struct defines an interface to inject callbacks

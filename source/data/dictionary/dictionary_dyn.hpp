@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <fstream>
+#include <mutex>
 
 #include "dictionary_entry.hpp"
 
@@ -49,6 +50,8 @@ class dictionary_dyn
    private:
       std::ifstream dictionary_file;
       MODE buffermode;
+
+      std::mutex access_lock;
 
       std::map<attribute::tag_type, dictionary_entry> dict_buffer;
 

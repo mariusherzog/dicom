@@ -11,6 +11,9 @@
 #include "data/dictionary/dictionary.hpp"
 #include "data/attribute/constants.hpp"
 
+#include "serviceclass/storage_scu.hpp"
+#include "serviceclass/queryretrieve_scp.hpp"
+
 #include "util/channel_sev_logger.hpp"
 
 int main()
@@ -75,7 +78,7 @@ int main()
       }}}
    };
 
-   dimse::SOP_class findrq {"1.2.840.10008.5.1.4.31",
+   dimse::SOP_class findrq {"1.2.840.10008.5.1.4.1.1.2",
    { { dataset::DIMSE_SERVICE_GROUP::C_FIND_RQ,
       [](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) {
          assert(data == nullptr);
@@ -120,12 +123,27 @@ int main()
 
    try
    {
-      auto request_property = ascdef.get_initial_request();
-//      dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
-      dicom::network::upperlayer::scp sc(dict, 11113);
-      dicom::network::dimse::dimse_pm_manager dpm(sc, ascdef, dict);
+      //auto request_property = ascdef.get_initial_request();
+      //dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
+      //dicom::network::upperlayer::scp sc(dict, 11113);
+      //dicom::network::dimse::dimse_pm_manager dpm(sc, ascdef, dict);
 
-      dpm.run();
+      //sc.run();
+
+//      int x = 0;
+//      storage_scu storage("STORESCU", "STORESCP", 4096, dict,
+//                          [&x](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+//         std::cout << cmd << "##";
+//         if (x > 2) st->release();
+//         x++;
+//      });
+//      storage.get_scu().run();
+
+      queryretrieve_scp qr("QRSCP", "QRSCU", 4096, dict,
+                           [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+
+      });
+      qr.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }
