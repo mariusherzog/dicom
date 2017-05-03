@@ -8,9 +8,10 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/dimse/sop_class.hpp"
 #include "network/dimse/association_definition.hpp"
+#include "serviceclass.hpp"
 
 
-class storage_scu
+class storage_scu : public Iserviceclass
 {
    public:
       storage_scu(std::string calling_ae, std::string called_ae,
@@ -23,10 +24,7 @@ class storage_scu
 
       void release();
 
-      // void abort();
-
-      //TODO: deprecate this!
-      dicom::network::upperlayer::scu& get_scu();
+      virtual void run() override;
 
    private:
       dicom::network::dimse::SOP_class sop_class;

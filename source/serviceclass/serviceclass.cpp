@@ -1,6 +1,6 @@
 #include "serviceclass.hpp"
 
-serviceclass::~serviceclass()
+Iserviceclass::~Iserviceclass()
 {
 
 }

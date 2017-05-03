@@ -49,11 +49,6 @@ storage_scu::~storage_scu()
    // close
 }
 
-upperlayer::scu& storage_scu::get_scu()
-{
-   return scu;
-}
-
 void storage_scu::release()
 {
    do_release = true;
@@ -63,6 +58,11 @@ void storage_scu::send_next_request(dataset::iod data)
 {
    senddata = data;
    scu.accept_new();
+}
+
+void storage_scu::run()
+{
+   dimse_pm.run();
 }
 
 void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data)

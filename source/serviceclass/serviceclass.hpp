@@ -5,10 +5,10 @@
  * @brief The serviceclass interface contains all common operations performed
  *        with a concrete service class
  */
-class serviceclass
+class Iserviceclass
 {
    public:
-      virtual ~serviceclass() = 0;
+      virtual ~Iserviceclass() = 0;
 
       /**
        * @brief run starts listening as scp or initiates contact as scu

@@ -48,7 +48,7 @@ class storage_scu_thread
                      ++n;
                   }
          };
-         st.get_scu().run();
+         st.run();
       }
 
    private:
@@ -58,7 +58,7 @@ class storage_scu_thread
       dicom::data::dictionary::dictionary& dict;
 };
 
-class queryretrieve_scp : public serviceclass
+class queryretrieve_scp : public Iserviceclass
 {
    public:
       queryretrieve_scp(std::string calling_ae, std::string called_ae,

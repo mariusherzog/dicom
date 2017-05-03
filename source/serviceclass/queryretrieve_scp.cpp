@@ -54,27 +54,11 @@ void queryretrieve_scp::handle_cfind(dimse::dimse_pm* pm, dataset::commandset_da
 {
    handler(this, command, std::move(data));
 
-//   if (do_release) {
-//      pm->release_association();
-//   }
-
-   //cstore.get_scu().run();
-
 
    // loop through result set
    dicom::data::dataset::iod resp;
    //resp[{0x0008,0x0005}] = attribute::make_elementfield<VR::CS>("ISO_IR 6");
-   resp[{0x0010,0x0010}] = attribute::make_elementfield<VR::PN>("meow");
-/*
-   storage_scu st {"QRSCP", "QRSCU", 4096, dict, [this, command, pm](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
-         std::cout << "#sent#" << std::flush;
-         pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0xff00});
-      }
-                  };
-
-   st.get_scu().run();*/
-
-   //st.send_next_request(resp);
+   //resp[{0x0010,0x0010}] = attribute::make_elementfield<VR::PN>("meow");
 
    if (storage_thread.get()) {
       storage_thread->join();
@@ -82,10 +66,6 @@ void queryretrieve_scp::handle_cfind(dimse::dimse_pm* pm, dataset::commandset_da
 
    storage_operation.reset(new storage_scu_thread {*this, command, pm, dict});
    storage_thread.reset(new std::thread {*storage_operation});
-
-
-//      pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0x00ff});
-//      pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, command, boost::none, 0x0000});
 }
 
 dicom::network::upperlayer::scp& queryretrieve_scp::get_scp()
