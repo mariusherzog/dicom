@@ -14,9 +14,6 @@ using namespace dicom::data::attribute;
 using namespace dicom::data::dictionary;
 using namespace dicom::network;
 
-using handlermap = std::map<dicom::data::dataset::DIMSE_SERVICE_GROUP,
-std::function<void(dicom::network::dimse::dimse_pm* pm, dicom::data::dataset::commandset_data cdata, std::unique_ptr<dicom::data::dataset::iod> data)>>;
-
 storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
                          int max_message_len, dicom::data::dictionary::dictionary& dict,
                          std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):

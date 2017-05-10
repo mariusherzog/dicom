@@ -5,6 +5,7 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/upperlayer/upperlayer.hpp"
 
+#include "data/attribute/attribute.hpp"
 #include "data/dataset/dataset_iterator.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 #include "data/dictionary/datadictionary.hpp"
@@ -12,6 +13,7 @@
 #include "data/attribute/constants.hpp"
 
 #include "serviceclass/storage_scu.hpp"
+#include "serviceclass/storage_scp.hpp"
 #include "serviceclass/queryretrieve_scp.hpp"
 
 #include "util/channel_sev_logger.hpp"
@@ -123,27 +125,21 @@ int main()
 
    try
    {
-      //auto request_property = ascdef.get_initial_request();
-      //dicom::network::upperlayer::scu sc(dict, "localhost", "11113", request_property);
-      //dicom::network::upperlayer::scp sc(dict, 11113);
-      //dicom::network::dimse::dimse_pm_manager dpm(sc, ascdef, dict);
 
-      //sc.run();
+//      queryretrieve_scp qr("QRSCP", "QRSCU", 4096, dict,
+//                           [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
 
-//      int x = 0;
-//      storage_scu storage("STORESCU", "STORESCP", 4096, dict,
-//                          [&x](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
-//         std::cout << cmd << "##";
-//         if (x > 2) st->release();
-//         x++;
 //      });
-//      storage.get_scu().run();
-
-      queryretrieve_scp qr("QRSCP", "QRSCU", 4096, dict,
-                           [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
-
+      storage_scp store("STORAGESCU", "STORAGESCP", 4096, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      {
+         std::ofstream out("out", std::ios::binary);
+         std::vector<unsigned char> imdata;
+         auto value_field = (*data)[{0x7fe0,0x0010}];
+         get_value_field<VR::OW>(value_field, imdata);
+         out << imdata;
+         out.flush();
       });
-      qr.run();
+      store.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }
