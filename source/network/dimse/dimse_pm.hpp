@@ -214,6 +214,8 @@ class dimse_pm
 
       association_definition operations;
 
+      int msg_id = 1;
+
       std::size_t max_remote_msg_length;
 
       std::map<data::dataset::DIMSE_SERVICE_GROUP

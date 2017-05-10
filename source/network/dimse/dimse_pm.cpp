@@ -453,8 +453,7 @@ void dimse_pm::sent_abort(upperlayer::scx* sc, upperlayer::property*)
 
 int dimse_pm::next_message_id()
 {
-   static int mid = 1;
-   return mid++;
+   return msg_id++;
 }
 
 transfer_processor& dimse_pm::find_transfer_processor()
@@ -516,14 +515,12 @@ upperlayer::p_data_tf dimse_pm::assemble_cecho_rq(response r, int pres_context_i
    commandset_data cresp;
 
    std::string SOP_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
 
    cresp[AffectedSOPClassUID] = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]        = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]           = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]           = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]  = make_elementfield<VR::US>(0x0101);
    cresp[Status]              = make_elementfield<VR::US>(r.get_status());
 
@@ -549,15 +546,13 @@ upperlayer::p_data_tf dimse_pm::assemble_cfind_rq(response r,  int pres_context_
    commandset_data cresp;
 
    std::string SOP_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
 
    cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]           = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]              = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]              = make_elementfield<VR::US>(next_message_id());
    cresp[Priority]               = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_priority()));
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[Status]                 = make_elementfield<VR::US>(r.get_status());
@@ -618,18 +613,17 @@ upperlayer::p_data_tf dimse_pm::assemble_cstore_rq(response r, int pres_context_
    commandset_data cresp;
 
    std::string SOP_uid, aff_SOP_uid, move_orig_ae;
-   unsigned short message_id, move_orig_id;
+   unsigned short move_orig_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
    get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
    get_value_field<VR::AE>(cs.at(MoveOriginatorApplicationEntityTitle), move_orig_ae);
    get_value_field<VR::US>(cs.at(MoveOriginatorMessageID), move_orig_id);
 
    cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]           = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]              = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]              = make_elementfield<VR::US>(next_message_id());
    cresp[Priority]               = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_priority()));
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[Status]                 = make_elementfield<VR::US>(r.get_status());
@@ -695,15 +689,13 @@ upperlayer::p_data_tf dimse_pm::assemble_cget_rq(response r, int pres_context_id
    commandset_data cresp;
 
    std::string SOP_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
 
    cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]           = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]              = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]              = make_elementfield<VR::US>(next_message_id());
    cresp[Priority]               = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_priority()));
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
 
@@ -773,16 +765,14 @@ upperlayer::p_data_tf dimse_pm::assemble_cmove_rq(response r, int pres_context_i
 
    std::string SOP_uid;
    std::string move_destination;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
    get_value_field<VR::AE>(cs.at(MoveDestination), move_destination);
 
    cresp[AffectedSOPClassUID]    = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]           = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]              = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]              = make_elementfield<VR::US>(next_message_id());
    cresp[Priority]               = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_priority()));
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[MoveDestination]        = make_elementfield<VR::AE>(move_destination);
@@ -927,16 +917,14 @@ upperlayer::p_data_tf dimse_pm::assemble_nget_rq(response r, int pres_context_id
    commandset_data cresp;
 
    std::string SOP_uid, SOP_instance_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
    get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
 
    cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]                 = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]                 = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
 
@@ -998,16 +986,14 @@ upperlayer::p_data_tf dimse_pm::assemble_nset_rq(response r, int pres_context_id
    commandset_data cresp;
 
    std::string SOP_uid, SOP_instance_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
    get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
 
    cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]                 = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]                 = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
 
@@ -1033,16 +1019,14 @@ upperlayer::p_data_tf dimse_pm::assemble_nset_rsp(response r, int pres_context_i
    commandset_data cresp;
 
    std::string SOP_uid, aff_SOP_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
-   get_value_field<VR::US>(cs.at(MessageID), message_id);
    get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), aff_SOP_uid);
 
    cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(message_id);
+   cresp[MessageIDBeingRespondedTo] = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
@@ -1069,18 +1053,17 @@ upperlayer::p_data_tf dimse_pm::assemble_naction_rq(response r, int pres_context
    commandset_data cresp;
 
    std::string SOP_uid, SOP_instance_uid;
-   unsigned short message_id, action_id;
+   unsigned short action_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
    get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
    get_value_field<VR::US>(cs.at(ActionTypeID), action_id);
 
 
    cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]                 = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]                 = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
    cresp[ActionTypeID]              = make_elementfield<VR::US>(action_id);
@@ -1145,17 +1128,14 @@ upperlayer::p_data_tf dimse_pm::assemble_ncreate_rq(response r, int pres_context
    commandset_data cresp;
 
    std::string SOP_uid, SOP_instance_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(AffectedSOPClassUID), SOP_uid);
    get_value_field<VR::UI>(cs.at(AffectedSOPInstanceUID), SOP_instance_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
-
 
    cresp[AffectedSOPClassUID]       = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]                 = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]                 = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(SOP_instance_uid);
 
@@ -1217,17 +1197,14 @@ upperlayer::p_data_tf dimse_pm::assemble_ndelete_rq(response r, int pres_context
    commandset_data cresp;
 
    std::string SOP_uid, SOP_instance_uid;
-   unsigned short message_id;
    auto cs = r.get_command();
    bool hasdata = r.get_data().is_initialized();
    get_value_field<VR::UI>(cs.at(RequestedSOPClassUID), SOP_uid);
    get_value_field<VR::UI>(cs.at(RequestedSOPInstanceUID), SOP_instance_uid);
-   get_value_field<VR::US>(cs.at(MessageIDBeingRespondedTo), message_id);
-
 
    cresp[RequestedSOPClassUID]      = make_elementfield<VR::UI>(SOP_uid);
    cresp[CommandField]              = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_response_type()));
-   cresp[MessageID]                 = make_elementfield<VR::US>(message_id);
+   cresp[MessageID]                 = make_elementfield<VR::US>(next_message_id());
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
 
