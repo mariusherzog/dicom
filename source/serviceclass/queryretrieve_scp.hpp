@@ -15,48 +15,7 @@
 
 class queryretrieve_scp;
 
-class storage_scu_thread
-{
-   public:
-      storage_scu_thread(queryretrieve_scp& qr_scp,
-                         dicom::data::dataset::commandset_data cmove_cmd,
-                         dicom::network::dimse::dimse_pm* cfind_pm,
-                         dicom::data::dictionary::dictionary& dict):
-         qr_scp {qr_scp},
-         cmove_cmd {cmove_cmd},
-         cfind_pm {cfind_pm},
-         dict {dict}
-      {
-         n = 0;
-      }
-
-      int n;
-
-      void operator()()
-      {
-         storage_scu st
-         {
-            "QRSCP", "QRSCU", 4096, dict,
-                  [this](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
-                  {
-                     cfind_pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, cmove_cmd, boost::none, 0xff00});
-                     if (n >= 20)
-                     {
-                        st->release();
-                        cfind_pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, cmove_cmd, boost::none, 0x0000});
-                     }
-                     ++n;
-                  }
-         };
-         st.run();
-      }
-
-   private:
-      queryretrieve_scp& qr_scp;
-      dicom::data::dataset::commandset_data cmove_cmd;
-      dicom::network::dimse::dimse_pm* cfind_pm;
-      dicom::data::dictionary::dictionary& dict;
-};
+class storage_scu_thread;
 
 class queryretrieve_scp : public Iserviceclass
 {
