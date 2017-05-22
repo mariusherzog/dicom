@@ -259,12 +259,12 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
          }
 
          if (!have_common_ts) {
-            ac.pres_contexts.push_back({pc.id, RESULT::TRANSF_SYNT_NOT_SUPP, pc.abstract_syntax});
+            ac.pres_contexts.push_back({pc.id, RESULT::TRANSF_SYNT_NOT_SUPP, ""});
             BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << pc.id << "\n";
          }
 
       } else {
-         ac.pres_contexts.push_back({pc.id, RESULT::ABSTR_CONT_NOT_SUPP, pc.abstract_syntax});
+         ac.pres_contexts.push_back({pc.id, RESULT::ABSTR_CONT_NOT_SUPP, ""});
       }
 
    }
