@@ -41,8 +41,6 @@ class queryretrieve_scp : public Iserviceclass
                         dicom::data::dataset::commandset_data command,
                         std::unique_ptr<dicom::data::dataset::iod> data);
 
-      //storage_scu cstore;
-
       dicom::data::dictionary::dictionary& dict;
       dicom::network::dimse::SOP_class sop_class;
       dicom::network::dimse::association_definition assoc_def;

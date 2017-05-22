@@ -19,6 +19,7 @@ namespace network
 namespace dimse
 {
 
+
 /**
  * @brief The initial_request class is used to notify the dimse pm of the
  *        available presentation contexts.
@@ -49,11 +50,15 @@ class association_definition
             SOP_class sop_class;
             std::vector<std::string> transfer_syntaxes;
             DIMSE_MSG_TYPE msg_type;
+
+            presentation_context(SOP_class SOP,
+                                 std::vector<std::string> transfer_syntaxes,
+                                 DIMSE_MSG_TYPE msg_type);
       };
 
       association_definition(std::string calling_ae,
                       std::string called_ae,
-                      std::initializer_list<presentation_context> pcs,
+                      std::vector<presentation_context> pcs,
                       int max_message_len = 0xfffe,
                       std::string application_context = "1.2.840.10008.3.1.1.1");
 
@@ -82,6 +87,18 @@ class association_definition
       upperlayer::a_associate_rq request;
       std::vector<presentation_context> supported_sops;
 };
+
+/**
+ * @brief presentation_context constructor used to set the same
+ *        transfer syntaxes for a set of sop classes
+ * @param sop_classes set of sop classes
+ * @param transfer_syntaxes transfer syntaxes supported
+ * @param msg_type message type, response or initiatiator
+ */
+std::vector<association_definition::presentation_context> make_presentation_contexts(
+      std::vector<SOP_class> sop_classes,
+      std::initializer_list<std::string> transfer_syntaxes,
+      association_definition::DIMSE_MSG_TYPE msg_type);
 
 }
 

@@ -31,8 +31,10 @@ class storage_scp : public Iserviceclass
                          dicom::data::dataset::commandset_data command,
                          std::unique_ptr<dicom::data::dataset::iod> data);
 
+      handlermap cstore_sop;
+
       dicom::data::dictionary::dictionary& dict;
-      dicom::network::dimse::SOP_class sop_class;
+      std::vector<dicom::network::dimse::SOP_class> sop_classes;
       dicom::network::dimse::association_definition assoc_def;
       dicom::network::upperlayer::scp scp;
       dicom::network::dimse::dimse_pm_manager dimse_pm;

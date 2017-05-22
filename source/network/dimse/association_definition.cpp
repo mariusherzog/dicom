@@ -28,7 +28,7 @@ static std::string pad_to_16(std::string s)
 
 association_definition::association_definition(std::string calling_ae,
                                  std::string called_ae,
-                                 std::initializer_list<presentation_context> pcs,
+                                 std::vector<presentation_context> pcs,
                                  int max_message_len,
                                  std::string application_context)
 {
@@ -56,6 +56,15 @@ association_definition::association_definition(std::string calling_ae,
    }
 }
 
+association_definition::presentation_context::presentation_context(SOP_class SOP, std::vector<std::string> transfer_syntaxes, DIMSE_MSG_TYPE msg_type):
+   sop_class {SOP},
+   transfer_syntaxes {transfer_syntaxes},
+   msg_type {msg_type}
+{
+
+}
+
+
 std::vector<association_definition::presentation_context>
    association_definition::get_SOP_class(std::string abstract_syntax) const
 {
@@ -78,6 +87,18 @@ std::vector<association_definition::presentation_context>
 upperlayer::a_associate_rq association_definition::get_initial_request() const
 {
    return request;
+}
+
+std::vector<association_definition::presentation_context> make_presentation_contexts(std::vector<SOP_class> sop_classes,
+      std::initializer_list<std::string> transfer_syntaxes,
+      association_definition::DIMSE_MSG_TYPE msg_type)
+{
+   std::vector<association_definition::presentation_context> pcs;
+   pcs.reserve(sop_classes.size());
+   for (auto sop : sop_classes) {
+      pcs.emplace_back(sop, transfer_syntaxes, msg_type);
+   }
+   return pcs;
 }
 
 }

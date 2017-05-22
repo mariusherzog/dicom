@@ -126,21 +126,21 @@ int main()
    try
    {
 
-      queryretrieve_scp qr("QRSCP", "QRSCU", 4096, dict,
-                           [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
+//      queryretrieve_scp qr("QRSCP", "QRSCU", 4096, dict,
+//                           [](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data) {
 
-      });
-      qr.run();
-//      storage_scp store("STORAGESCU", "STORAGESCP", 4096, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
-//      {
-//         std::ofstream out("out", std::ios::binary);
-//         std::vector<unsigned char> imdata;
-//         auto value_field = (*data)[{0x7fe0,0x0010}];
-//         get_value_field<VR::OW>(value_field, imdata);
-//         out << imdata;
-//         out.flush();
 //      });
-//      store.run();
+//      qr.run();
+      storage_scp store("STORAGESCU", "STORAGESCP", 4096, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      {
+         std::ofstream out("out", std::ios::binary);
+         std::vector<unsigned char> imdata;
+         auto value_field = (*data)[{0x7fe0,0x0010}];
+         get_value_field<VR::OW>(value_field, imdata);
+         out << imdata;
+         out.flush();
+      });
+      store.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }
