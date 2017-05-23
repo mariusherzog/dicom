@@ -4,6 +4,12 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/dimse/association_definition.hpp"
 
+namespace dicom
+{
+
+namespace serviceclass
+{
+
 /**
  * @brief The serviceclass interface contains all common operations performed
  *        with a concrete service class
@@ -21,5 +27,10 @@ class Iserviceclass
 
 using handlermap = std::map<dicom::data::dataset::DIMSE_SERVICE_GROUP,
 std::function<void(dicom::network::dimse::dimse_pm* pm, dicom::data::dataset::commandset_data cdata, std::unique_ptr<dicom::data::dataset::iod> data)>>;
+
+}
+
+
+}
 
 #endif // SERVICECLASS_HPP

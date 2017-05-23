@@ -14,6 +14,12 @@ using namespace dicom::data::attribute;
 using namespace dicom::data::dictionary;
 using namespace dicom::network;
 
+namespace dicom
+{
+
+namespace serviceclass
+{
+
 storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
                          std::string host, short port,
                          dicom::data::dictionary::dictionary& dict,
@@ -93,7 +99,9 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
    } else {
       pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, command, senddata});
    }
+}
 
 
+}
 
 }

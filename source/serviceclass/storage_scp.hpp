@@ -11,6 +11,11 @@
 #include "network/dimse/association_definition.hpp"
 #include "serviceclass.hpp"
 
+namespace dicom
+{
+
+namespace serviceclass
+{
 
 /**
  * @brief The storage_scp class implements a storage scp
@@ -41,5 +46,9 @@ class storage_scp : public Iserviceclass
 
       std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler;
 };
+
+}
+
+}
 
 #endif // STORAGE_SCP_HPP

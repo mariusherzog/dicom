@@ -26,6 +26,7 @@ int main()
    using namespace dicom::data::attribute;
    using namespace dicom::data::dictionary;
    using namespace dicom::network;
+   using namespace dicom::serviceclass;
 
 
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};

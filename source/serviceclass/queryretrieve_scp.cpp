@@ -15,6 +15,12 @@ using namespace dicom::data::attribute;
 using namespace dicom::data::dictionary;
 using namespace dicom::network;
 
+namespace dicom
+{
+
+namespace serviceclass
+{
+
 using handlermap = std::map<dicom::data::dataset::DIMSE_SERVICE_GROUP,
 std::function<void(dicom::network::dimse::dimse_pm* pm, dicom::data::dataset::commandset_data cdata, std::unique_ptr<dicom::data::dataset::iod> data)>>;
 
@@ -124,3 +130,8 @@ void queryretrieve_scp::send_image(dataset::iod data)
 {
 
 }
+
+}
+
+}
+

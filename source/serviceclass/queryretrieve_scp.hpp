@@ -13,6 +13,13 @@
 #include "serviceclass.hpp"
 #include "storage_scu.hpp"
 
+namespace dicom
+{
+
+namespace serviceclass
+{
+
+
 class queryretrieve_scp;
 
 class storage_scu_thread;
@@ -51,8 +58,10 @@ class queryretrieve_scp : public Iserviceclass
       std::unique_ptr<std::thread> storage_thread;
 
       std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler;
-
-
 };
+
+}
+
+}
 
 #endif // QUERYRETRIEVE_SCP_HPP

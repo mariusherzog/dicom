@@ -10,6 +10,11 @@
 #include "network/dimse/association_definition.hpp"
 #include "serviceclass.hpp"
 
+namespace dicom
+{
+
+namespace serviceclass
+{
 
 class storage_scu : public Iserviceclass
 {
@@ -45,5 +50,9 @@ class storage_scu : public Iserviceclass
 
       bool do_release;
 };
+
+}
+
+}
 
 #endif // STORAGE_SCU_HPP

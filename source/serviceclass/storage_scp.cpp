@@ -11,6 +11,12 @@ using namespace dicom::data::attribute;
 using namespace dicom::data::dictionary;
 using namespace dicom::network;
 
+namespace dicom
+{
+
+namespace serviceclass
+{
+
 storage_scp::storage_scp(std::string calling_ae, std::string called_ae,
                          short port,
                          dicom::data::dictionary::dictionary& dict,
@@ -53,4 +59,8 @@ void storage_scp::handle_cstore(dimse::dimse_pm* pm, dataset::commandset_data co
    handler(this, command, std::move(data));
 
    pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, command, boost::none, 0x0000});
+}
+
+}
+
 }
