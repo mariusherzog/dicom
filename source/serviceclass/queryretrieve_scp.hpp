@@ -21,7 +21,7 @@ class queryretrieve_scp : public Iserviceclass
 {
    public:
       queryretrieve_scp(std::string calling_ae, std::string called_ae,
-                        int max_message_len, dicom::data::dictionary::dictionary& dict,
+                        short port, dicom::data::dictionary::dictionary& dict,
                         std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       ~queryretrieve_scp();

@@ -12,7 +12,8 @@ using namespace dicom::data::dictionary;
 using namespace dicom::network;
 
 storage_scp::storage_scp(std::string calling_ae, std::string called_ae,
-                         int max_message_len, dicom::data::dictionary::dictionary& dict,
+                         short port,
+                         dicom::data::dictionary::dictionary& dict,
                          std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler):
    cstore_sop {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->handle_cstore(pm, command, std::move(data)); }}},
    dict {dict},
@@ -26,10 +27,12 @@ storage_scp::storage_scp(std::string calling_ae, std::string called_ae,
    assoc_def
    {
       calling_ae, called_ae,
-            dimse::make_presentation_contexts(sop_classes, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
-            max_message_len
+      dimse::make_presentation_contexts(
+               sop_classes,
+               {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
+               dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
    },
-   scp {dict, 1113},
+   scp {dict, port},
    dimse_pm {scp, assoc_def, dict},
    handler {handler}
 {

@@ -15,7 +15,8 @@ using namespace dicom::data::dictionary;
 using namespace dicom::network;
 
 storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
-                         int max_message_len, dicom::data::dictionary::dictionary& dict,
+                         std::string host, short port,
+                         dicom::data::dictionary::dictionary& dict,
                          std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):
    sop_class { "1.2.840.10008.5.1.4.1.1.1\0", handlermap {
 {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
@@ -29,10 +30,10 @@ storage_scu::storage_scu(std::string calling_ae, std::string called_ae,
       calling_ae, called_ae, {
          {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
          {sop_class_response, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
-      }, max_message_len
+      }
    },
    initial_rq {assoc_def.get_initial_request()},
-   scu { dict, "localhost", "1114", initial_rq},
+   scu { dict, host, std::to_string(port), initial_rq},
    dimse_pm {scu, assoc_def, dict},
    senddata {},
    handler {handler},

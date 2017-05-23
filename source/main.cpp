@@ -131,7 +131,7 @@ int main()
 
 //      });
 //      qr.run();
-      storage_scp store("STORAGESCU", "STORAGESCP", 4096, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      storage_scp store("STORAGESCU", "STORAGESCP", 1113, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
       {
          std::ofstream out("out", std::ios::binary);
          std::vector<unsigned char> imdata;

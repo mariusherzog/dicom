@@ -39,7 +39,7 @@ class storage_scu_thread
       {
          storage_scu st
          {
-            "QRSCP", "QRSCU", 4096, dict,
+            "QRSCP", "QRSCU", "localhost", 1114, dict,
                   [this](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
                   {
                      cfind_pm->send_response({dicom::data::dataset::DIMSE_SERVICE_GROUP::C_MOVE_RSP, cmove_cmd, boost::none, 0xff00});
@@ -62,7 +62,7 @@ class storage_scu_thread
 };
 
 queryretrieve_scp::queryretrieve_scp(std::string calling_ae, std::string called_ae,
-                                     int max_message_len, dicom::data::dictionary::dictionary& dict,
+                                     short port, dicom::data::dictionary::dictionary& dict,
                                      std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler):
    dict {dict},
    sop_class { "1.2.840.10008.5.1.4.1.2.1.2", handlermap {
@@ -72,9 +72,9 @@ queryretrieve_scp::queryretrieve_scp(std::string calling_ae, std::string called_
    {
       calling_ae, called_ae, {
          {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
-      }, max_message_len
+      }
    },
-   scp {dict, 1113},
+   scp {dict, port},
    dimse_pm {scp, assoc_def, dict},
    storage_thread {nullptr},
    handler {handler}
