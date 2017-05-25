@@ -29,7 +29,7 @@ class queryretrieve_scp : public Iserviceclass
    public:
       queryretrieve_scp(std::string calling_ae, std::string called_ae,
                         short port, dicom::data::dictionary::dictionary& dict,
-                        std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
+                        std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::shared_ptr<dicom::data::dataset::iod>)> handler);
 
       ~queryretrieve_scp();
 
@@ -39,14 +39,16 @@ class queryretrieve_scp : public Iserviceclass
 
       virtual void run() override;
 
-      void send_image(dicom::data::dataset::iod data);
+      void send_image(boost::optional<dicom::data::dataset::iod> data);
 
    private:
-      void cstore_callback(storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data);
-
       void handle_cfind(dicom::network::dimse::dimse_pm* pm,
                         dicom::data::dataset::commandset_data command,
                         std::unique_ptr<dicom::data::dataset::iod> data);
+
+      boost::optional<data::dataset::iod> handle_cmove(queryretrieve_scp* scp,
+                        dicom::data::dataset::commandset_data command,
+                        std::shared_ptr<dicom::data::dataset::iod> data);
 
       dicom::data::dictionary::dictionary& dict;
       dicom::network::dimse::SOP_class sop_class;
@@ -57,7 +59,9 @@ class queryretrieve_scp : public Iserviceclass
       std::unique_ptr<storage_scu_thread> storage_operation;
       std::unique_ptr<std::thread> storage_thread;
 
-      std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler;
+      std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::shared_ptr<dicom::data::dataset::iod>)> handler;
+      std::shared_ptr<dicom::data::dataset::iod> filter_data;
+      boost::optional<dicom::data::dataset::iod> response_data;
 };
 
 }

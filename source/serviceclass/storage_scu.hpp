@@ -26,7 +26,17 @@ class storage_scu : public Iserviceclass
 
       ~storage_scu();
 
+      /**
+       * @brief send_next_request starts a new association on the connection
+       *        defined in the ctor.
+       * @param data data to be sent
+       */
       void send_next_request(dicom::data::dataset::iod data);
+
+      void set_store_data(dicom::data::dataset::iod data)
+      {
+         senddata = data;
+      }
 
       void release();
 

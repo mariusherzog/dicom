@@ -90,7 +90,7 @@ void storage_scu::send_store_request(dimse::dimse_pm* pm, dataset::commandset_da
    command[MoveOriginatorApplicationEntityTitle] = dicom::data::attribute::make_elementfield<VR::AE>("move22");
    command[MoveOriginatorMessageID] = dicom::data::attribute::make_elementfield<VR::US>(1);
 
-  handler(this, command, std::move(data));
+   handler(this, command, std::move(data));
 
    // handler requested release
    if (do_release) {
