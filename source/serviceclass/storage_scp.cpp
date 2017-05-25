@@ -6,6 +6,7 @@
 #include "data/dictionary/dictionary.hpp"
 #include "data/attribute/constants.hpp"
 
+
 using namespace dicom::data;
 using namespace dicom::data::attribute;
 using namespace dicom::data::dictionary;
@@ -17,8 +18,7 @@ namespace dicom
 namespace serviceclass
 {
 
-storage_scp::storage_scp(std::string calling_ae, std::string called_ae,
-                         short port,
+storage_scp::storage_scp(connection endpoint,
                          dicom::data::dictionary::dictionary& dict,
                          std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler):
    cstore_sop {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->handle_cstore(pm, command, std::move(data)); }}},
@@ -32,13 +32,13 @@ storage_scp::storage_scp(std::string calling_ae, std::string called_ae,
    },
    assoc_def
    {
-      calling_ae, called_ae,
+      endpoint.calling_ae, endpoint.called_ae,
       dimse::make_presentation_contexts(
                sop_classes,
                {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
                dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
    },
-   scp {dict, port},
+   scp {dict, endpoint.port},
    dimse_pm {scp, assoc_def, dict},
    handler {handler}
 {

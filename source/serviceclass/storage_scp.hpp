@@ -9,6 +9,7 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/dimse/sop_class.hpp"
 #include "network/dimse/association_definition.hpp"
+#include "network/connection.hpp"
 #include "serviceclass.hpp"
 
 namespace dicom
@@ -23,8 +24,8 @@ namespace serviceclass
 class storage_scp : public Iserviceclass
 {
    public:
-      storage_scp(std::string calling_ae, std::string called_ae,
-                  short port, dicom::data::dictionary::dictionary& dict,
+      storage_scp(dicom::network::connection endpoint,
+                  dicom::data::dictionary::dictionary& dict,
                   std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       ~storage_scp() override;

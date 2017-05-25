@@ -128,7 +128,7 @@ int main()
    {
 
       int n = 0;
-      queryretrieve_scp qr("QRSCP", "QRSCU", 1113, dict,
+      queryretrieve_scp qr({"QRSCP", "QRSCU", "", 1113}, dict,
                            [&n](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::shared_ptr<dicom::data::dataset::iod> data) {
          dataset::iod seq;
          seq[{0x0010,0x0010}] = dicom::data::attribute::make_elementfield<VR::PN>("test");

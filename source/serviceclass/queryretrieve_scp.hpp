@@ -10,6 +10,7 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/dimse/sop_class.hpp"
 #include "network/dimse/association_definition.hpp"
+#include "network/connection.hpp"
 #include "serviceclass.hpp"
 #include "storage_scu.hpp"
 
@@ -27,8 +28,8 @@ class storage_scu_thread;
 class queryretrieve_scp : public Iserviceclass
 {
    public:
-      queryretrieve_scp(std::string calling_ae, std::string called_ae,
-                        short port, dicom::data::dictionary::dictionary& dict,
+      queryretrieve_scp(dicom::network::connection endpoint,
+                        dicom::data::dictionary::dictionary& dict,
                         std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::shared_ptr<dicom::data::dataset::iod>)> handler);
 
       ~queryretrieve_scp();

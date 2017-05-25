@@ -8,6 +8,7 @@
 #include "network/dimse/dimse_pm.hpp"
 #include "network/dimse/sop_class.hpp"
 #include "network/dimse/association_definition.hpp"
+#include "network/connection.hpp"
 #include "serviceclass.hpp"
 
 namespace dicom
@@ -19,8 +20,7 @@ namespace serviceclass
 class storage_scu : public Iserviceclass
 {
    public:
-      storage_scu(std::string calling_ae, std::string called_ae,
-                  std::string host, short port,
+      storage_scu(dicom::network::connection endpoint,
                   dicom::data::dictionary::dictionary& dict,
                   std::function<void(storage_scu*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
@@ -28,16 +28,24 @@ class storage_scu : public Iserviceclass
 
       /**
        * @brief send_next_request starts a new association on the connection
-       *        defined in the ctor.
+       *        defined in the ctor
        * @param data data to be sent
        */
       void send_next_request(dicom::data::dataset::iod data);
 
+      /**
+       * @brief set_store_data shall be called from the handler and sets the
+       *        iod transmitted next
+       * @param data iod transmitted next
+       */
       void set_store_data(dicom::data::dataset::iod data)
       {
          senddata = data;
       }
 
+      /**
+       * @brief release sends a release request
+       */
       void release();
 
       virtual void run() override;
