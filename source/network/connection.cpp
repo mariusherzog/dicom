@@ -15,6 +15,11 @@ connection::connection(std::string calling_ae,
    host {host},
    port {port}
 {
+}
+
+connection::connection():
+   connection("", "", "")
+{
 
 }
 

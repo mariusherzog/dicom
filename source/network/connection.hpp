@@ -22,6 +22,8 @@ struct connection
                  std::string host,
                  short port = 104);
 
+      connection();
+
       std::string calling_ae;
       std::string called_ae;
 

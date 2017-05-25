@@ -29,11 +29,13 @@ class storage_scu_thread
 {
    public:
       storage_scu_thread(queryretrieve_scp& qr_scp,
+                         connection move_destination,
                          dicom::data::dataset::commandset_data cmove_cmd,
                          dicom::network::dimse::dimse_pm* cfind_pm,
                          std::function<boost::optional<dicom::data::dataset::iod>()> cmove_handler,
                          dicom::data::dictionary::dictionary& dict):
          qr_scp {qr_scp},
+         move_destination {move_destination},
          cmove_cmd {cmove_cmd},
          cfind_pm {cfind_pm},
          cmove_handler {cmove_handler},
@@ -45,7 +47,7 @@ class storage_scu_thread
       {
          storage_scu st
          {
-            {"QRSCP", "QRSCU", "localhost", 1114}, dict,
+            move_destination, dict,
                   [this](storage_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
                   {
                      auto response = cmove_handler();
@@ -63,6 +65,7 @@ class storage_scu_thread
 
    private:
       queryretrieve_scp& qr_scp;
+      connection move_destination;
       dicom::data::dataset::commandset_data cmove_cmd;
       dicom::network::dimse::dimse_pm* cfind_pm;
       std::function<boost::optional<dicom::data::dataset::iod>()> cmove_handler;
@@ -106,7 +109,12 @@ void queryretrieve_scp::handle_cfind(dimse::dimse_pm* pm, dataset::commandset_da
       storage_thread->join();
    }
 
-   storage_operation.reset(new storage_scu_thread {*this, command, pm, cmove_handler, dict});
+   std::string move_dest;
+   get_value_field<VR::AE>(command.at({0x0000,0x0600}), move_dest);
+   move_dest.erase(std::find_if(move_dest.rbegin(), move_dest.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), move_dest.end());
+   auto move_destination = move_destinations[move_dest];
+
+   storage_operation.reset(new storage_scu_thread {*this, move_destination, command, pm, cmove_handler, dict});
    storage_thread.reset(new std::thread {*storage_operation});
 }
 
@@ -116,9 +124,9 @@ boost::optional<dicom::data::dataset::iod> queryretrieve_scp::handle_cmove(query
    return response_data;
 }
 
-dicom::network::upperlayer::scp& queryretrieve_scp::get_scp()
+void queryretrieve_scp::set_move_destination(std::string ae, connection conn)
 {
-   return scp;
+   move_destinations[ae] = conn;
 }
 
 void queryretrieve_scp::run()

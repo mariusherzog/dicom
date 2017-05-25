@@ -139,6 +139,7 @@ int main()
             st->send_image(boost::none);
 
       });
+      qr.set_move_destination("MOVESCU", {"QRSCP", "QRSCU", "localhost", 1114});
       qr.run();
 //      storage_scp store("STORAGESCU", "STORAGESCP", 1113, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
 //      {

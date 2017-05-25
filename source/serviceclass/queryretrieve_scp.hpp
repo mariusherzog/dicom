@@ -36,11 +36,11 @@ class queryretrieve_scp : public Iserviceclass
 
       void start_listen();
 
-      dicom::network::upperlayer::scp& get_scp();
-
       virtual void run() override;
 
       void send_image(boost::optional<dicom::data::dataset::iod> data);
+
+      void set_move_destination(std::string ae, dicom::network::connection conn);
 
    private:
       void handle_cfind(dicom::network::dimse::dimse_pm* pm,
@@ -59,6 +59,7 @@ class queryretrieve_scp : public Iserviceclass
 
       std::unique_ptr<storage_scu_thread> storage_operation;
       std::unique_ptr<std::thread> storage_thread;
+      std::map<std::string, dicom::network::connection> move_destinations;
 
       std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::shared_ptr<dicom::data::dataset::iod>)> handler;
       std::shared_ptr<dicom::data::dataset::iod> filter_data;
