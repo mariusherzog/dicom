@@ -5,8 +5,7 @@
 This project is a boost::asio - based implementation of the DICOM network protocol. Leveraging the features of C++11, the goal is to realize a type-safe, easy-to-use and abstract framework to build applications based on the DICOM protocol.
 
 ## Progress
-Currently, only the upperlayer as described in chapter 8 of the standard is fully 
-realized on the master branch. Implementation of the DIMSE layer is currently work-in-progress; The DIMSE protocol machine supports the C-ECHO service group.
+Currently the upperlayer and the dimse protocol machine are supported. Service classes, like Storage, Query/Retrieve, Worklist, etc. are work-in-progress.
 
 ## Example
 The main.cpp file contains an example which will be walked through:
@@ -48,12 +47,12 @@ try
 {
    dicom::network::upperlayer::scp sc(11112);
    dicom::network::dimse::dimse_pm dpm(sc, ascdef, dict);
-   sc.run();
+   dpm.run();
 } catch (std::exception& ec) {
    std::cout << ec.what();
 }
 ```
-The first line creates an upperlayer SCP which will be used by the DIMSE PM to communicate over the network. In the second one an instance of the DIMSE PM is created, taking the upperlayer-object, the association definition, and the dictionary as arguments. The member function call run() instructs the upper layer to wait for and handle incoming connections.
+The first line creates an upperlayer SCP which will be used by the DIMSE PM to communicate over the network. In the second one an instance of the DIMSE PM is created, taking the upperlayer-object, the association definition, and the dictionary as arguments. The member function call run() instructs the dimse protocol machine to wait for and handle incoming connections.
 
 
 ## Dependencies
@@ -62,9 +61,9 @@ The first line creates an upperlayer SCP which will be used by the DIMSE PM to c
 ## Supported Compilers
 Tested on:
 
-* gcc 4.8.5
+* gcc 4.9.4
 * clang 3.7.0
-* msvc12 (master branch)
+Visual C++ is not tested but should work as no platform-specific extensions are used
 
 ## Build Instructions
 This project uses CMake for the build configuration. Invoking the ```cmake CMakeLists.txt``` from the command line or using the CMake GUI should generate a working Makefile / VS project file.
