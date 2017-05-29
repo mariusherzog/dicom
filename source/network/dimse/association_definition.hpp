@@ -76,6 +76,15 @@ class association_definition
        */
       std::vector<presentation_context> get_all_SOP() const;
 
+      /**
+       * @brief get_all_SOP returns a reference to the list of supported
+       *        presentation contexts
+       * @return reference to the list of supported presentation_contexts
+       * This method can be used to add / delete / modify the presentation
+       * contexts after initialization
+       */
+      std::vector<presentation_context>& get_all_SOP();
+
 
       /**
        * @brief get_initial_request generates a a_associate_rq property

@@ -51,6 +51,15 @@ class dimse_pm_manager
        */
       void run();
 
+      /**
+       * @brief get_operations returns a reference to the association definition
+       * @return reference to association definition
+       * note that changes will be only applied to new connection after run(),
+       * as the association_definition is copied into the connection-specific
+       * dimse protocol machine
+       */
+      association_definition& get_operations();
+
    private:
       std::map<upperlayer::Iupperlayer_comm_ops*, std::unique_ptr<dimse_pm>> protocol_machines;
 

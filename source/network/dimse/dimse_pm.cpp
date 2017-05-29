@@ -56,6 +56,11 @@ void dimse_pm_manager::run()
    conn.run();
 }
 
+association_definition& dimse_pm_manager::get_operations()
+{
+   return operations;
+}
+
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,

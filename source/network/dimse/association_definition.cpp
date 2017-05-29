@@ -84,6 +84,12 @@ std::vector<association_definition::presentation_context>
    return supported_sops;
 }
 
+std::vector<association_definition::presentation_context>&
+   association_definition::get_all_SOP()
+{
+   return supported_sops;
+}
+
 upperlayer::a_associate_rq association_definition::get_initial_request() const
 {
    return request;
