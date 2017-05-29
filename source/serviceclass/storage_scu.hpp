@@ -51,8 +51,11 @@ class storage_scu : public Iserviceclass
       virtual void run() override;
 
    private:
-      dicom::network::dimse::SOP_class sop_class;
-      dicom::network::dimse::SOP_class sop_class_response;
+      handlermap cstore_req;
+      handlermap cstore_resp;
+
+      std::vector<dicom::network::dimse::SOP_class> sop_classes;
+      std::vector<dicom::network::dimse::SOP_class> sop_classes_response;
       dicom::network::dimse::association_definition assoc_def;
       dicom::network::upperlayer::a_associate_rq initial_rq;
       dicom::network::upperlayer::scu scu;

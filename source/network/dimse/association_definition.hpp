@@ -89,16 +89,27 @@ class association_definition
 };
 
 /**
- * @brief presentation_context constructor used to set the same
+ * @brief presentation_context is used to set the same
  *        transfer syntaxes for a set of sop classes
  * @param sop_classes set of sop classes
  * @param transfer_syntaxes transfer syntaxes supported
  * @param msg_type message type, response or initiatiator
+ * @return
  */
 std::vector<association_definition::presentation_context> make_presentation_contexts(
       std::vector<SOP_class> sop_classes,
       std::initializer_list<std::string> transfer_syntaxes,
       association_definition::DIMSE_MSG_TYPE msg_type);
+
+/**
+ * @brief operator + is used to concatenate two lists of presentation contexts
+ * @param a list of presentation contexts
+ * @param b list of presentation contexts
+ * @return concatenated list
+ */
+std::vector<association_definition::presentation_context> operator+(std::vector<association_definition::presentation_context> a,
+                                                                    std::vector<association_definition::presentation_context> b);
+
 
 }
 

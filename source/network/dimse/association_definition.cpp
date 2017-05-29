@@ -101,6 +101,16 @@ std::vector<association_definition::presentation_context> make_presentation_cont
    return pcs;
 }
 
+std::vector<association_definition::presentation_context> operator+(std::vector<association_definition::presentation_context> a,
+                                                                    std::vector<association_definition::presentation_context> b)
+{
+   for (const auto rs : b) {
+      a.emplace_back(rs);
+   }
+   return a;
+}
+
+
 }
 
 }

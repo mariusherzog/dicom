@@ -23,19 +23,28 @@ namespace serviceclass
 storage_scu::storage_scu(connection endpoint,
                          dicom::data::dictionary::dictionary& dict,
                          std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):
-   sop_class { "1.2.840.10008.5.1.4.1.1.1\0", handlermap {
-{dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
-               }
-             },
-   sop_class_response {"1.2.840.10008.5.1.4.1.1.1\0", handlermap {
-         {dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}
-                        }},
+   cstore_req {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}},
+   cstore_resp {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}},
+   sop_classes
+   {
+      {"1.2.840.10008.5.1.4.1.1.1", cstore_req}
+   },
+   sop_classes_response
+   {
+      {"1.2.840.10008.5.1.4.1.1.1", cstore_resp}
+   },
    assoc_def
    {
-      endpoint.calling_ae, endpoint.called_ae, {
-         {sop_class, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR},
-         {sop_class_response, {"1.2.840.10008.1.2"}, dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE}
-      }
+      endpoint.calling_ae, endpoint.called_ae,
+      dimse::make_presentation_contexts(
+         sop_classes_response,
+         {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
+         dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE)
+            + // concatenate
+      dimse::make_presentation_contexts(
+         sop_classes,
+         {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
+         dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR)
    },
    initial_rq {assoc_def.get_initial_request()},
    scu { dict, endpoint.host, std::to_string(endpoint.port), initial_rq},
@@ -44,7 +53,7 @@ storage_scu::storage_scu(connection endpoint,
    handler {handler},
    do_release {false}
 {
-   senddata[{0x0010, 0x0010}] = attribute::make_elementfield<VR::PN>("test");
+
 }
 
 storage_scu::~storage_scu()

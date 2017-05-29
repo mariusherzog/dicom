@@ -133,7 +133,7 @@ int main()
          dataset::iod seq;
          seq[{0x0010,0x0010}] = dicom::data::attribute::make_elementfield<VR::PN>("test");
          ++n;
-         if (n < 10)
+         if (n < 5)
             st->send_image(*data);
          else
             st->send_image(boost::none);
