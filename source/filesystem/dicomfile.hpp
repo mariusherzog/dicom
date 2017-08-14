@@ -17,13 +17,13 @@ namespace filesystem
 
 /**
  * @brief The dicomfile class encapsulates a dicom dataset / iod for writing to
- *        a stream in the format as specified by DICOM standard part 10
- *        chapter 7.
+ *        and reading from a stream in the format as specified by DICOM standard
+ *        part 10 chapter 7.
  */
 class dicomfile
 {
    private:
-      dicom::data::dataset::iod dataset;
+      dicom::data::dataset::iod dataset_;
 
       std::array<unsigned char, 128> preamble;
       std::array<unsigned char, 4> prefix;
@@ -46,9 +46,25 @@ class dicomfile
        * @return stream written to
        */
       std::ostream& write_dataset(std::ostream& os);
+
+      /**
+       * @brief read_dataset reads from the given stream in binary
+       * @param is stream to read from
+       * @return stream read from
+       */
+      std::istream& read_dataset(std::istream& is);
+
+      /**
+       * @brief dataset is used to access the dataset, for example to access
+       *        dataset read from stream
+       * @return dataset encapsulated in this instance
+       */
+      dicom::data::dataset::iod& dataset();
 };
 
 std::ostream& operator<<(std::ostream& os, dicomfile& dicom);
+
+std::istream& operator>>(std::istream& is, dicomfile& dicom);
 
 }
 

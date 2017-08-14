@@ -33,13 +33,24 @@ int main()
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
 
    {
-      dataset::iod dicm;
-      dicm[{0x0008, 0x0016}] = make_elementfield<VR::CS>("1.2.840.10008.5.1.4.1.1.7");
-      dicm[{0x0008, 0x0018}] = make_elementfield<VR::CS>("1.2.840.10008.25.25.25.1");
-      dicm[{0x0010, 0x0010}] = make_elementfield<VR::PN>("test^test");
-      dicom::filesystem::dicomfile file(dicm, dict);
-      std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
-      outfile << file;
+      {
+         dataset::iod dicm;
+         dicm[{0x0008, 0x0016}] = make_elementfield<VR::CS>("1.2.840.10008.5.1.4.1.1.7");
+         dicm[{0x0008, 0x0018}] = make_elementfield<VR::CS>("1.2.840.10008.25.25.25.1");
+         dicm[{0x0010, 0x0010}] = make_elementfield<VR::PN>("test^test");
+         dicom::filesystem::dicomfile file(dicm, dict);
+         std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
+         outfile << file;
+         outfile.flush();
+      }
+      {
+         dataset::iod dicm;
+         dicom::filesystem::dicomfile file(dicm, dict);
+         std::fstream outfile("outfile.dcm", std::ios::in | std::ios::binary);
+         outfile >> file;
+         std::cout << file.dataset() << std::flush;
+      }
+
    }
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
