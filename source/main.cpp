@@ -12,6 +12,8 @@
 #include "data/dictionary/dictionary.hpp"
 #include "data/attribute/constants.hpp"
 
+#include "filesystem/dicomfile.hpp"
+
 #include "serviceclass/storage_scu.hpp"
 #include "serviceclass/storage_scp.hpp"
 #include "serviceclass/queryretrieve_scp.hpp"
@@ -28,8 +30,17 @@ int main()
    using namespace dicom::network;
    using namespace dicom::serviceclass;
 
-
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+
+   {
+      dataset::iod dicm;
+      dicm[{0x0008, 0x0016}] = make_elementfield<VR::CS>("1.2.840.10008.5.1.4.1.1.7");
+      dicm[{0x0008, 0x0018}] = make_elementfield<VR::CS>("1.2.840.10008.25.25.25.1");
+      dicm[{0x0010, 0x0010}] = make_elementfield<VR::PN>("test^test");
+      dicom::filesystem::dicomfile file(dicm, dict);
+      std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
+      outfile << file;
+   }
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP,
