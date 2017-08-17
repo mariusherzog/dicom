@@ -109,6 +109,8 @@ class transfer_processor
        */
       std::string get_transfer_syntax() const;
 
+      std::size_t dataelement_length(const dicom::data::attribute::elementfield& ef) const;
+
       virtual ~transfer_processor();
 
    private:
@@ -256,6 +258,19 @@ class big_endian_explicit: public transfer_processor
                             std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const;
 };
+
+
+
+/**
+ * @brief dataset_bytesize calculates the size in bytes of a dataset given a
+ *        certain transfer syntax.
+ * @param data dataset
+ * @param transfer_proc represents the underlying transfer syntax for the
+ *        calculation
+ * @return size of the dataset in bytes
+ */
+std::size_t dataset_bytesize(dataset_type data, const transfer_processor& transfer_proc);
+
 
 }
 

@@ -24,6 +24,15 @@ static const std::vector<VR> specialVRs {VR::OB, VR::OW, VR::OF, VR::SQ, VR::UR,
 static const std::vector<tag_type> item_attributes {Item, ItemDelimitationItem, SequenceDelimitationItem};
 
 
+std::size_t dataset_bytesize(dicom::data::dataset::dataset_type data, const transfer_processor& transfer_proc)
+{
+   return std::accumulate(data.begin(), data.end(), 0,
+      [&transfer_proc](int acc, const std::pair<const tag_type, elementfield>& attr)
+      {
+         return acc += transfer_proc.dataelement_length(attr.second);
+      });
+}
+
 
 /**
  * @brief is_specialVR checks if the given VR needs special handling in explicit
@@ -51,6 +60,20 @@ static bool is_item_attribute(tag_type tag)
          != item_attributes.end();
 }
 
+std::size_t transfer_processor::dataelement_length(const elementfield& ef) const
+{
+   if (vrtype == VR_TYPE::IMPLICIT) {
+      return ef.value_len + 4 + 2 + 2;
+   } else {
+      std::size_t length = ef.value_len + 2 + 2;
+      if (is_special_VR(*ef.value_rep)) {
+         length += 2 + 2 + 4;
+      } else {
+         length += 2 + 2;
+      }
+      return length;
+   }
+}
 
 
 transfer_processor::~transfer_processor()

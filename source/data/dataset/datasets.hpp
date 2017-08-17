@@ -32,15 +32,6 @@ using iod = dataset_type;
 
 std::ostream& operator<<(std::ostream& os, const dataset_type& data);
 
-/**
- * @brief dataset_size calculates the size in bytes of the dataset
- * @param data dataset
- * @param explicitvr true if the VR is encoded (adds 2 bytes per attribute)
- * @return size of the dataset in bytes
- * @todo change explicitvr param to enum
- */
-std::size_t dataset_size(dataset_type data, bool explicitvr = false);
-
 
 enum class DIMSE_SERVICE_GROUP : unsigned
 {
