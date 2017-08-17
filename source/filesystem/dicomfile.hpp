@@ -24,12 +24,19 @@ class dicomfile
 {
    private:
       dicom::data::dataset::iod dataset_;
+      dicom::data::dataset::iod filemetaheader;
 
       std::array<unsigned char, 128> preamble;
       std::array<unsigned char, 4> prefix;
 
       dicom::data::dictionary::dictionary& dict;
       std::unique_ptr<dicom::data::dataset::transfer_processor> transfer_proc;
+
+      /**
+       * @brief create_filemetaheader creates the meta file header (0002 group)
+       *        using information from the dicom dataset to be written.
+       */
+      void create_filemetaheader();
 
    public:
       /**

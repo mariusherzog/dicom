@@ -37,7 +37,8 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data);
  * @param data dataset
  * @param explicitvr true if the VR is encoded (adds 2 bytes per attribute)
  * @return size of the dataset in bytes
- * @todo change explicitvr param to enum
+ * @todo instead of bool param pass the transfer_processor. Calculation shall
+ *       be performed given an underlying transfer syntax
  */
 std::size_t dataset_size(dataset_type data, bool explicitvr = false);
 

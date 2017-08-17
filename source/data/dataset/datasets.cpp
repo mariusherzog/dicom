@@ -78,7 +78,6 @@ std::size_t dataset_size(dicom::data::dataset::dataset_type data, bool explicitv
    });
 }
 
-
 std::ostream& operator<<(std::ostream& os, DIMSE_SERVICE_GROUP dsg)
 {
     switch (dsg) {
