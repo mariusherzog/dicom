@@ -16,6 +16,8 @@ before_script:
   - sudo apt-get update -qq
   - sudo apt-get install libboost-dev libboost-log-dev 
 script:
-  - export CC=/usr/bin/gcc
-  - export CXX=/usr/bin/g++
+  - ln -s /usr/bin/gcc-5 /usr/local/bin/gcc
+  - ln -s /usr/bin/g++-5 /usr/local/bin/g++
+  - export CC=/usr/bin/gcc-5
+  - export CXX=/usr/bin/g++-5
   - cmake CMakeLists.txt && make
