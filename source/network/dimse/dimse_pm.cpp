@@ -254,8 +254,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
             auto transfer_syntaxes = pres_cont.transfer_syntaxes;
             for (const auto ts : transfer_syntaxes) {
                if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
-                   != transfer_syntaxes.end() /* &&
-                   std::find_if(transfer_processors.begin(), transfer_processors.end(),)*/) {
+                   != transfer_syntaxes.end() && transfer_processors.count(ts) > 0) {
                   ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
                   have_common_ts = true;
                   break;
