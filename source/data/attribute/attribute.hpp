@@ -250,7 +250,7 @@ struct type_of<VR::OF>
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
-struct type_of<VR::OW> { using type = std::vector<unsigned char>; };
+struct type_of<VR::OW> { using type = std::vector<unsigned short>; };
 template<>
 struct type_of<VR::PN>
 {
@@ -334,6 +334,8 @@ struct type_of<VR::NI>
 };
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OW>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 

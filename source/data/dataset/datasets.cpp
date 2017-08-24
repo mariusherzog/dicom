@@ -39,6 +39,8 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
           && attr.second.value_rep.get() != VR::NN
           && attr.second.value_rep.get() != VR::NI) {
          os << dictionary::dictionary_entry::vr_of_string.right.at(attr.second.value_rep.get());
+      } else if (attr.first == Item) {
+         os << std::to_string(attr.second.value_len) << " NN / NI ";
       } else {
          os << "(unknown) NN / NI";
       }

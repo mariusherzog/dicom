@@ -118,7 +118,7 @@ int main()
 //         dat2[{0xfffe, 0xe00d}] = dicom::data::attribute::make_elementfield<VR::NI>();
 //         dat3[dicom::data::attribute::SequenceDelimitationItem] = dicom::data::attribute::make_elementfield<VR::NI>();
 //         seq[{0x0032, 0x1064}] = dicom::data::attribute::make_elementfield<VR::SQ>(0xffffffff, {dat, dat2, dat3});
-         std::vector<unsigned char> largedat(25000000, 0xff);
+         std::vector<unsigned short> largedat(25000000, 0xff);
          seq[{0x7fe0,0x0010}] = dicom::data::attribute::make_elementfield<VR::OW>(25000000, largedat);
          pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_FIND_RQ, command, seq});
       }}}
@@ -148,7 +148,7 @@ int main()
 
    try
    {
-
+/*
       int n = 0;
       queryretrieve_scp qr({"QRSCP", "QRSCU", "", 1113}, dict,
                            [&n](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::shared_ptr<dicom::data::dataset::iod> data) {
@@ -162,17 +162,22 @@ int main()
 
       });
       qr.set_move_destination("MOVESCU", {"QRSCP", "QRSCU", "localhost", 1114});
-      qr.run();
-//      storage_scp store("STORAGESCU", "STORAGESCP", 1113, dict, [](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
-//      {
-//         std::ofstream out("out", std::ios::binary);
-//         std::vector<unsigned char> imdata;
+      qr.run();*/
+      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      {
+         std::ofstream out("out", std::ios::binary);
+	 std::cout << *data;
+//         std::vector<unsigned short> imdata;
 //         auto value_field = (*data)[{0x7fe0,0x0010}];
 //         get_value_field<VR::OW>(value_field, imdata);
-//         out << imdata;
+//         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
 //         out.flush();
-//      });
-//      store.run();
+     dicom::filesystem::dicomfile file(*data, dict);
+     std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
+     outfile << file;
+     outfile.flush();
+      });
+      store.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }

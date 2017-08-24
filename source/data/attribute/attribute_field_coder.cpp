@@ -121,8 +121,7 @@ static std::vector<unsigned char> encode_byte_string(attribute::vmtype<std::stri
 {
    std::vector<unsigned char> buf;
    int offset = 0;
-   for (auto it = str.begin(); it != str.end(); ++it)
-   {
+   for (auto it = str.begin(); it != str.end(); ++it) {
       std::string value = *it;
       if (it != str.begin()) { //beginning from the 2nd element, start preceding
                                //with the separator backslash
@@ -146,11 +145,26 @@ static std::vector<unsigned char> encode_byte_array(const std::vector<unsigned c
    return std::vector<unsigned char> {strdata};
 }
 
-static std::vector<unsigned char> encode_word_array_le(const std::vector<unsigned char>& strdata)
+static std::vector<unsigned char> encode_word_array_le(const std::vector<unsigned short>& strdata)
 {
-   // encoding a stream in little endian does not require byte swapping as it
-   // matches the local machine's layout
-   return std::vector<unsigned char> {strdata};
+   std::vector<unsigned char> buf;
+   buf.reserve(strdata.size() * 2);
+   for (const auto v : strdata) {
+      buf.push_back((v & 0xff));
+      buf.push_back((v & 0xff00) >> 8);
+   }
+   return buf;
+}
+
+static std::vector<unsigned char> encode_word_array_be(const std::vector<unsigned short>& strdata)
+{
+   std::vector<unsigned char> buf;
+   buf.reserve(strdata.size() * 2);
+   for (const auto v : strdata) {
+      buf.push_back((v & 0xff) >> 8);
+      buf.push_back((v & 0xff00));
+   }
+   return buf;
 }
 
 static attribute::vmtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, int begin, int len)
@@ -186,11 +200,37 @@ static std::vector<unsigned char> decode_byte_array(const std::vector<unsigned c
    return str;
 }
 
-static std::vector<unsigned char> decode_word_array_le(const std::vector<unsigned char>& strdata, int begin, int len)
+static std::vector<unsigned short> decode_word_array_le(const std::vector<unsigned char>& strdata, int begin, int len)
 {
-   // decoding a stream in little endian does not require byte swapping as it
-   // matches the local machine's layout
-   std::vector<unsigned char> str {strdata.begin()+begin, strdata.begin()+begin+len};
+   std::vector<unsigned short> str;
+   str.reserve(len/2);
+
+   for (int i=begin; i<begin+len; i+=2) {
+      unsigned short value = 0;
+      value |= (strdata[i]);
+      value |= (strdata[i + 1] << 8);
+      str.push_back(value);
+   }
+
+   if (len % 2 != 0) {
+      str.push_back(0x00);
+   }
+   assert(len % 2 == 0);
+   return str;
+}
+
+static std::vector<unsigned short> decode_word_array_be(const std::vector<unsigned char>& strdata, int begin, int len)
+{
+   std::vector<unsigned short> str;
+   str.reserve(len/2);
+
+   for (int i=begin; i<begin+len; i+=2) {
+      unsigned short value = 0;
+      value |= (strdata[i + 1]);
+      value |= (strdata[i] << 8);
+      str.push_back(value);
+   }
+
    if (len % 2 != 0) {
       str.push_back(0x00);
    }
@@ -437,9 +477,13 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::OW: {
-         std::vector<unsigned char> ow;
+         std::vector<unsigned short> ow;
          get_value_field<VR::OW>(attr, ow);
-         data = convhelper::encode_word_array_le(ow);
+         if (endianness == ENDIANNESS::LITTLE) {
+             data = convhelper::encode_word_array_le(ow);
+         } else {
+             data = convhelper::encode_word_array_be(ow);
+         }
          break;
       }
       case VR::PN: {
@@ -641,7 +685,12 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          return make_elementfield<VR::OF>(len, of);
       }
       case VR::OW: {
-         auto ow = convhelper::decode_word_array_le(data, begin, len);
+         std::vector<unsigned short> ow;
+         if (endianness == ENDIANNESS::LITTLE) {
+             ow = convhelper::decode_word_array_le(data, begin, len);
+         } else {
+             ow = convhelper::decode_word_array_be(data, begin, len);
+         }
          return make_elementfield<VR::OW>(len, ow);
          break;
       }

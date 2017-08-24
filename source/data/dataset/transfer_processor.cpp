@@ -1,6 +1,7 @@
 #include "transfer_processor.hpp"
 
 #include <stack>
+#include <numeric>
 
 #include "data/attribute/attribute_field_coder.hpp"
 #include "data/attribute/constants.hpp"
@@ -271,12 +272,12 @@ std::vector<unsigned char> commandset_processor::serialize_attribute(elementfiel
    return encode_value_field(e, end, vr);
 }
 
-std::vector<unsigned char> transfer_processor::serialize(iod data) const
+std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
 {
    std::vector<unsigned char> stream;
    bool explicit_length_item = true;
    bool explicit_length_sequence = true;
-   for (const auto attr : dataset_iterator_adaptor(data)) {
+   for (const auto attr : dataset_iterator_adaptor(dataset)) {
       if (attr.first == SequenceDelimitationItem) {
          if (!explicit_length_sequence) {
             auto tag = encode_tag(attr.first, endianness);

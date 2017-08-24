@@ -8,6 +8,7 @@
 #include <string>
 #include <exception>
 #include <algorithm>
+#include <numeric>
 #include <iterator>
 
 #include <boost/algorithm/string.hpp>
