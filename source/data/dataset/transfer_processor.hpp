@@ -177,6 +177,15 @@ class transfer_processor
        */
       std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg) const;
 
+      /**
+       * @brief calculate_item_lengths calculates the correct sequence and item lengths
+       *        given the specified transfer syntax.
+       * @param dataset dataset which will receive updated length values
+       * @return byte length of the set given in the parameter minus any item and / or
+       *         sequence sizes which are undefined length.
+       */
+      std::size_t calculate_item_lengths(data::dataset::dataset_type& dataset) const;
+
       std::vector<vr_of_tag> tstags;
 
       boost::optional<dictionary::dictionary&> dict;

@@ -36,7 +36,10 @@ std::ostream& operator<<(std::ostream& os, const tag_type tag)
 bool operator<(const tag_type& lhs, const tag_type& rhs)
 {
    // Item tag should be placed first in a (nested) set
-   if (lhs == Item) return true;
+   // but prevent that index operator for map inserts
+   // dupe Items
+   //if (lhs == Item && rhs == Item) return false;
+   if (lhs == Item && rhs != Item) return true;
    if (rhs == Item && lhs != Item) return false;
    return lhs.group_id == rhs.group_id ?
           lhs.element_id < rhs.element_id :

@@ -440,7 +440,6 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data
    e.value_field->accept<vr>(getter);
 }
 
-
 template <VR vr>
 void get_value_field(const elementfield& e, typename type_of<vr>::type::base_type& out_data)
 {
@@ -450,7 +449,6 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type::base_typ
    e.value_field->accept<vr>(getter);
    out_data = *wrapper.begin();
 }
-
 
 /**
  * @brief The set_visitor class is used to set a specified value into the
@@ -471,6 +469,14 @@ class set_visitor : public attribute_visitor<vr>
          ef->value_field = setdata;
       }
 };
+
+template <VR vr>
+void set_value_field(const elementfield& e, typename type_of<vr>::type& indata)
+{
+   set_visitor<vr> setter(indata);
+   e.value_field->accept<vr>(setter);
+}
+
 
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute

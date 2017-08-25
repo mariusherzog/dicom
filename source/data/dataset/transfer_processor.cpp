@@ -76,6 +76,55 @@ std::size_t transfer_processor::dataelement_length(const elementfield& ef) const
    }
 }
 
+std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& dataset) const
+{
+   std::size_t accu = 0;
+
+   // skip undefined length items. The accumulator for this sequence will stay at 0.
+   // This is ok since it is not used for the sequence length, since when one item
+   // length is undefined, the sequence length is necessarily undefined as well.
+   if (dataset.count(Item) > 0 && dataset[Item].value_len == 0xffffffff) {
+      return accu;
+   }
+
+   // item only contains "item type" tags, so the length is essentially zero.
+   if (std::all_of(dataset.begin(), dataset.end(),
+                   [](std::pair<const tag_type, elementfield> attr) {
+                     return is_item_attribute(attr.first); })) {
+      return accu;
+   }
+
+   for (auto& attr : dataset) {
+      VR repr = get_vr(attr.first);
+      if (repr != VR::SQ && !is_item_attribute(attr.first)) {
+         accu += dataelement_length(attr.second);
+      } else if (repr == VR::SQ) {
+         // now handle all sequence items
+         // sequences with undefined length need to be checked as well
+         // because they may contain items with defined length
+         typename type_of<VR::SQ>::type data;
+         get_value_field<VR::SQ>(attr.second, data);
+         std::size_t sequencesize = 0;
+         for (dataset_type& itemset : data) {
+            auto itemsize = calculate_item_lengths(itemset);
+            if (itemsize > 0) {
+               itemset[Item].value_len = itemsize;
+               sequencesize += itemsize + 8;
+            } else {
+               sequencesize += 0;
+            }
+         }
+
+         if (attr.second.value_len != 0xffffffff) {
+            attr.second.value_len = sequencesize;
+            set_value_field<VR::SQ>(attr.second, data);
+            accu += dataelement_length(attr.second); // update the sequence length
+         }
+      }
+   }
+   return accu;
+}
+
 
 transfer_processor::~transfer_processor()
 {
@@ -274,6 +323,8 @@ std::vector<unsigned char> commandset_processor::serialize_attribute(elementfiel
 
 std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
 {
+   calculate_item_lengths(dataset);
+
    std::vector<unsigned char> stream;
    bool explicit_length_item = true;
    bool explicit_length_sequence = true;
