@@ -33,3 +33,15 @@ endif()
 
 
 
+project(dicom_test)
+
+# Prepare "Catch" library for other executables
+set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_library(Catch INTERFACE)
+target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
+
+# Make test executable
+set(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/testsmain.cpp)
+add_executable(dicom_tests tests ${TEST_SOURCES})
+target_link_libraries(dicom_tests Catch)
+
