@@ -190,87 +190,93 @@ class vmtype
          return value_sequence.size();
       }
 
+   private:
+
       /**
         * @brief The iterator struct is the iterator to navigate through the
         *        value field.
         */
-      struct iterator : public std::iterator<std::random_access_iterator_tag, T>
+      template <bool Const = false>
+      struct iterator_t : public std::iterator<std::random_access_iterator_tag, T>
       {
          private:
             vmtype* container;
             std::size_t index;
 
+            using pointermaybeconst = typename std::conditional<Const, const T*, T*>::type;
+            using referencemaybeconst = typename std::conditional<Const, const T&, T&>::type;
+
          public:
-            iterator(vmtype* container, std::size_t index = 0):
+            iterator_t(vmtype* container, std::size_t index = 0):
                container {container},
                index {index}
             {
             }
 
-            iterator operator++(int)
+            iterator_t operator++(int)
             {
                iterator temp = *this;
                index++;
                return temp;
             }
 
-            iterator& operator++()
+            iterator_t& operator++()
             {
                index++;
                return *this;
             }
 
-            iterator& operator+=(std::size_t s)
+            iterator_t& operator+=(std::size_t s)
             {
                index += s;
                return *this;
             }
 
-            friend iterator operator+(const iterator& a, std::size_t s)
+            friend iterator_t operator+(const iterator_t& a, std::size_t s)
             {
                return a += s;
             }
 
-            friend iterator operator+(std::size_t s, const iterator& a)
+            friend iterator_t operator+(std::size_t s, const iterator_t& a)
             {
                return a += s;
             }
 
-            iterator operator--(int)
+            iterator_t operator--(int)
             {
                iterator temp = *this;
                index--;
                return temp;
             }
 
-            iterator& operator--()
+            iterator_t& operator--()
             {
                index--;
                return *this;
             }
 
-            iterator& operator-=(std::size_t s)
+            iterator_t& operator-=(std::size_t s)
             {
                index -= s;
                return *this;
             }
 
-            friend iterator operator-(const iterator& a, std::size_t s)
+            friend iterator_t operator-(const iterator_t& a, std::size_t s)
             {
                return a -= s;
             }
 
-            friend iterator operator-(std::size_t s, const iterator& a)
+            friend iterator_t operator-(std::size_t s, const iterator_t& a)
             {
                return a -= s;
             }
 
-            T& operator[](std::size_t s) const
+            referencemaybeconst operator[](std::size_t s) const
             {
                return container->value_sequence[s];
             }
 
-            T& operator*()
+            referencemaybeconst operator*()
             {
                return container->value_sequence[index];
             }
@@ -280,51 +286,66 @@ class vmtype
                return container->value_sequence[index];
             }
 
-            T* operator->() const
+            pointermaybeconst operator->() const
             {
                return &container->value_sequence[index];
             }
 
-            friend bool operator==(const iterator& lhs, const iterator& rhs)
+            friend bool operator==(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs.container == rhs.container && lhs.index == rhs.index;
             }
 
-            friend bool operator!=(const iterator& lhs, const iterator& rhs)
+            friend bool operator!=(const iterator_t& lhs, const iterator_t& rhs)
             {
                return !(lhs == rhs);
             }
 
-            friend bool operator<(const iterator& lhs, const iterator& rhs)
+            friend bool operator<(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs.index < rhs.index;
             }
 
-            friend bool operator>(const iterator& lhs, const iterator& rhs)
+            friend bool operator>(const iterator_t& lhs, const iterator_t& rhs)
             {
                return !(lhs < rhs || lhs == rhs);
             }
 
-            friend bool operator<=(const iterator& lhs, const iterator& rhs)
+            friend bool operator<=(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs < rhs || lhs == rhs;
             }
 
-            friend bool operator>=(const iterator& lhs, const iterator& rhs)
+            friend bool operator>=(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs > rhs || lhs == rhs;
             }
       };
 
+   public:
+      using iterator = iterator_t<false>;
+      using const_iterator = iterator_t<true>;
+
       iterator begin()
       {
-         return iterator {this};
+         return iterator_t<false> {this};
       }
 
       iterator end()
       {
-         return iterator {this, value_sequence.size()};
+         return iterator_t<false> {this, value_sequence.size()};
       }
+
+      const_iterator cbegin() const
+      {
+         return iterator_t<true> {this};
+      }
+
+      const_iterator cend() const
+      {
+         return iterator_t<true> {this, value_sequence.size()};
+      }
+
 
       std::size_t byte_size() const
       {
