@@ -167,7 +167,7 @@ void dimse_pm::send_response(response r)
       BOOST_LOG_SEV(logger, warning) << errormsg;
       throw std::runtime_error(errormsg);
    }
-
+   
 
    auto accepted = std::find_if(connection_properties.get().pres_contexts.begin(),
                 connection_properties.get().pres_contexts.end(),
