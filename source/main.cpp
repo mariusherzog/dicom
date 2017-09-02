@@ -32,6 +32,24 @@ int main()
 
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
 
+   dataset::iod dat;
+   std::string a = "Hello";
+   value<VR::FD> coord {0.3, 0.3, 0.3};
+   dat[{0x0010, 0x0010}] = value<VR::PN> {"Marius^Herzog"};
+   dat[{0x0010, 0x0010}] = value<VR::FD> {1.0, 0.0, -1.0};
+   dat[{0x007f, 0x0010}] = value<VR::ST> {a};
+
+//   value_ref<VR::FD> val = dat[{0x0010, 0x0010}];
+//   *(val.value().begin()) = 2.3;
+
+   value<VR::PN> val2 = dat[{0x0010, 0x0010}];
+   value<VR::ST> val3 = dat[{0x007f, 0x0010}];
+   auto v = *(val2.get().begin());
+   dat[{0x0010, 0x0010}] = coord;
+   val2 = dat[{0x0010, 0x0010}];
+   v = *(val2.get().begin());
+   std::string c = val3;
+
 //   {
 //      {
 //         dataset::iod dicm;

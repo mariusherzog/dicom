@@ -1,4 +1,4 @@
-project(dicom)
+project(libdicom)
 cmake_minimum_required(VERSION 2.8)
 
 #set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
@@ -15,9 +15,9 @@ find_package(Boost COMPONENTS system log REQUIRED)
 if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
    include_directories(${CMAKE_SOURCE_DIR}/source)
-   include_directories(${CMAKE_SOURCE_DIR}/source/data/vrtypes)
+   #include_directories(${CMAKE_SOURCE_DIR}/source/data/vrtypes)
    aux_source_directory(. SRC_LIST)
-   aux_source_directory(./source SRC_LIST)
+   #aux_source_directory(./source SRC_LIST)
    aux_source_directory(./source/data/attribute SRC_LIST)
    aux_source_directory(./source/data/dictionary SRC_LIST)
    aux_source_directory(./source/data/dataset SRC_LIST)
@@ -27,24 +27,29 @@ if(Boost_FOUND)
    aux_source_directory(./source/network SRC_LIST)
    aux_source_directory(./source/serviceclass SRC_LIST)
    aux_source_directory(./source/util SRC_LIST)
-   add_executable(${PROJECT_NAME} ${SRC_LIST})
    add_library(libdicom ${SRC_LIST})
-   target_link_libraries(dicom ${Boost_LIBRARIES})
    target_link_libraries(libdicom ${Boost_LIBRARIES})
 endif()
 
 
+project(dicom)
+if (Boost_FOUND)
+   include_directories(${Boost_INCLUDE_DIRS})
+   aux_source_directory(./source SRC_LIST_PROGRAM)
+   add_executable(${PROJECT_NAME} ${SRC_LIST_PROGRAM})
+   target_link_libraries(dicom libdicom ${Boost_LIBRARIES})
+endif()
+
 
 project(dicom_test)
 
-# Prepare "Catch" library for other executables
 set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+set(PROJECT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 add_library(Catch INTERFACE)
 target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
 
 
-# Make test executable
-set(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/testsmain.cpp)
+set(TEST_SOURCES ${PROJECT_TEST_DIR})
 file(GLOB_RECURSE TEST_SOURCES tests/dataset.cpp tests/types.cpp tests/testsmain.cpp)
 add_executable(dicom_tests ${TEST_SOURCES})
 target_link_libraries(dicom_tests Catch libdicom ${Boost_LIBRARIES})
