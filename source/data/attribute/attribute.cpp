@@ -118,7 +118,7 @@ std::size_t validate_internal_multitext(vmtype<std::string>& value_field, std::v
 
       auto not_allowed_char = [not_allowed](const char c)
       {
-         return std::find(not_allowed.begin(), not_allowed.end(), c) == not_allowed.end();
+         return std::find(not_allowed.begin(), not_allowed.end(), c) != not_allowed.end();
 
       };
       val.erase(std::remove_if(val.begin(), val.end(), not_allowed_char), val.end());
