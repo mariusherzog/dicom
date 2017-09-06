@@ -209,7 +209,7 @@ void dimse_pm::release_association()
 }
 
 
-void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
+void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rq)
 {
    using namespace dicom::util::log;
    assert(sc == &upperlayer_impl);
@@ -282,7 +282,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    state = CONN_STATE::CONNECTED;
 }
 
-void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> ac)
+void dimse_pm::association_ac_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> ac)
 {
    using namespace dicom::util::log;
    assert(sc == &upperlayer_impl);
@@ -323,7 +323,7 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
    }
 }
 
-void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
+void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> da)
 {
    using namespace upperlayer;
    using namespace dicom::util::log;
@@ -379,7 +379,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    }
 }
 
-void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::release_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -390,21 +390,21 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
    connection_properties = boost::none;
 }
 
-void dimse_pm::release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::release_rp_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received release_rp pdu from upperlayer implementation";
 }
 
-void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::abort_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received a_abort pdu from upperlayer implementation";
 }
 
-void dimse_pm::sent_association_ac(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_association_ac(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -412,7 +412,7 @@ void dimse_pm::sent_association_ac(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_association_rq(upperlayer::scx* sc, upperlayer::property* r)
+void dimse_pm::sent_association_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -423,7 +423,7 @@ void dimse_pm::sent_association_rq(upperlayer::scx* sc, upperlayer::property* r)
    connection_request = *rq;
 }
 
-void dimse_pm::sent_data_tf(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_data_tf(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -431,7 +431,7 @@ void dimse_pm::sent_data_tf(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_release_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -439,7 +439,7 @@ void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_release_rp(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_release_rp(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -447,7 +447,7 @@ void dimse_pm::sent_release_rp(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_abort(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_abort(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);

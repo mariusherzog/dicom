@@ -69,8 +69,8 @@ struct Istate_trans_ops
 struct Iupperlayer_comm_ops
 {
       virtual void queue_for_write(std::unique_ptr<property> p) = 0;
-      virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
-      virtual void inject_conf(TYPE t, std::function<void(scx*, property* f)>) = 0;
+      virtual void inject(TYPE t, std::function<void(Iupperlayer_comm_ops*, std::unique_ptr<property>)> f) = 0;
+      virtual void inject_conf(TYPE t, std::function<void(Iupperlayer_comm_ops*, property* f)>) = 0;
       virtual ~Iupperlayer_comm_ops() = 0;
 };
 
@@ -117,14 +117,14 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] t
        * @param[in] f
        */
-      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) override;
+      void inject(TYPE t, std::function<void(Iupperlayer_comm_ops*, std::unique_ptr<property>)> f) override;
 
       /**
        * @brief inject_conf sets a handler for a sent property type t.
        * @param[in] t
        * @param[in] f
        */
-      void inject_conf(TYPE t, std::function<void(scx*, property*)> f) override;
+      void inject_conf(TYPE t, std::function<void(Iupperlayer_comm_ops*, property*)> f) override;
 
       /**
        * @brief queue_for_write takes ownership of a property and queues it for

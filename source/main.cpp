@@ -20,6 +20,9 @@
 
 #include "util/channel_sev_logger.hpp"
 
+#include <boost/variant.hpp>
+
+
 int main()
 {
    dicom::util::log::init_log();
@@ -31,6 +34,7 @@ int main()
    using namespace dicom::serviceclass;
 
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+
 
 //   {
 //      {

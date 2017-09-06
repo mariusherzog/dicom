@@ -9,7 +9,7 @@
 using namespace dicom::data;
 using namespace dicom::data::attribute;
 
-SCENARIO("Validation of attributes")
+SCENARIO("Validation of attributes", "[attributes]")
 {
    GIVEN("An attribute value field of VR AE")
    {

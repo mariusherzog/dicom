@@ -219,9 +219,9 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
             BOOST_LOG_SEV(logger, trace) << "Read data fragment of size " << bytes;
 
             nextbufcompl->reserve(len+6);
-            nextbufcompl->insert(nextbufcompl->end(), nextbuflen->begin(), nextbuflen->end());
-            nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
-            data->insert(data->end(), nextbufcompl->begin(), nextbufcompl->end());
+            nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbuflen->begin()), std::make_move_iterator(nextbuflen->end()));
+            nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbufdata->begin()), std::make_move_iterator(nextbufdata->end()));
+            data->insert(data->end(), std::make_move_iterator(nextbufcompl->begin()), std::make_move_iterator(nextbufcompl->end()));
 
             bool lastsegment = ((*nextbufcompl)[11] & 0x02);
             if (lastsegment) {
@@ -447,12 +447,12 @@ void scx::artim_expired(const boost::system::error_code& error)
 }
 
 
-void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
+void scx::inject(TYPE t, std::function<void (Iupperlayer_comm_ops*, std::unique_ptr<property>)> f)
 {
    handlers[t] = f;
 }
 
-void scx::inject_conf(TYPE t, std::function<void(scx*, property*)> f)
+void scx::inject_conf(TYPE t, std::function<void(Iupperlayer_comm_ops*, property*)> f)
 {
    handlers_conf[t] = f;
 }
@@ -545,12 +545,12 @@ boost::asio::ip::tcp::socket& scp_connection::sock()
    return *socket;
 }
 
-boost::asio::io_service&scp_connection::io_s()
+boost::asio::io_service &scp_connection::io_s()
 {
    return io_service;
 }
 
-boost::asio::steady_timer&scp_connection::artim_timer()
+boost::asio::steady_timer& scp_connection::artim_timer()
 {
    return artim;
 }
