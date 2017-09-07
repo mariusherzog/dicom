@@ -185,7 +185,7 @@ void dimse_pm::send_response(response r)
 
    std::vector<unsigned char> dataset;
    if (r.get_data().is_initialized()) {
-      auto& tfproc = find_transfer_processor();
+      auto& tfproc = find_transfer_processor(pres_context->id);
       dataset = tfproc.serialize(r.get_data().get());
    }
    data.data_set = dataset;
@@ -253,8 +253,8 @@ void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std:
             auto pres_cont = *have_pres_cont;
             auto transfer_syntaxes = pres_cont.transfer_syntaxes;
             for (const auto ts : transfer_syntaxes) {
-               if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
-                   != transfer_syntaxes.end() && transfer_processors.count(ts) > 0) {
+               if (std::find(pc.transfer_syntaxes.begin(), pc.transfer_syntaxes.end(), ts)
+                   != pc.transfer_syntaxes.end() && transfer_processors.count(ts) > 0) {
                   ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
                   have_common_ts = true;
                   break;
@@ -264,11 +264,12 @@ void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std:
 
          if (!have_common_ts) {
             ac.pres_contexts.push_back({pc.id, RESULT::TRANSF_SYNT_NOT_SUPP, ""});
-            BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << pc.id << "\n";
+            BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << std::to_string(pc.id) << "\n";
          }
 
       } else {
          ac.pres_contexts.push_back({pc.id, RESULT::ABSTR_CONT_NOT_SUPP, ""});
+         BOOST_LOG_TRIVIAL(debug) << "Unsupported abstract syntax in presentation context with id " << std::to_string(pc.id) << "\n";
       }
 
    }
@@ -343,7 +344,7 @@ void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_pt
 
    iod dataset;
    if (!d->data_set.empty()) {
-      auto& tfproc = find_transfer_processor();
+      auto& tfproc = find_transfer_processor(d->pres_context_id);
 
       dataset = tfproc.deserialize(d->data_set);
    }
@@ -460,22 +461,21 @@ int dimse_pm::next_message_id()
    return msg_id++;
 }
 
-transfer_processor& dimse_pm::find_transfer_processor()
+transfer_processor& dimse_pm::find_transfer_processor(unsigned char presentation_context_id)
 {
    using kvpair = std::pair<const std::string, std::unique_ptr<data::dataset::transfer_processor>>;
-   return *(std::find_if(transfer_processors.begin(), transfer_processors.end(),
-                       [this](kvpair& kv) {
-      auto pres_contexts = connection_properties.get().pres_contexts;
-      std::string transfer_syntax = kv.first;
-      return std::find_if(pres_contexts.begin(), pres_contexts.end(),
-                          [transfer_syntax](upperlayer::a_associate_ac::presentation_context pc)
-      {
-         return pc.result_
-               == upperlayer::a_associate_ac::presentation_context::RESULT::ACCEPTANCE
-               && pc.transfer_syntax
-               == transfer_syntax;
-      }) != pres_contexts.end();
-   })->second);
+
+
+   // retrieve the negotiated transfer syntax of the presentation context
+   auto pres_contexts = connection_properties.get().pres_contexts;
+   std::string ts_of_presentation_context = (std::find_if(pres_contexts.begin(), pres_contexts.end(),
+      [presentation_context_id](upperlayer::a_associate_ac::presentation_context pc) { return pc.id == presentation_context_id; })
+         )->transfer_syntax;
+
+   // and return a reference to our corresponding transfer processor instance
+   return *((std::find_if(transfer_processors.begin(), transfer_processors.end(),
+      [this, ts_of_presentation_context](kvpair& kv) { return ts_of_presentation_context == kv.first; }))->second);
+
 }
 
 

@@ -208,11 +208,15 @@ class dimse_pm
 
       /**
        * @brief find_transfer_processor uses the connection properties and the
-       *        availabe transfer processors to return a machting transfer
-       *        processor.
+       *        availabe transfer processors to return a transfer processor
+       *        appropriate for the presentation context on which dicom
+       *        transmission / reception occurs.
+       * @param presentation_context_id presentation context id where data is
+       *        to be sent / received.
        * @return reference to a matching transfer processor
        */
-      data::dataset::transfer_processor& find_transfer_processor();
+
+      data::dataset::transfer_processor& find_transfer_processor(unsigned char presentation_context_id);
 
       //upperlayer::Iupperlayer_sethandlers& upperlayer_handlers;
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
