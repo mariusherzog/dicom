@@ -349,6 +349,10 @@ void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_pt
       dataset = tfproc.deserialize(d->data_set);
    }
 
+   // TODO handle data on rejected presentation context? -> respond with failure
+   // http://dicom.nema.org/dicom/2013/output/chtml/part07/sect_C.5.html
+   // -> SOP Class not supported
+
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
    unsigned short message_id;

@@ -29,6 +29,13 @@ if(Boost_FOUND)
    target_link_libraries(libdicom ${Boost_LIBRARIES})
 endif()
 
+# Copy files necessary at runtime
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/datadictionary.csv
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/commanddictionary.csv
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+
 project(dicom)
 
 if(Boost_FOUND)
@@ -41,16 +48,19 @@ endif()
 
 project(dicom_test)
 
-# Prepare "Catch" library for other executables
+
 set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 add_library(Catch INTERFACE)
 target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
 
 
-# Make test executable
 set(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/testsmain.cpp)
 file(GLOB_RECURSE TEST_SOURCES tests/dataset.cpp tests/types.cpp tests/testsmain.cpp tests/attribute.cpp tests/dimse.cpp tests/stubs/upperlayer_communication_stub.hpp)
 add_executable(dicom_tests ${TEST_SOURCES})
 target_link_libraries(dicom_tests Catch libdicom ${Boost_LIBRARIES})
+
+# Copy test data, like prepared serialized sets etc.
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/data
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(NAME tests COMMAND dicom_tests)
