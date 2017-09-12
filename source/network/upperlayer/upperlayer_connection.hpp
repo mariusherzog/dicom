@@ -17,6 +17,7 @@
 
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
+#include "infrastructure/asio_tcp_connection.hpp"
 
 #include "data/dataset/transfer_processor.hpp"
 
@@ -270,6 +271,8 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
       std::map<TYPE, std::function<void(scx*, std::unique_ptr<property>)>> handlers;
 
       bool shutdown_requested;
+
+      asio_tcp_connection* infr_tcp;
 
    protected:
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;

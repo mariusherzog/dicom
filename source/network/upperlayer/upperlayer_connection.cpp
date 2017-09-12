@@ -70,7 +70,8 @@ scx::scx(data::dictionary::dictionary& dict,
    proc {data::dataset::commandset_processor {dict}},
    received_pdu {boost::none},
    handlers {},
-   shutdown_requested {false}
+   shutdown_requested {false},
+   infr_tcp {nullptr}
 {
    for (const auto p : l) {
       handlers[p.first] = p.second;
@@ -116,11 +117,15 @@ void scx::send(property* p)
          e = statemachine::EVENT::UNRECOG_PDU;
    }
 
+   if (!infr_tcp) {
+      infr_tcp = new asio_tcp_connection(io_s(), sock());
+   }
+
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
       // call async_write after each sent property until the queue is
       // empty
       if (ptype != TYPE::P_DATA_TF) {
-         boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
+         infr_tcp->write_data(pdu,
             [this, p, ptype](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
@@ -137,7 +142,7 @@ void scx::send(property* p)
 
          std::size_t len = be_char_to_32b({pdu->begin()+6, pdu->begin()+10});
          auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
-         boost::asio::async_write(sock(), boost::asio::buffer(*commandset),
+         infr_tcp->write_data(commandset,
             [this, commandset, len, pdu, p, ptype, pdataprop]
                (const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
