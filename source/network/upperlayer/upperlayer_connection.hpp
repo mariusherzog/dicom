@@ -274,7 +274,10 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 
       asio_tcp_connection* infr_tcp;
 
+
    protected:
+      virtual asio_tcp_connection* connection() = 0;
+
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 };
@@ -293,10 +296,21 @@ class scp_connection: public scx
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
           std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
           std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+
+      scp_connection(asio_tcp_connection* tcp_conn,
+                     boost::asio::io_service& io_service,
+                     data::dictionary::dictionary& dict,
+                     short port,
+                     std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+                     std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
+                     std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+
       scp_connection(const scp_connection&) = delete;
       scp_connection& operator=(const scp_connection&) = delete;
 
    private:
+      asio_tcp_connection* conn;
+
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
@@ -304,6 +318,9 @@ class scp_connection: public scx
       boost::asio::io_service& io_service;
       std::shared_ptr<boost::asio::ip::tcp::socket> socket;
       boost::asio::steady_timer artim;
+
+   protected:
+      virtual asio_tcp_connection* connection() override { return conn; }
 };
 
 /**
@@ -334,6 +351,9 @@ class scu_connection: public scx
       boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
       boost::asio::ip::tcp::socket socket;
       boost::asio::steady_timer artim;
+
+   protected:
+      virtual asio_tcp_connection* connection() { return nullptr; }
 };
 
 }

@@ -117,8 +117,11 @@ void scx::send(property* p)
          e = statemachine::EVENT::UNRECOG_PDU;
    }
 
-   if (!infr_tcp) {
-      infr_tcp = new asio_tcp_connection(io_s(), sock());
+   if (connection()) {
+      infr_tcp = connection();
+   } else {
+      //infr_tcp = new asio_tcp_connection(io_s(), sock());
+      infr_tcp = nullptr;
    }
 
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
@@ -205,8 +208,15 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
    auto nextbuflen = std::make_shared<std::vector<unsigned char>>(6);
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
    auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
-   boost::asio::async_read(sock(), boost::asio::buffer(*nextbuflen), boost::asio::transfer_exactly(6),
-      [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
+
+   if (connection()) {
+      infr_tcp = connection();
+   } else {
+      //infr_tcp = new asio_tcp_connection(io_s(), sock());
+      infr_tcp = nullptr;
+   }
+
+   infr_tcp->read_data(nextbuflen, 6, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
          if (error) {
             throw boost::system::system_error(error);
          }
@@ -215,8 +225,7 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
 
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         boost::asio::async_read(sock(), boost::asio::buffer(*nextbufdata),
-         [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
+         infr_tcp->read_data(nextbufdata, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
             if (error) {
                throw boost::system::system_error(error);
             }
@@ -281,8 +290,12 @@ void scx::do_read()
    auto rem_data = std::make_shared<std::vector<unsigned char>>();
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
 
-   boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
-      [=](const boost::system::error_code& error, std::size_t bytes)  {
+   if (connection())
+   {
+      infr_tcp = connection();
+   }
+
+   infr_tcp->read_data(size, 6, [=](const boost::system::error_code& error, std::size_t bytes)  {
          if (error) {
             throw boost::system::system_error(error);
          }
@@ -293,7 +306,7 @@ void scx::do_read()
 
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(len),
+         infr_tcp->read_data(rem_data, len,
             [=](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
@@ -430,12 +443,15 @@ void scx::close_connection()
 
    // closing of the connection may only be done when there are no
    // outstanding operations
-   io_s().post([this]() {
-      sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-      sock().close();
-      handler_end_connection(this);
-      shutdown_requested = false;
-   });
+
+   connection()->close();
+
+//   io_s().post([this]() {
+//      sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+//      sock().close();
+//      handler_end_connection(this);
+//      shutdown_requested = false;
+//   });
 }
 
 void scx::run()
@@ -481,6 +497,26 @@ scp_connection::scp_connection(boost::asio::io_service& io_service,
    artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 //   handler_new_connection {handler_new_conn},
 //   handler_end_connection {handler_end_conn}
+{
+   handler_new_connection = handler_new_conn;
+   handler_end_connection = handler_end_conn;
+   artim.cancel();
+   statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
+   handler_new_connection(this);
+   do_read();
+}
+
+scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
+                               boost::asio::io_service& io_service,
+                               data::dictionary::dictionary& dict,
+                               short port,
+                               std::function<void (Iupperlayer_comm_ops*)> handler_new_conn,
+                               std::function<void (Iupperlayer_comm_ops*)> handler_end_conn,
+                               std::vector<std::pair<TYPE, std::function<void(scx*,std::unique_ptr<property>)>>> l):
+   scx {dict, l},
+   io_service {io_service},
+   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) },
+   conn {tcp_conn}
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;

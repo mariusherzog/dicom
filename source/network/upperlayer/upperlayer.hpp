@@ -81,14 +81,17 @@ class scp: public Iupperlayer_connection_handlers
 
    private:
 
-      void accept_new(std::shared_ptr<boost::asio::ip::tcp::socket>, boost::system::error_code);
+      std::map<asio_tcp_connection*, std::unique_ptr<scp_connection>> scps;
+
+      void accept_new(asio_tcp_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::vector<std::unique_ptr<scp_connection>> connections;
-      boost::asio::io_service io_service;
-      boost::asio::ip::tcp::acceptor acptr;
+      std::unique_ptr<asio_tcp_server_acceptor> connection;
+//      std::vector<std::unique_ptr<scp_connection>> connections;
+//      boost::asio::io_service io_service;
+//      boost::asio::ip::tcp::acceptor acptr;
       short port;
       data::dictionary::dictionary& dict;
 };
