@@ -38,6 +38,36 @@ class asio_tcp_server_acceptor
         boost::asio::ip::tcp::acceptor acptr;
 };
 
+class asio_tcp_client_acceptor
+{
+    public:
+        asio_tcp_client_acceptor(std::string host, std::string port,
+                                 std::function<void(asio_tcp_connection*)> new_connection,
+                                 std::function<void(asio_tcp_connection*)> end_connection);
+
+        void run();
+
+        boost::asio::io_service& io_svc()
+        {
+            return io_s;
+        }
+
+        void accept_new_conn();
+
+        std::function<void(asio_tcp_connection*)> handler_new;
+        std::function<void(asio_tcp_connection*)> handler_end;
+
+    private:
+        void accept_new();
+
+        std::unique_ptr<asio_tcp_connection> connection;
+
+        boost::asio::io_service io_s;
+        boost::asio::ip::tcp::resolver resolver;
+        boost::asio::ip::tcp::resolver::query query;
+        boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
+};
+
 
 // scx will take an instance of this class!
 class asio_tcp_connection
@@ -47,6 +77,9 @@ class asio_tcp_connection
 
       void write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                       std::function<void(const boost::system::error_code&, std::size_t)> on_complete);
+
+      void write_data(void* data_offset, std::size_t len,
+                      std::function<void (const boost::system::error_code&, std::size_t)> on_complete);
 
       void read_data(std::shared_ptr<std::vector<unsigned char>> buffer, std::size_t len,
                      std::function<void(const boost::system::error_code&, std::size_t)> on_complete);

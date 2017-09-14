@@ -38,6 +38,48 @@ void asio_tcp_server_acceptor::accept_new(std::shared_ptr<boost::asio::ip::tcp::
 }
 
 
+//
+
+asio_tcp_client_acceptor::asio_tcp_client_acceptor(std::string host, std::string port,
+                                                   std::function<void (asio_tcp_connection *)> new_connection,
+                                                   std::function<void (asio_tcp_connection *)> end_connection):
+   handler_new {new_connection},
+   handler_end {end_connection},
+   io_s {},
+   resolver {io_s},
+   query {host, port},
+   endpoint_iterator {resolver.resolve(query)}
+{
+
+}
+
+void asio_tcp_client_acceptor::accept_new()
+{
+   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(io_s);
+   boost::asio::ip::tcp::resolver::iterator end;
+   boost::system::error_code error = boost::asio::error::host_not_found;
+   while(error && endpoint_iterator != end)
+   {
+     socket->close();
+     socket->connect(*endpoint_iterator++, error);
+   }
+   connection = std::unique_ptr<asio_tcp_connection> {new asio_tcp_connection(io_s, socket)};
+
+   handler_new(connection.get());
+}
+
+void asio_tcp_client_acceptor::run()
+{
+   accept_new();
+   io_s.run();
+}
+
+void asio_tcp_client_acceptor::accept_new_conn()
+{
+
+}
+
+//
 
 
 asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
@@ -48,10 +90,17 @@ asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
 
 }
 
+// boost::asio::buffer(data_offset, len)
 void asio_tcp_connection::write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                                      std::function<void (const boost::system::error_code&, std::size_t)> on_complete)
 {
    boost::asio::async_write(*socket, boost::asio::buffer(*buffer), on_complete);
+}
+
+void asio_tcp_connection::write_data(void* data_offset, std::size_t len,
+                                     std::function<void (const boost::system::error_code&, std::size_t)> on_complete)
+{
+   boost::asio::async_write(*socket, boost::asio::buffer(data_offset, len), on_complete);
 }
 
 void asio_tcp_connection::read_data(std::shared_ptr<std::vector<unsigned char>> buffer,

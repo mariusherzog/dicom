@@ -332,15 +332,26 @@ class scu_connection: public scx
    public:
       scu_connection(boost::asio::io_service& io_service,
           data::dictionary::dictionary& dict,
-          std::string host, std::string port,
+                     std::string host, std::string port,
           a_associate_rq& rq,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
           std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
           std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+
+      scu_connection(asio_tcp_connection* conn,
+                     boost::asio::io_service& io_service,
+          data::dictionary::dictionary& dict,
+          a_associate_rq& rq,
+          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
+          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+
       scu_connection(const scu_connection&) = delete;
       scu_connection& operator=(const scu_connection&) = delete;
 
    private:
+      asio_tcp_connection* conn;
+
       boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
@@ -353,7 +364,7 @@ class scu_connection: public scx
       boost::asio::steady_timer artim;
 
    protected:
-      virtual asio_tcp_connection* connection() { return nullptr; }
+      virtual asio_tcp_connection* connection() { return conn; }
 };
 
 }

@@ -257,7 +257,14 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
 
    void* data_offset = (static_cast<void*>(data->data()+begin));
 
-   boost::asio::async_write(sock(), boost::asio::buffer(data_offset, len),
+   if (connection()) {
+      infr_tcp = connection();
+   } else {
+      //infr_tcp = new asio_tcp_connection(io_s(), sock());
+      infr_tcp = nullptr;
+   }
+
+   infr_tcp->write_data(data_offset, len,
       [this, p, data, len, begin, data_offset](const boost::system::error_code& error, std::size_t bytes) {
          if (error) {
             throw boost::system::system_error(error);
@@ -579,6 +586,63 @@ scu_connection::scu_connection(boost::asio::io_service& io_service,
          }
    });
 }
+
+
+scu_connection::scu_connection(asio_tcp_connection* conn,
+                               boost::asio::io_service& io_service,
+         data::dictionary::dictionary& dict,
+         a_associate_rq& rq,
+         std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+         std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
+         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+   scx {dict, l},
+   conn {conn},
+   io_service {io_service},
+   resolver {io_service},
+   query {"", ""},
+   //endpoint_iterator {resolver.resolve(query)},
+   socket {io_service},
+   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
+{
+   handler_new_connection = handler_new_conn;
+   handler_end_connection = handler_end_conn;
+   statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
+
+//   boost::asio::ip::tcp::resolver::iterator end;
+//   boost::system::error_code error = boost::asio::error::host_not_found;
+//   while(error && endpoint_iterator != end)
+//   {
+//     socket.close();
+//     socket.connect(*endpoint_iterator++, error);
+//   }
+
+//   if (error) {
+//      throw boost::system::system_error(error);
+//   }
+
+
+   statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
+
+   handler_new_connection(this);
+
+   auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
+   conn->write_data(pdu, [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
+         if (!error) {
+            auto type = TYPE::A_ASSOCIATE_RQ;
+            BOOST_LOG_SEV(logger, info) << "Sent property of type " << type;
+            BOOST_LOG_SEV(logger, debug) << "Property info: \n" << rq;
+            if (handlers_conf.find(type) != handlers_conf.end()) {
+               handlers_conf[type](this, &rq);
+            }
+            do_read();
+         } else {
+            throw boost::system::system_error(error);
+         }
+   });
+}
+
+
+
 
 
 boost::asio::ip::tcp::socket& scp_connection::sock()

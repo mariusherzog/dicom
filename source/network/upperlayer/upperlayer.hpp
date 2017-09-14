@@ -119,6 +119,8 @@ class scu: public Iupperlayer_connection_handlers
        * @brief accept_new starts a new association with the parameters
        *        specified in the constructor.
        */
+      void accept_new(asio_tcp_connection* conn);
+
       void accept_new();
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
@@ -128,8 +130,10 @@ class scu: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
+      std::unique_ptr<asio_tcp_client_acceptor> connection;
+
       std::vector<std::unique_ptr<scu_connection>> connections;
-      boost::asio::io_service io_service;
+      //boost::asio::io_service io_service;
       std::string host;
       std::string port;
       a_associate_rq& request;

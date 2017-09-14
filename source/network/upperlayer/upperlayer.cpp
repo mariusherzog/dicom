@@ -79,32 +79,43 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 scu::scu(data::dictionary::dictionary& dict,
          std::string host, std::string port,
          a_associate_rq& rq):
-   io_service {},
+//   io_service {},
+   connection {new asio_tcp_client_acceptor(host, port, nullptr, nullptr)},
    host {host},
    port {port},
    request {rq},
    dict {dict}
 {
    using namespace std::placeholders;
+   connection->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
 }
 
 scu::~scu()
 {
 }
 
-void scu::accept_new()
+void scu::accept_new(asio_tcp_connection* conn)
 {
-
+//   connections.push_back(std::unique_ptr<scu_connection>
+//   {
+//      new scu_connection {io_service, dict, host, port, request, handler_new_connection, handler_end_connection}
+//   });
    connections.push_back(std::unique_ptr<scu_connection>
    {
-      new scu_connection {io_service, dict, host, port, request, handler_new_connection, handler_end_connection}
+      new scu_connection {conn, conn->io_svc(), dict, request, handler_new_connection, handler_end_connection}
    });
+}
+
+void scu::accept_new()
+{
+   connection->accept_new_conn();
 }
 
 void scu::run()
 {
-   accept_new();
-   io_service.run();
+//   accept_new();
+//   io_service.run();
+   connection->run();
 }
 
 void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -114,14 +125,14 @@ void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
-   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
-      handler(conn);
-      for (auto& connection : connections) {
-         if (connection.get() == conn) {
-            connection.reset();
-         }
-      }
-   };
+//   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
+//      handler(conn);
+//      for (auto& connection : connections) {
+//         if (connection.get() == conn) {
+//            connection.reset();
+//         }
+//      }
+//   };
 }
 
 
