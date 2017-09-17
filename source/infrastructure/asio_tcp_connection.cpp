@@ -25,7 +25,7 @@ void asio_tcp_server_acceptor::accept_new(std::shared_ptr<boost::asio::ip::tcp::
    if (!ec) {
       connections.push_back(std::unique_ptr<asio_tcp_connection>
          {
-            new asio_tcp_connection {io_s, sock}
+            new asio_tcp_connection {io_s, sock, handler_end}
          });
    } else {
       throw boost::system::system_error(ec);
@@ -63,7 +63,7 @@ void asio_tcp_client_acceptor::accept_new()
      socket->close();
      socket->connect(*endpoint_iterator++, error);
    }
-   connections.emplace_back(new asio_tcp_connection(io_s, socket));
+   connections.emplace_back(new asio_tcp_connection(io_s, socket, handler_end));
 
    handler_new(connections.back().get());
 }
@@ -76,16 +76,18 @@ void asio_tcp_client_acceptor::run()
 
 void asio_tcp_client_acceptor::accept_new_conn()
 {
-
+   accept_new();
 }
 
 //
 
 
 asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
-                                         std::shared_ptr<boost::asio::ip::tcp::socket> sock):
+                                         std::shared_ptr<boost::asio::ip::tcp::socket> sock,
+                                         std::function<void(asio_tcp_connection*)> on_end_connection):
    io_s {ioservice},
-   socket {sock}
+   socket {sock},
+   handler_end_connection {on_end_connection}
 {
 
 }

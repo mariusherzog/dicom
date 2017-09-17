@@ -168,33 +168,34 @@ int main()
 //      qr.set_move_destination("MOVESCU", {"QRSCP", "QRSCU", "localhost", 1114});
 //      qr.run();
 
-//      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
-//      {
-//         std::ofstream out("out", std::ios::binary);
-//    std::cout << *data;
-////         std::vector<unsigned short> imdata;
-////         auto value_field = (*data)[{0x7fe0,0x0010}];
-////         get_value_field<VR::OW>(value_field, imdata);
-////         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
-////         out.flush();
-//     dicom::filesystem::dicomfile file(*data, dict);
-//     std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
-//     outfile << file;
-//     outfile.flush();
-//      });
-//      store.run();
-      int n = 0;
-      storage_scu store({"STORAGESCP", "STORAGESCU", "localhost", 1113}, dict,
-                        [&dict, &n](storage_scu* sc, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
       {
-            if (n == 0) {
-               ++n;
-            }
-            else
-            sc->release();
+         std::ofstream out("out", std::ios::binary);
+    std::cout << *data;
+//         std::vector<unsigned short> imdata;
+//         auto value_field = (*data)[{0x7fe0,0x0010}];
+//         get_value_field<VR::OW>(value_field, imdata);
+//         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
+//         out.flush();
+     dicom::filesystem::dicomfile file(*data, dict);
+     std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
+     outfile << file;
+     outfile.flush();
       });
-      store.set_store_data(dicm);
       store.run();
+
+//      int n = 0;
+//      storage_scu store({"STORAGESCP", "STORAGESCU", "localhost", 1113}, dict,
+//                        [&dict, &n](storage_scu* sc, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+//      {
+//            if (n == 0) {
+//               ++n;
+//            }
+//            else
+//            sc->release();
+//      });
+//      store.set_store_data(dicm);
+//      store.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();
    }

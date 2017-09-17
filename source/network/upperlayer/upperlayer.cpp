@@ -21,13 +21,16 @@ Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 
 scp::scp(data::dictionary::dictionary& dict,
          short port):
-//   io_service {},
-//   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
-   connection {new asio_tcp_server_acceptor(port, nullptr, nullptr)},
+   acceptor {new asio_tcp_server_acceptor(port, nullptr, nullptr)},
    port {port},
    dict {dict}
 {
-   connection->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
+   acceptor->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
+   acceptor->handler_end = [this](asio_tcp_connection* conn) { connection_end(conn);};
+//   connection->handler_end = [this](asio_tcp_connection* conn)
+//   {
+//      handler_end_connection(conn);
+//   };
 //   using namespace std::placeholders;
 //   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
 //   acptr.async_accept(*socket, [socket, this](boost::system::error_code ec) { accept_new(socket, ec); });
@@ -53,9 +56,17 @@ void scp::accept_new(asio_tcp_connection* conn)
    scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, conn->io_svc(), dict, port, handler_new_connection, handler_end_connection)};
 }
 
+void scp::connection_end(asio_tcp_connection* conn)
+{
+   auto& sc = scps.at(conn);
+   handler_end_connection(sc.get());
+   //sc->reset();
+   scps.erase(conn);
+}
+
 void scp::run()
 {
-   connection->run();
+   acceptor->run();
 }
 
 void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -73,6 +84,7 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 //         }
 //      }
 //   };
+   handler_end_connection = handler;
 }
 
 
@@ -80,14 +92,18 @@ scu::scu(data::dictionary::dictionary& dict,
          std::string host, std::string port,
          a_associate_rq& rq):
 //   io_service {},
-   connection {new asio_tcp_client_acceptor(host, port, nullptr, nullptr)},
+   acceptor {new asio_tcp_client_acceptor(host, port, nullptr, nullptr)},
    host {host},
    port {port},
    request {rq},
    dict {dict}
 {
    using namespace std::placeholders;
-   connection->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
+   acceptor->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
+   acceptor->handler_end = [this](asio_tcp_connection* conn)
+   {
+      //handler_end_connection(conn);
+   };
 }
 
 scu::~scu()
@@ -108,14 +124,14 @@ void scu::accept_new(asio_tcp_connection* conn)
 
 void scu::accept_new()
 {
-   connection->accept_new_conn();
+   acceptor->accept_new_conn();
 }
 
 void scu::run()
 {
 //   accept_new();
 //   io_service.run();
-   connection->run();
+   acceptor->run();
 }
 
 void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)

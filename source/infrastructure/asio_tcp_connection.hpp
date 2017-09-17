@@ -73,7 +73,9 @@ class asio_tcp_client_acceptor
 class asio_tcp_connection
 {
    public:
-      asio_tcp_connection(boost::asio::io_service& ioservice, std::shared_ptr<boost::asio::ip::tcp::socket> sock);
+      asio_tcp_connection(boost::asio::io_service& ioservice,
+                          std::shared_ptr<boost::asio::ip::tcp::socket> sock,
+                          std::function<void(asio_tcp_connection*)> on_end_connection);
 
       void write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                       std::function<void(const boost::system::error_code&, std::size_t)> on_complete);
@@ -97,7 +99,7 @@ class asio_tcp_connection
           io_s.post([this]() {
              socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
              socket->close();
-//             handler_end_connection(this);
+             handler_end_connection(this);
 //             shutdown_requested = false;
           });
       }
@@ -105,6 +107,8 @@ class asio_tcp_connection
     private:
       boost::asio::io_service& io_s;
       std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+
+      std::function<void(asio_tcp_connection*)> handler_end_connection;
 };
 
 #endif // ASIO_TCP_CONNECTION_HPP

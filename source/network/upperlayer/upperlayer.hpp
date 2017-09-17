@@ -59,7 +59,8 @@ struct Iupperlayer_connection_handlers
 
 /**
  * @brief The scp class acts as a service class provider which can have
- *        and manages multiple connections simultaneously.
+ *        and manages multiple connections simultaneously as specified by the
+ *        constructor's parameters.
  */
 class scp: public Iupperlayer_connection_handlers
 {
@@ -85,19 +86,18 @@ class scp: public Iupperlayer_connection_handlers
 
       void accept_new(asio_tcp_connection* conn);
 
+      void connection_end(asio_tcp_connection* conn);
+
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::unique_ptr<asio_tcp_server_acceptor> connection;
-//      std::vector<std::unique_ptr<scp_connection>> connections;
-//      boost::asio::io_service io_service;
-//      boost::asio::ip::tcp::acceptor acptr;
+      std::unique_ptr<asio_tcp_server_acceptor> acceptor;
       short port;
       data::dictionary::dictionary& dict;
 };
 
 /**
- * @brief The scu class
+ * @brief The scu class handles all connections to a remote application entity.
  */
 class scu: public Iupperlayer_connection_handlers
 {
@@ -130,7 +130,7 @@ class scu: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::unique_ptr<asio_tcp_client_acceptor> connection;
+      std::unique_ptr<asio_tcp_client_acceptor> acceptor;
 
       std::vector<std::unique_ptr<scu_connection>> connections;
       //boost::asio::io_service io_service;
