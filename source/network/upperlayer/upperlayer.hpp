@@ -127,13 +127,14 @@ class scu: public Iupperlayer_connection_handlers
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
 
    private:
+      void connection_end(asio_tcp_connection* conn);
+
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       std::unique_ptr<asio_tcp_client_acceptor> acceptor;
 
-      std::vector<std::unique_ptr<scu_connection>> connections;
-      //boost::asio::io_service io_service;
+      std::map<asio_tcp_connection*, std::unique_ptr<scu_connection>> scus;
       std::string host;
       std::string port;
       a_associate_rq& request;
