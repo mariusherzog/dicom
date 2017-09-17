@@ -34,7 +34,6 @@ class asio_tcp_server_acceptor
         std::vector<std::unique_ptr<asio_tcp_connection>> connections;
 
         boost::asio::io_service io_s;
-        //boost::asio::ip::tcp::socket socket;
         boost::asio::ip::tcp::acceptor acptr;
 };
 
@@ -60,13 +59,14 @@ class asio_tcp_client_acceptor
     private:
         void accept_new();
 
-        std::unique_ptr<asio_tcp_connection> connection;
+        std::vector<std::unique_ptr<asio_tcp_connection>> connections;
 
         boost::asio::io_service io_s;
         boost::asio::ip::tcp::resolver resolver;
         boost::asio::ip::tcp::resolver::query query;
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
 };
+
 
 
 // scx will take an instance of this class!

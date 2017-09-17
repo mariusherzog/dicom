@@ -63,9 +63,9 @@ void asio_tcp_client_acceptor::accept_new()
      socket->close();
      socket->connect(*endpoint_iterator++, error);
    }
-   connection = std::unique_ptr<asio_tcp_connection> {new asio_tcp_connection(io_s, socket)};
+   connections.emplace_back(new asio_tcp_connection(io_s, socket));
 
-   handler_new(connection.get());
+   handler_new(connections.back().get());
 }
 
 void asio_tcp_client_acceptor::run()

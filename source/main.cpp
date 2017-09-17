@@ -171,7 +171,7 @@ int main()
 //      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
 //      {
 //         std::ofstream out("out", std::ios::binary);
-//	 std::cout << *data;
+//    std::cout << *data;
 ////         std::vector<unsigned short> imdata;
 ////         auto value_field = (*data)[{0x7fe0,0x0010}];
 ////         get_value_field<VR::OW>(value_field, imdata);
