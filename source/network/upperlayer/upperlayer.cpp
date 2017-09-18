@@ -35,7 +35,7 @@ scp::~scp()
 
 void scp::accept_new(asio_tcp_connection* conn)
 {
-   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, conn->io_svc(), dict, port, handler_new_connection, handler_end_connection)};
+   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, port, handler_new_connection, handler_end_connection)};
 }
 
 void scp::connection_end(asio_tcp_connection* conn)
@@ -86,7 +86,7 @@ void scu::accept_new(asio_tcp_connection* conn)
 //   {
 //      new scu_connection {conn, conn->io_svc(), dict, request, handler_new_connection, handler_end_connection}
 //   });
-   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, conn->io_svc(), dict, request, handler_new_connection, handler_end_connection}};
+   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection}};
 }
 
 void scu::accept_new()

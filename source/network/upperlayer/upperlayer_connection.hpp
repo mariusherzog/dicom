@@ -195,7 +195,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @brief artim_expired is called when the artim timer expires
        * @param[in] error
        */
-      void artim_expired(const boost::system::error_code& error);
+      void artim_expired();
 
       std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
 
@@ -249,20 +249,20 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 //       */
 //      virtual boost::asio::ip::tcp::socket& sock() = 0;
 
-      /**
-       * @brief sock is used by the subclasses to use the ::run() member function
-       * @return ref to boost::asio::io_service
-       *
-       * for initalization reasons the socket cannot be declared in this abstract
-       * class.
-       */
-      virtual boost::asio::io_service& io_s() = 0;
+//      /**
+//       * @brief sock is used by the subclasses to use the ::run() member function
+//       * @return ref to boost::asio::io_service
+//       *
+//       * for initalization reasons the socket cannot be declared in this abstract
+//       * class.
+//       */
+//      virtual boost::asio::io_service& io_s() = 0;
 
       /**
        * @brief artim_timer returns a reference to the artim timer
        * @return ref to boost::asio::steady_timer
        */
-      virtual boost::asio::steady_timer& artim_timer() = 0;
+      virtual timeout_connection& artim_timer() = 0;
 
       data::dataset::commandset_processor proc;
 
@@ -288,7 +288,6 @@ class scp_connection: public scx
 {
    public:
       scp_connection(asio_tcp_connection* tcp_conn,
-                     boost::asio::io_service& io_service,
                      data::dictionary::dictionary& dict,
                      short port,
                      std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
@@ -301,11 +300,11 @@ class scp_connection: public scx
    private:
       asio_tcp_connection* conn;
 
-      boost::asio::io_service& io_s() override;
-      boost::asio::steady_timer& artim_timer() override;
+//      boost::asio::io_service& io_s() override;
+      timeout_connection& artim_timer() override;
 
-      boost::asio::io_service& io_service;
-      boost::asio::steady_timer artim;
+//      boost::asio::io_service& io_service;
+      timeout_connection artim;
 
    protected:
       virtual asio_tcp_connection* connection() override { return conn; }
@@ -319,7 +318,6 @@ class scu_connection: public scx
 {
    public:
       scu_connection(asio_tcp_connection* conn,
-                     boost::asio::io_service& io_service,
           data::dictionary::dictionary& dict,
           a_associate_rq& rq,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
@@ -332,11 +330,11 @@ class scu_connection: public scx
    private:
       asio_tcp_connection* conn;
 
-      boost::asio::io_service& io_s() override;
-      boost::asio::steady_timer& artim_timer() override;
+//      boost::asio::io_service& io_s() override;
+      timeout_connection& artim_timer() override;
 
-      boost::asio::io_service& io_service;
-      boost::asio::steady_timer artim;
+//      boost::asio::io_service& io_service;
+      timeout_connection artim;
 
    protected:
       virtual asio_tcp_connection* connection() override { return conn; }

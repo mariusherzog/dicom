@@ -115,6 +115,11 @@ class asio_tcp_connection
           return io_s;
       }
 
+      bool is_stopped() const
+      {
+         return io_s.stopped();
+      }
+
       void close()
       {
           io_s.post([this]() {

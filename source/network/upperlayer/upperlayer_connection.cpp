@@ -177,7 +177,7 @@ void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
       close_connection();
    } else {
       // be ready for new data
-      if (!io_s().stopped() && !shutdown_requested) {
+      if (!connection()->is_stopped() && !shutdown_requested) {
          do_read();
       }
    }
@@ -404,7 +404,7 @@ void scx::stop_artim()
 void scx::start_artim()
 {
    using namespace std::placeholders;
-   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
+   artim_timer().wait_async();
       //member function artim_expired has implicit scx* as first parameter
 }
 
@@ -436,15 +436,15 @@ void scx::close_connection()
 
 void scx::run()
 {
-   io_s().run();
+//   io_s().run();
 }
 
-void scx::artim_expired(const boost::system::error_code& error)
+void scx::artim_expired()
 {
-   if (error != boost::asio::error::operation_aborted) {
+   //if (error != boost::asio::error::operation_aborted) {
       BOOST_LOG_SEV(this->logger, info) << "ARTIM timer expired";
       statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
-   }
+   //}
 }
 
 
@@ -465,16 +465,14 @@ statemachine::CONN_STATE scx::get_state()
 
 
 scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
-                               boost::asio::io_service& io_service,
                                data::dictionary::dictionary& dict,
                                short port,
                                std::function<void (Iupperlayer_comm_ops*)> handler_new_conn,
                                std::function<void (Iupperlayer_comm_ops*)> handler_end_conn,
                                std::vector<std::pair<TYPE, std::function<void(scx*,std::unique_ptr<property>)>>> l):
    scx {dict, l},
-   io_service {io_service},
-   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) },
-   conn {tcp_conn}
+   conn {tcp_conn},
+   artim {conn->timeout_timer(std::chrono::seconds(10), [this](){ artim_expired(); })}
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;
@@ -485,7 +483,6 @@ scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
 }
 
 scu_connection::scu_connection(asio_tcp_connection* conn,
-                               boost::asio::io_service& io_service,
          data::dictionary::dictionary& dict,
          a_associate_rq& rq,
          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
@@ -493,8 +490,7 @@ scu_connection::scu_connection(asio_tcp_connection* conn,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {dict, l},
    conn {conn},
-   io_service {io_service},
-   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
+   artim {conn->timeout_timer(std::chrono::seconds(10), [this](){ artim_expired(); })}
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;
@@ -523,22 +519,22 @@ scu_connection::scu_connection(asio_tcp_connection* conn,
 
 
 
-boost::asio::io_service &scp_connection::io_s()
-{
-   return io_service;
-}
+//boost::asio::io_service &scp_connection::io_s()
+//{
+//   return io_service;
+//}
 
-boost::asio::steady_timer& scp_connection::artim_timer()
+timeout_connection& scp_connection::artim_timer()
 {
    return artim;
 }
 
-boost::asio::io_service& scu_connection::io_s()
-{
-   return io_service;
-}
+//boost::asio::io_service& scu_connection::io_s()
+//{
+//   return io_service;
+//}
 
-boost::asio::steady_timer&scu_connection::artim_timer()
+timeout_connection& scu_connection::artim_timer()
 {
    return artim;
 }
