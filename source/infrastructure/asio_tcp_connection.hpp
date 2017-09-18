@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <memory>
+#include <chrono>
 
 class asio_tcp_connection;
 
@@ -68,12 +69,28 @@ class asio_tcp_client_acceptor
 };
 
 
+class timeout_connection
+{
+   public:
+      timeout_connection(boost::asio::io_service& io_svc,
+                         std::chrono::duration<int> timeout,
+                         std::function<void()> on_timeout);
+
+      void cancel();
+      void wait_async();
+
+   private:
+      std::chrono::duration<int> timeout;
+      std::function<void()> on_timeout;
+      std::shared_ptr<boost::asio::steady_timer> timer;
+};
+
 
 // scx will take an instance of this class!
 class asio_tcp_connection
 {
    public:
-      asio_tcp_connection(boost::asio::io_service& ioservice,
+      asio_tcp_connection(boost::asio::io_service& io_svc,
                           std::shared_ptr<boost::asio::ip::tcp::socket> sock,
                           std::function<void(asio_tcp_connection*)> on_end_connection);
 
@@ -88,6 +105,10 @@ class asio_tcp_connection
 
       void read_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                      std::function<void(const boost::system::error_code&, std::size_t)> on_complete);
+
+      timeout_connection timeout_timer(std::chrono::duration<int> timeout,
+                                       std::function<void()> on_timeout);
+
 
       boost::asio::io_service& io_svc()
       {
@@ -107,6 +128,7 @@ class asio_tcp_connection
     private:
       boost::asio::io_service& io_s;
       std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+      std::unique_ptr<boost::asio::steady_timer> timeout;
 
       std::function<void(asio_tcp_connection*)> handler_end_connection;
 };

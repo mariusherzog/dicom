@@ -287,14 +287,6 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 class scp_connection: public scx
 {
    public:
-//      scp_connection(boost::asio::io_service& io_service,
-//          std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-//          data::dictionary::dictionary& dict,
-//          short port,
-//          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
-//          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-//          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
-
       scp_connection(asio_tcp_connection* tcp_conn,
                      boost::asio::io_service& io_service,
                      data::dictionary::dictionary& dict,
@@ -309,12 +301,10 @@ class scp_connection: public scx
    private:
       asio_tcp_connection* conn;
 
-//      boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
 
       boost::asio::io_service& io_service;
-//      std::shared_ptr<boost::asio::ip::tcp::socket> socket;
       boost::asio::steady_timer artim;
 
    protected:
@@ -328,14 +318,6 @@ class scp_connection: public scx
 class scu_connection: public scx
 {
    public:
-//      scu_connection(boost::asio::io_service& io_service,
-//          data::dictionary::dictionary& dict,
-//                     std::string host, std::string port,
-//          a_associate_rq& rq,
-//          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
-//          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-//          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
-
       scu_connection(asio_tcp_connection* conn,
                      boost::asio::io_service& io_service,
           data::dictionary::dictionary& dict,
@@ -350,19 +332,14 @@ class scu_connection: public scx
    private:
       asio_tcp_connection* conn;
 
-//      boost::asio::ip::tcp::socket& sock() override;
       boost::asio::io_service& io_s() override;
       boost::asio::steady_timer& artim_timer() override;
 
       boost::asio::io_service& io_service;
-//      boost::asio::ip::tcp::resolver resolver;
-//      boost::asio::ip::tcp::resolver::query query;
-//      boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
-//      boost::asio::ip::tcp::socket socket;
       boost::asio::steady_timer artim;
 
    protected:
-      virtual asio_tcp_connection* connection() { return conn; }
+      virtual asio_tcp_connection* connection() override { return conn; }
 };
 
 }

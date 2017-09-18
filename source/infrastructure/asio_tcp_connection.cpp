@@ -82,11 +82,42 @@ void asio_tcp_client_acceptor::accept_new_conn()
 //
 
 
+timeout_connection::timeout_connection(boost::asio::io_service& io_svc,
+                                       std::chrono::duration<int> timeout,
+                                       std::function<void()> on_timeout):
+   timeout {timeout},
+   on_timeout {on_timeout},
+   timer {std::make_shared<boost::asio::steady_timer>(io_svc, std::chrono::steady_clock::now() + timeout)}
+{
+}
+
+void timeout_connection::cancel()
+{
+   timer->cancel();
+}
+
+void timeout_connection::wait_async()
+{
+   auto handler = [this](const boost::system::error_code& error)
+   {
+      if (error != boost::asio::error::operation_aborted) {
+         on_timeout();
+      }
+   };
+
+   timer->async_wait(handler);
+}
+
+
+//
+
+
 asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
                                          std::shared_ptr<boost::asio::ip::tcp::socket> sock,
                                          std::function<void(asio_tcp_connection*)> on_end_connection):
    io_s {ioservice},
    socket {sock},
+   timeout {nullptr},
    handler_end_connection {on_end_connection}
 {
 
@@ -117,6 +148,13 @@ void asio_tcp_connection::read_data(std::shared_ptr<std::vector<unsigned char>> 
 {
    boost::asio::async_read(*socket, boost::asio::buffer(*buffer), on_complete);
 }
+
+timeout_connection asio_tcp_connection::timeout_timer(std::chrono::duration<int> timeout, std::function<void()> on_timeout)
+{
+   return timeout_connection {io_s, timeout, on_timeout};
+}
+
+
 
 
 
