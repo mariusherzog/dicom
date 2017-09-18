@@ -70,8 +70,7 @@ scx::scx(data::dictionary::dictionary& dict,
    proc {data::dataset::commandset_processor {dict}},
    received_pdu {boost::none},
    handlers {},
-   shutdown_requested {false},
-   infr_tcp {nullptr}
+   shutdown_requested {false}
 {
    for (const auto p : l) {
       handlers[p.first] = p.second;
@@ -117,18 +116,11 @@ void scx::send(property* p)
          e = statemachine::EVENT::UNRECOG_PDU;
    }
 
-   if (connection()) {
-      infr_tcp = connection();
-   } else {
-      //infr_tcp = new asio_tcp_connection(io_s(), sock());
-      infr_tcp = nullptr;
-   }
-
    if (statem.transition(e) != statemachine::CONN_STATE::INV) {
       // call async_write after each sent property until the queue is
       // empty
       if (ptype != TYPE::P_DATA_TF) {
-         infr_tcp->write_data(pdu,
+         connection()->write_data(pdu,
             [this, p, ptype](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
@@ -145,7 +137,7 @@ void scx::send(property* p)
 
          std::size_t len = be_char_to_32b({pdu->begin()+6, pdu->begin()+10});
          auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
-         infr_tcp->write_data(commandset,
+         connection()->write_data(commandset,
             [this, commandset, len, pdu, p, ptype, pdataprop]
                (const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
@@ -209,14 +201,7 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
    auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
 
-   if (connection()) {
-      infr_tcp = connection();
-   } else {
-      //infr_tcp = new asio_tcp_connection(io_s(), sock());
-      infr_tcp = nullptr;
-   }
-
-   infr_tcp->read_data(nextbuflen, 6, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
+   connection()->read_data(nextbuflen, 6, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
          if (error) {
             throw boost::system::system_error(error);
          }
@@ -225,7 +210,7 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
 
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         infr_tcp->read_data(nextbufdata, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
+         connection()->read_data(nextbufdata, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
             if (error) {
                throw boost::system::system_error(error);
             }
@@ -257,14 +242,7 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
 
    void* data_offset = (static_cast<void*>(data->data()+begin));
 
-   if (connection()) {
-      infr_tcp = connection();
-   } else {
-      //infr_tcp = new asio_tcp_connection(io_s(), sock());
-      infr_tcp = nullptr;
-   }
-
-   infr_tcp->write_data(data_offset, len,
+   connection()->write_data(data_offset, len,
       [this, p, data, len, begin, data_offset](const boost::system::error_code& error, std::size_t bytes) {
          if (error) {
             throw boost::system::system_error(error);
@@ -297,12 +275,7 @@ void scx::do_read()
    auto rem_data = std::make_shared<std::vector<unsigned char>>();
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
 
-   if (connection())
-   {
-      infr_tcp = connection();
-   }
-
-   infr_tcp->read_data(size, 6, [=](const boost::system::error_code& error, std::size_t bytes)  {
+   connection()->read_data(size, 6, [=](const boost::system::error_code& error, std::size_t bytes)  {
          if (error) {
             throw boost::system::system_error(error);
          }
@@ -313,7 +286,7 @@ void scx::do_read()
 
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         infr_tcp->read_data(rem_data, len,
+         connection()->read_data(rem_data, len,
             [=](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
@@ -491,28 +464,6 @@ statemachine::CONN_STATE scx::get_state()
 }
 
 
-scp_connection::scp_connection(boost::asio::io_service& io_service,
-         std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-         data::dictionary::dictionary& dict,
-         short port,
-         std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
-         std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {dict, l},
-   io_service {io_service},
-   socket {socket},
-   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
-//   handler_new_connection {handler_new_conn},
-//   handler_end_connection {handler_end_conn}
-{
-   handler_new_connection = handler_new_conn;
-   handler_end_connection = handler_end_conn;
-   artim.cancel();
-   statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
-   handler_new_connection(this);
-   do_read();
-}
-
 scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
                                boost::asio::io_service& io_service,
                                data::dictionary::dictionary& dict,
@@ -533,61 +484,6 @@ scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
    do_read();
 }
 
-
-
-scu_connection::scu_connection(boost::asio::io_service& io_service,
-         data::dictionary::dictionary& dict,
-         std::string host, std::string port,
-         a_associate_rq& rq,
-         std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
-         std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {dict, l},
-   io_service {io_service},
-   resolver {io_service},
-   query {host, port},
-   endpoint_iterator {resolver.resolve(query)},
-   socket {io_service},
-   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
-{
-   handler_new_connection = handler_new_conn;
-   handler_end_connection = handler_end_conn;
-   statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
-
-   boost::asio::ip::tcp::resolver::iterator end;
-   boost::system::error_code error = boost::asio::error::host_not_found;
-   while(error && endpoint_iterator != end)
-   {
-     socket.close();
-     socket.connect(*endpoint_iterator++, error);
-   }
-
-   if (error) {
-      throw boost::system::system_error(error);
-   }
-
-   statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
-
-   handler_new_connection(this);
-
-   auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
-   boost::asio::async_write(socket, boost::asio::buffer(*pdu),
-      [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
-         if (!error) {
-            auto type = TYPE::A_ASSOCIATE_RQ;
-            BOOST_LOG_SEV(logger, info) << "Sent property of type " << type;
-            BOOST_LOG_SEV(logger, debug) << "Property info: \n" << rq;
-            if (handlers_conf.find(type) != handlers_conf.end()) {
-               handlers_conf[type](this, &rq);
-            }
-            do_read();
-         } else {
-            throw boost::system::system_error(error);
-         }
-   });
-}
-
-
 scu_connection::scu_connection(asio_tcp_connection* conn,
                                boost::asio::io_service& io_service,
          data::dictionary::dictionary& dict,
@@ -598,28 +494,11 @@ scu_connection::scu_connection(asio_tcp_connection* conn,
    scx {dict, l},
    conn {conn},
    io_service {io_service},
-   resolver {io_service},
-   query {"", ""},
-   //endpoint_iterator {resolver.resolve(query)},
-   socket {io_service},
    artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;
    statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
-
-//   boost::asio::ip::tcp::resolver::iterator end;
-//   boost::system::error_code error = boost::asio::error::host_not_found;
-//   while(error && endpoint_iterator != end)
-//   {
-//     socket.close();
-//     socket.connect(*endpoint_iterator++, error);
-//   }
-
-//   if (error) {
-//      throw boost::system::system_error(error);
-//   }
-
 
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
 
@@ -644,12 +523,6 @@ scu_connection::scu_connection(asio_tcp_connection* conn,
 
 
 
-
-boost::asio::ip::tcp::socket& scp_connection::sock()
-{
-   return *socket;
-}
-
 boost::asio::io_service &scp_connection::io_s()
 {
    return io_service;
@@ -658,11 +531,6 @@ boost::asio::io_service &scp_connection::io_s()
 boost::asio::steady_timer& scp_connection::artim_timer()
 {
    return artim;
-}
-
-boost::asio::ip::tcp::socket& scu_connection::sock()
-{
-   return socket;
 }
 
 boost::asio::io_service& scu_connection::io_s()
