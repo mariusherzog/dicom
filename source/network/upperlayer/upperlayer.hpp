@@ -82,11 +82,11 @@ class scp: public Iupperlayer_connection_handlers
 
    private:
 
-      std::map<asio_tcp_connection*, std::unique_ptr<scp_connection>> scps;
+      std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scp_connection>> scps;
 
-      void accept_new(asio_tcp_connection* conn);
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
 
-      void connection_end(asio_tcp_connection* conn);
+      void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
@@ -119,7 +119,7 @@ class scu: public Iupperlayer_connection_handlers
        * @brief accept_new starts a new association with the parameters
        *        specified in the constructor.
        */
-      void accept_new(asio_tcp_connection* conn);
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
 
       void accept_new();
 
@@ -127,14 +127,14 @@ class scu: public Iupperlayer_connection_handlers
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
 
    private:
-      void connection_end(asio_tcp_connection* conn);
+      void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       std::unique_ptr<asio_tcp_client_acceptor> acceptor;
 
-      std::map<asio_tcp_connection*, std::unique_ptr<scu_connection>> scus;
+      std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
       std::string host;
       std::string port;
       a_associate_rq& request;

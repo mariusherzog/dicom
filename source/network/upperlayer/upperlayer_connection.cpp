@@ -464,7 +464,7 @@ statemachine::CONN_STATE scx::get_state()
 }
 
 
-scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
+scp_connection::scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
                                data::dictionary::dictionary& dict,
                                short port,
                                std::function<void (Iupperlayer_comm_ops*)> handler_new_conn,
@@ -482,7 +482,7 @@ scp_connection::scp_connection(asio_tcp_connection* tcp_conn,
    do_read();
 }
 
-scu_connection::scu_connection(asio_tcp_connection* conn,
+scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
          data::dictionary::dictionary& dict,
          a_associate_rq& rq,
          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,

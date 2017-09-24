@@ -25,20 +25,20 @@ scp::scp(data::dictionary::dictionary& dict,
    port {port},
    dict {dict}
 {
-   acceptor->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
-   acceptor->handler_end = [this](asio_tcp_connection* conn) { connection_end(conn);};
+   acceptor->handler_new = [this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);};
+   acceptor->handler_end = [this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);};
 }
 
 scp::~scp()
 {
 }
 
-void scp::accept_new(asio_tcp_connection* conn)
+void scp::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
    scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, port, handler_new_connection, handler_end_connection)};
 }
 
-void scp::connection_end(asio_tcp_connection* conn)
+void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
 {
    auto& sc = scps.at(conn);
    handler_end_connection(sc.get());
@@ -72,15 +72,15 @@ scu::scu(data::dictionary::dictionary& dict,
    dict {dict}
 {
    using namespace std::placeholders;
-   acceptor->handler_new = [this](asio_tcp_connection* conn) { accept_new(conn);};
-   acceptor->handler_end = [this](asio_tcp_connection* conn) { connection_end(conn);};
+   acceptor->handler_new = [this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);};
+   acceptor->handler_end = [this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);};
 }
 
 scu::~scu()
 {
 }
 
-void scu::accept_new(asio_tcp_connection* conn)
+void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
 //   connections.push_back(std::unique_ptr<scu_connection>
 //   {
@@ -94,7 +94,7 @@ void scu::accept_new()
    acceptor->accept_new_conn();
 }
 
-void scu::connection_end(asio_tcp_connection* conn)
+void scu::connection_end(Iinfrastructure_upperlayer_connection* conn)
 {
    auto& sc = scus.at(conn);
    handler_end_connection(sc.get());

@@ -2,8 +2,8 @@
 
 
 asio_tcp_server_acceptor::asio_tcp_server_acceptor(short port,
-                                                   std::function<void(asio_tcp_connection*)> new_connection,
-                                                   std::function<void(asio_tcp_connection*)> end_connection):
+                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
+                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection):
    handler_new {new_connection},
    handler_end {end_connection},
    io_s {},
@@ -41,8 +41,8 @@ void asio_tcp_server_acceptor::accept_new(std::shared_ptr<boost::asio::ip::tcp::
 //
 
 asio_tcp_client_acceptor::asio_tcp_client_acceptor(std::string host, std::string port,
-                                                   std::function<void (asio_tcp_connection *)> new_connection,
-                                                   std::function<void (asio_tcp_connection *)> end_connection):
+                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
+                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection):
    handler_new {new_connection},
    handler_end {end_connection},
    io_s {},
@@ -112,6 +112,11 @@ void timeout_connection::wait_async()
 //
 
 
+Iinfrastructure_upperlayer_connection::~Iinfrastructure_upperlayer_connection()
+{
+
+}
+
 asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
                                          std::shared_ptr<boost::asio::ip::tcp::socket> sock,
                                          std::function<void(asio_tcp_connection*)> on_end_connection):
@@ -123,7 +128,6 @@ asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
 
 }
 
-// boost::asio::buffer(data_offset, len)
 void asio_tcp_connection::write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                                      std::function<void (const boost::system::error_code&, std::size_t)> on_complete)
 {
