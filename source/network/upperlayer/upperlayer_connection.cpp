@@ -398,13 +398,13 @@ void scx::reset_artim()
 
 void scx::stop_artim()
 {
-   artim_timer().cancel();
+   artim_timer()->cancel();
 }
 
 void scx::start_artim()
 {
    using namespace std::placeholders;
-   artim_timer().wait_async();
+   artim_timer()->wait_async();
       //member function artim_expired has implicit scx* as first parameter
 }
 
@@ -426,6 +426,8 @@ void scx::close_connection()
 
    connection()->close();
 
+   // TODO: update shutdown_requested
+
 //   io_s().post([this]() {
 //      sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
 //      sock().close();
@@ -441,10 +443,8 @@ void scx::run()
 
 void scx::artim_expired()
 {
-   //if (error != boost::asio::error::operation_aborted) {
-      BOOST_LOG_SEV(this->logger, info) << "ARTIM timer expired";
-      statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
-   //}
+   BOOST_LOG_SEV(this->logger, info) << "ARTIM timer expired";
+   statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
 }
 
 
@@ -476,10 +476,15 @@ scp_connection::scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;
-   artim.cancel();
+   artim->cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
    handler_new_connection(this);
    do_read();
+}
+
+Iinfrastructure_timeout_connection* scp_connection::artim_timer()
+{
+   return artim.get();
 }
 
 scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
@@ -517,26 +522,9 @@ scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
 }
 
 
-
-
-//boost::asio::io_service &scp_connection::io_s()
-//{
-//   return io_service;
-//}
-
-timeout_connection& scp_connection::artim_timer()
+Iinfrastructure_timeout_connection* scu_connection::artim_timer()
 {
-   return artim;
-}
-
-//boost::asio::io_service& scu_connection::io_s()
-//{
-//   return io_service;
-//}
-
-timeout_connection& scu_connection::artim_timer()
-{
-   return artim;
+   return artim.get();
 }
 
 }

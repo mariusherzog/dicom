@@ -241,10 +241,10 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 
 
       /**
-       * @brief artim_timer returns a reference to the artim timer
-       * @return ref to boost::asio::steady_timer
+       * @brief artim_timer returns a pointer to the artim timer
+       * @return referencing pointer to the artim timer
        */
-      virtual timeout_connection& artim_timer() = 0;
+      virtual Iinfrastructure_timeout_connection* artim_timer() = 0;
 
       data::dataset::commandset_processor proc;
 
@@ -282,11 +282,9 @@ class scp_connection: public scx
    private:
       Iinfrastructure_upperlayer_connection* conn;
 
-//      boost::asio::io_service& io_s() override;
-      timeout_connection& artim_timer() override;
+      Iinfrastructure_timeout_connection* artim_timer() override;
 
-//      boost::asio::io_service& io_service;
-      timeout_connection artim;
+      std::unique_ptr<Iinfrastructure_timeout_connection> artim;
 
    protected:
       virtual Iinfrastructure_upperlayer_connection* connection() override { return conn; }
@@ -312,11 +310,9 @@ class scu_connection: public scx
    private:
       Iinfrastructure_upperlayer_connection* conn;
 
-//      boost::asio::io_service& io_s() override;
-      timeout_connection& artim_timer() override;
+      Iinfrastructure_timeout_connection* artim_timer() override;
 
-//      boost::asio::io_service& io_service;
-      timeout_connection artim;
+      std::unique_ptr<Iinfrastructure_timeout_connection> artim;
 
    protected:
       virtual Iinfrastructure_upperlayer_connection* connection() override { return conn; }

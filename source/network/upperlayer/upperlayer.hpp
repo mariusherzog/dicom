@@ -4,11 +4,10 @@
 #include <functional>
 #include <memory>
 
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/log/trivial.hpp>
 
 #include "upperlayer_connection.hpp"
+#include "infrastructure/asio_tcp_connection_manager.hpp"
 #include "data/dictionary/dictionary.hpp"
 
 

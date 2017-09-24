@@ -1,91 +1,14 @@
 #include "asio_tcp_connection.hpp"
 
 
-asio_tcp_server_acceptor::asio_tcp_server_acceptor(short port,
-                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
-                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection):
-   handler_new {new_connection},
-   handler_end {end_connection},
-   io_s {},
-   acptr {io_s, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)}
+
+Iinfrastructure_timeout_connection::~Iinfrastructure_timeout_connection()
 {
-   using namespace std::placeholders;
-   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   acptr.async_accept(*socket, [socket, this](boost::system::error_code ec) { accept_new(socket, ec); });
 }
-
-void asio_tcp_server_acceptor::run()
-{
-   io_s.run();
-}
-
-void asio_tcp_server_acceptor::accept_new(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code ec)
-{
-   using namespace std::placeholders;
-   if (!ec) {
-      connections.push_back(std::unique_ptr<asio_tcp_connection>
-         {
-            new asio_tcp_connection {io_s, sock, handler_end}
-         });
-   } else {
-      throw boost::system::system_error(ec);
-   }
-
-   handler_new(connections.back().get());
-
-   auto newsock = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   acptr.async_accept(*newsock, [newsock, this](boost::system::error_code ec) { accept_new(newsock, ec); });
-}
-
-
-//
-
-asio_tcp_client_acceptor::asio_tcp_client_acceptor(std::string host, std::string port,
-                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
-                                                   std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection):
-   handler_new {new_connection},
-   handler_end {end_connection},
-   io_s {},
-   resolver {io_s},
-   query {host, port},
-   endpoint_iterator {resolver.resolve(query)}
-{
-
-}
-
-void asio_tcp_client_acceptor::accept_new()
-{
-   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(io_s);
-   boost::asio::ip::tcp::resolver::iterator end;
-   boost::system::error_code error = boost::asio::error::host_not_found;
-   while(error && endpoint_iterator != end)
-   {
-     socket->close();
-     socket->connect(*endpoint_iterator++, error);
-   }
-   connections.emplace_back(new asio_tcp_connection(io_s, socket, handler_end));
-
-   handler_new(connections.back().get());
-}
-
-void asio_tcp_client_acceptor::run()
-{
-   accept_new();
-   io_s.run();
-}
-
-void asio_tcp_client_acceptor::accept_new_conn()
-{
-   accept_new();
-}
-
-//
-
 
 timeout_connection::timeout_connection(boost::asio::io_service& io_svc,
                                        std::chrono::duration<int> timeout,
                                        std::function<void()> on_timeout):
-   timeout {timeout},
    on_timeout {on_timeout},
    timer {std::make_shared<boost::asio::steady_timer>(io_svc, std::chrono::steady_clock::now() + timeout)}
 {
@@ -109,9 +32,6 @@ void timeout_connection::wait_async()
 }
 
 
-//
-
-
 Iinfrastructure_upperlayer_connection::~Iinfrastructure_upperlayer_connection()
 {
 
@@ -122,7 +42,6 @@ asio_tcp_connection::asio_tcp_connection(boost::asio::io_service& ioservice,
                                          std::function<void(asio_tcp_connection*)> on_end_connection):
    io_s {ioservice},
    socket {sock},
-   timeout {nullptr},
    handler_end_connection {on_end_connection}
 {
 
@@ -153,9 +72,18 @@ void asio_tcp_connection::read_data(std::shared_ptr<std::vector<unsigned char>> 
    boost::asio::async_read(*socket, boost::asio::buffer(*buffer), on_complete);
 }
 
-timeout_connection asio_tcp_connection::timeout_timer(std::chrono::duration<int> timeout, std::function<void()> on_timeout)
+std::unique_ptr<Iinfrastructure_timeout_connection> asio_tcp_connection::timeout_timer(std::chrono::duration<int> timeout, std::function<void()> on_timeout)
 {
-   return timeout_connection {io_s, timeout, on_timeout};
+   return std::unique_ptr<Iinfrastructure_timeout_connection> { new timeout_connection {io_s, timeout, on_timeout}};
+}
+
+void asio_tcp_connection::close()
+{
+   io_s.post([this]() {
+      socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+      socket->close();
+      handler_end_connection(this);
+   });
 }
 
 

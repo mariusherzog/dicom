@@ -82,10 +82,6 @@ scu::~scu()
 
 void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-//   connections.push_back(std::unique_ptr<scu_connection>
-//   {
-//      new scu_connection {conn, conn->io_svc(), dict, request, handler_new_connection, handler_end_connection}
-//   });
    scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection}};
 }
 
