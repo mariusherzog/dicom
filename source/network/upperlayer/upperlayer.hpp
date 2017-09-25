@@ -64,8 +64,8 @@ struct Iupperlayer_connection_handlers
 class scp: public Iupperlayer_connection_handlers
 {
    public:
-      scp(data::dictionary::dictionary& dict,
-          short port);
+      scp(Iinfrastructure_server_acceptor& infrstr_scp,
+          data::dictionary::dictionary& dict);
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -90,7 +90,7 @@ class scp: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::unique_ptr<asio_tcp_server_acceptor> acceptor;
+      Iinfrastructure_server_acceptor& acceptor;
       short port;
       data::dictionary::dictionary& dict;
 };
@@ -101,8 +101,8 @@ class scp: public Iupperlayer_connection_handlers
 class scu: public Iupperlayer_connection_handlers
 {
    public:
-      scu(data::dictionary::dictionary& dict,
-          std::string host, std::string port,
+      scu(Iinfrastructure_client_acceptor& infr_scu,
+          data::dictionary::dictionary& dict,
           a_associate_rq& rq);
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
@@ -131,11 +131,9 @@ class scu: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::unique_ptr<asio_tcp_client_acceptor> acceptor;
+      Iinfrastructure_client_acceptor& acceptor;
 
       std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
-      std::string host;
-      std::string port;
       a_associate_rq& request;
       data::dictionary::dictionary& dict;
 };

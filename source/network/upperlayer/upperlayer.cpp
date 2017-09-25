@@ -19,14 +19,13 @@ Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 }
 
 
-scp::scp(data::dictionary::dictionary& dict,
-         short port):
-   acceptor {new asio_tcp_server_acceptor(port, nullptr, nullptr)},
-   port {port},
+scp::scp(Iinfrastructure_server_acceptor& infrstr_scp,
+         data::dictionary::dictionary& dict):
+   acceptor {infrstr_scp},
    dict {dict}
 {
-   acceptor->handler_new = [this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);};
-   acceptor->handler_end = [this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);};
+   acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
+   acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
 }
 
 scp::~scp()
@@ -48,7 +47,7 @@ void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
 
 void scp::run()
 {
-   acceptor->run();
+   acceptor.run();
 }
 
 void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -62,18 +61,16 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 }
 
 
-scu::scu(data::dictionary::dictionary& dict,
-         std::string host, std::string port,
+scu::scu(Iinfrastructure_client_acceptor& infr_scu,
+         data::dictionary::dictionary& dict,
          a_associate_rq& rq):
-   acceptor {new asio_tcp_client_acceptor(host, port, nullptr, nullptr)},
-   host {host},
-   port {port},
+   acceptor {infr_scu},
    request {rq},
    dict {dict}
 {
    using namespace std::placeholders;
-   acceptor->handler_new = [this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);};
-   acceptor->handler_end = [this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);};
+   acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
+   acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
 }
 
 scu::~scu()
@@ -87,7 +84,7 @@ void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
 
 void scu::accept_new()
 {
-   acceptor->accept_new_conn();
+   acceptor.accept_new_conn();
 }
 
 void scu::connection_end(Iinfrastructure_upperlayer_connection* conn)
@@ -100,7 +97,7 @@ void scu::connection_end(Iinfrastructure_upperlayer_connection* conn)
 
 void scu::run()
 {
-   acceptor->run();
+   acceptor.run();
 }
 
 void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)

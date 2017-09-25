@@ -12,7 +12,6 @@
 #include <exception>
 
 #include <boost/optional.hpp>
-#include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
 

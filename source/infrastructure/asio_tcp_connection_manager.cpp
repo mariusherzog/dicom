@@ -1,5 +1,17 @@
 #include "asio_tcp_connection_manager.hpp"
 
+
+Iinfrastructure_server_acceptor::~Iinfrastructure_server_acceptor()
+{
+
+}
+
+Iinfrastructure_client_acceptor::~Iinfrastructure_client_acceptor()
+{
+
+}
+
+
 asio_tcp_server_acceptor::asio_tcp_server_acceptor(short port,
                                                    std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
                                                    std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection):
@@ -16,6 +28,16 @@ asio_tcp_server_acceptor::asio_tcp_server_acceptor(short port,
 void asio_tcp_server_acceptor::run()
 {
    io_s.run();
+}
+
+void asio_tcp_server_acceptor::set_handler_new(std::function<void(Iinfrastructure_upperlayer_connection*)> handler)
+{
+   handler_new = handler;
+}
+
+void asio_tcp_server_acceptor::set_handler_end(std::function<void (Iinfrastructure_upperlayer_connection *)> handler)
+{
+   handler_end = handler;
 }
 
 void asio_tcp_server_acceptor::accept_new(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code ec)
@@ -35,7 +57,6 @@ void asio_tcp_server_acceptor::accept_new(std::shared_ptr<boost::asio::ip::tcp::
    auto newsock = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
    acptr.async_accept(*newsock, [newsock, this](boost::system::error_code ec) { accept_new(newsock, ec); });
 }
-
 
 //
 
@@ -71,6 +92,16 @@ void asio_tcp_client_acceptor::run()
 {
    accept_new();
    io_s.run();
+}
+
+void asio_tcp_client_acceptor::set_handler_new(std::function<void(Iinfrastructure_upperlayer_connection*)> handler)
+{
+   handler_new = handler;
+}
+
+void asio_tcp_client_acceptor::set_handler_end(std::function<void (Iinfrastructure_upperlayer_connection *)> handler)
+{
+   handler_end = handler;
 }
 
 void asio_tcp_client_acceptor::accept_new_conn()

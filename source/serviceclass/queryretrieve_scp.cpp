@@ -90,7 +90,8 @@ queryretrieve_scp::queryretrieve_scp(connection endpoint, dicom::data::dictionar
                   dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
       }
    },
-   scp {dict, endpoint.port},
+   infrstr_scp {endpoint.port, nullptr, nullptr},
+   scp {infrstr_scp, dict},
    dimse_pm {scp, assoc_def, dict},
    storage_thread {nullptr},
    handler {handler}
