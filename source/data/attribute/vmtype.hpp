@@ -100,19 +100,19 @@ std::size_t byte_length(std::vector<unsigned char> value_field);
 
 std::size_t byte_length(const std::string& value_field);
 
-std::size_t byte_length(unsigned char);
+std::size_t byte_length(const unsigned char);
 
-std::size_t byte_length(unsigned short);
+std::size_t byte_length(const unsigned short);
 
-std::size_t byte_length(short);
+std::size_t byte_length(const short);
 
-std::size_t byte_length(unsigned int);
+std::size_t byte_length(const unsigned int);
 
-std::size_t byte_length(long);
+std::size_t byte_length(const long);
 
-std::size_t byte_length(float);
+std::size_t byte_length(const float);
 
-std::size_t byte_length(double);
+std::size_t byte_length(const double);
 
 std::size_t byte_length(tag_type);
 
@@ -128,6 +128,19 @@ std::size_t byte_length(std::vector<dataset::dataset_type>);
 template <typename T>
 class vmtype
 {
+   private:
+      /**
+       * @brief the private vmtype constructor initializes the rules as specified
+       *        by the parameter
+       * @param mult multiplicity
+       * @param int dummy parameter to prevent ambiguous overloads for T = string
+       */
+      vmtype(std::string mult, int):
+         multiplicity {mult}
+      {
+         populate_mult_rules();
+      }
+
    public:
       using base_type = T;
 
@@ -137,23 +150,27 @@ class vmtype
        * @param mult multiplicity
        */
       vmtype(multiplicity_data mult):
-         multiplicity {mult.multiplicity}
+         multiplicity {mult.multiplicity, 0}
       {
          populate_mult_rules();
+         insert({});
       }
 
       /**
        * @brief vmtype constructs a multivalued field with one entry
        * @param value value to be added
        */
-      vmtype(T value)
+      vmtype(T value):
+         vmtype {"*", 0}
       {
          const T* value_addr = &value;
          insert(value_addr, value_addr+1);
       }
 
-      vmtype()
+      vmtype():
+         vmtype {"*", 0}
       {
+         insert({});
       }
 
       /**
@@ -162,7 +179,7 @@ class vmtype
        * @param values values to be stored
        */
       vmtype(multiplicity_data multiplicity, std::initializer_list<T> values):
-         vmtype(multiplicity)
+         vmtype {multiplicity.multiplicity, 0}
       {
          insert(values);
       }
@@ -176,7 +193,7 @@ class vmtype
        */
       template <typename Iter>
       vmtype(std::string multiplicity, Iter begin, Iter end):
-         vmtype(multiplicity_data(multiplicity))
+         vmtype {multiplicity, 0}
       {
          insert(begin, end);
       }
@@ -200,14 +217,16 @@ class vmtype
       struct iterator_t : public std::iterator<std::random_access_iterator_tag, T>
       {
          private:
-            vmtype* container;
-            std::size_t index;
-
+            using vmmaybeconst = typename std::conditional<Const, const vmtype*, vmtype*>::type;
             using pointermaybeconst = typename std::conditional<Const, const T*, T*>::type;
             using referencemaybeconst = typename std::conditional<Const, const T&, T&>::type;
 
+
+            vmmaybeconst container;
+            std::size_t index;
+
          public:
-            iterator_t(vmtype* container, std::size_t index = 0):
+            iterator_t(vmmaybeconst container, std::size_t index = 0):
                container {container},
                index {index}
             {
@@ -234,12 +253,14 @@ class vmtype
 
             friend iterator_t operator+(const iterator_t& a, std::size_t s)
             {
-               return a += s;
+               auto ret = a;
+               ret += s;
+               return ret;
             }
 
-            friend iterator_t operator+(std::size_t s, const iterator_t& a)
+            friend iterator_t operator+(std::size_t s, iterator_t& a)
             {
-               return a += s;
+               return a + s;
             }
 
             iterator_t operator--(int)
@@ -263,12 +284,14 @@ class vmtype
 
             friend iterator_t operator-(const iterator_t& a, std::size_t s)
             {
-               return a -= s;
+               auto ret = a;
+               ret -= s;
+               return ret;
             }
 
             friend iterator_t operator-(std::size_t s, const iterator_t& a)
             {
-               return a -= s;
+               return a - s;
             }
 
             referencemaybeconst operator[](std::size_t s) const
@@ -349,9 +372,12 @@ class vmtype
 
       std::size_t byte_size() const
       {
-         auto size = std::accumulate(value_sequence.begin(), value_sequence.end(), 0,
-                                [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
-         return size;
+         std::size_t bytesize = 0;
+         if (size() > 0) {
+            bytesize = std::accumulate(value_sequence.cbegin(), value_sequence.cend(), 0,
+                                   [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+         }
+         return bytesize;
       }
 
    private:

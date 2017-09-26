@@ -17,6 +17,7 @@
 
 #include "upperlayer_properties.hpp"
 #include "upperlayer_statemachine.hpp"
+#include "infrastructure/asio_tcp_connection.hpp"
 
 #include "data/dataset/transfer_processor.hpp"
 
@@ -69,8 +70,8 @@ struct Istate_trans_ops
 struct Iupperlayer_comm_ops
 {
       virtual void queue_for_write(std::unique_ptr<property> p) = 0;
-      virtual void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) = 0;
-      virtual void inject_conf(TYPE t, std::function<void(scx*, property* f)>) = 0;
+      virtual void inject(TYPE t, std::function<void(Iupperlayer_comm_ops*, std::unique_ptr<property>)> f) = 0;
+      virtual void inject_conf(TYPE t, std::function<void(Iupperlayer_comm_ops*, property* f)>) = 0;
       virtual ~Iupperlayer_comm_ops() = 0;
 };
 
@@ -117,14 +118,14 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @param[in] t
        * @param[in] f
        */
-      void inject(TYPE t, std::function<void(scx*, std::unique_ptr<property>)> f) override;
+      void inject(TYPE t, std::function<void(Iupperlayer_comm_ops*, std::unique_ptr<property>)> f) override;
 
       /**
        * @brief inject_conf sets a handler for a sent property type t.
        * @param[in] t
        * @param[in] f
        */
-      void inject_conf(TYPE t, std::function<void(scx*, property*)> f) override;
+      void inject_conf(TYPE t, std::function<void(Iupperlayer_comm_ops*, property*)> f) override;
 
       /**
        * @brief queue_for_write takes ownership of a property and queues it for
@@ -194,7 +195,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        * @brief artim_expired is called when the artim timer expires
        * @param[in] error
        */
-      void artim_expired(const boost::system::error_code& error);
+      void artim_expired();
 
       std::map<TYPE, std::function<void(scx*, property*)>> handlers_conf;
 
@@ -238,30 +239,12 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
        */
       void write_complete_dataset(property* p, std::shared_ptr<std::vector<unsigned char>> data, std::size_t begin = 0);
 
-      /**
-       * @brief sock is used by send() and receive() to access the socket of the
-       *        subclasses
-       * @return ref to boost::asio::ip::tcp::socket of the subclass
-       *
-       * for initalization reasons the socket cannot be declared in this abstract
-       * class.
-       */
-      virtual boost::asio::ip::tcp::socket& sock() = 0;
 
       /**
-       * @brief sock is used by the subclasses to use the ::run() member function
-       * @return ref to boost::asio::io_service
-       *
-       * for initalization reasons the socket cannot be declared in this abstract
-       * class.
+       * @brief artim_timer returns a pointer to the artim timer
+       * @return referencing pointer to the artim timer
        */
-      virtual boost::asio::io_service& io_s() = 0;
-
-      /**
-       * @brief artim_timer returns a reference to the artim timer
-       * @return ref to boost::asio::steady_timer
-       */
-      virtual boost::asio::steady_timer& artim_timer() = 0;
+      virtual Iinfrastructure_timeout_connection* artim_timer() = 0;
 
       data::dataset::commandset_processor proc;
 
@@ -271,7 +254,10 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 
       bool shutdown_requested;
 
+
    protected:
+      virtual Iinfrastructure_upperlayer_connection* connection() = 0;
+
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 };
@@ -283,24 +269,25 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 class scp_connection: public scx
 {
    public:
-      scp_connection(boost::asio::io_service& io_service,
-          std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-          data::dictionary::dictionary& dict,
-          short port,
-          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
-          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+      scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
+                     data::dictionary::dictionary& dict,
+                     short port,
+                     std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+                     std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
+                     std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+
       scp_connection(const scp_connection&) = delete;
       scp_connection& operator=(const scp_connection&) = delete;
 
    private:
-      boost::asio::ip::tcp::socket& sock() override;
-      boost::asio::io_service& io_s() override;
-      boost::asio::steady_timer& artim_timer() override;
+      Iinfrastructure_upperlayer_connection* conn;
 
-      boost::asio::io_service& io_service;
-      std::shared_ptr<boost::asio::ip::tcp::socket> socket;
-      boost::asio::steady_timer artim;
+      Iinfrastructure_timeout_connection* artim_timer() override;
+
+      std::unique_ptr<Iinfrastructure_timeout_connection> artim;
+
+   protected:
+      virtual Iinfrastructure_upperlayer_connection* connection() override { return conn; }
 };
 
 /**
@@ -310,27 +297,25 @@ class scp_connection: public scx
 class scu_connection: public scx
 {
    public:
-      scu_connection(boost::asio::io_service& io_service,
+      scu_connection(Iinfrastructure_upperlayer_connection* conn,
           data::dictionary::dictionary& dict,
-          std::string host, std::string port,
           a_associate_rq& rq,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
           std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
           std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
+
       scu_connection(const scu_connection&) = delete;
       scu_connection& operator=(const scu_connection&) = delete;
 
    private:
-      boost::asio::ip::tcp::socket& sock() override;
-      boost::asio::io_service& io_s() override;
-      boost::asio::steady_timer& artim_timer() override;
+      Iinfrastructure_upperlayer_connection* conn;
 
-      boost::asio::io_service& io_service;
-      boost::asio::ip::tcp::resolver resolver;
-      boost::asio::ip::tcp::resolver::query query;
-      boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
-      boost::asio::ip::tcp::socket socket;
-      boost::asio::steady_timer artim;
+      Iinfrastructure_timeout_connection* artim_timer() override;
+
+      std::unique_ptr<Iinfrastructure_timeout_connection> artim;
+
+   protected:
+      virtual Iinfrastructure_upperlayer_connection* connection() override { return conn; }
 };
 
 }

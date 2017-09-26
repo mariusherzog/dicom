@@ -20,37 +20,37 @@ std::size_t byte_length(const std::string& value_field)
    return size;
 }
 
-std::size_t byte_length(unsigned char)
+std::size_t byte_length(const unsigned char)
 {
    return 1;
 }
 
-std::size_t byte_length(unsigned short)
+std::size_t byte_length(const unsigned short)
 {
    return 2;
 }
 
-std::size_t byte_length(short)
+std::size_t byte_length(const short)
 {
    return 2;
 }
 
-std::size_t byte_length(unsigned int)
+std::size_t byte_length(const unsigned int)
 {
    return 4;
 }
 
-std::size_t byte_length(long)
+std::size_t byte_length(const long)
 {
    return 4;
 }
 
-std::size_t byte_length(float)
+std::size_t byte_length(const float)
 {
    return 4;
 }
 
-std::size_t byte_length(double)
+std::size_t byte_length(const double)
 {
    return 4;
 }

@@ -461,11 +461,13 @@ class set_visitor : public attribute_visitor<vr>
       typename type_of<vr>::type setdata;
 
    public:
-      set_visitor(typename type_of<vr>::type data) {
+      set_visitor(typename type_of<vr>::type data)
+      {
          setdata = data;
       }
 
-      virtual void apply(element_field<vr>* ef) override {
+      virtual void apply(element_field<vr>* ef) override
+      {
          ef->value_field = setdata;
       }
 };
@@ -485,7 +487,7 @@ void set_value_field(const elementfield& e, typename type_of<vr>::type& indata)
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type &data)
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type& data)
 {
    static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;
@@ -499,7 +501,7 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
 }
 
 template <VR vr>
-elementfield make_elementfield(const typename type_of<vr>::type &data)
+elementfield make_elementfield(const typename type_of<vr>::type& data)
 {
    std::size_t len = byte_length(data);
    // if len is uneven, validate
@@ -516,7 +518,7 @@ elementfield make_elementfield(const typename type_of<vr>::type &data)
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type::base_type &data)
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type::base_type& data)
 {
    static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;
