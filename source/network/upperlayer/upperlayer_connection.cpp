@@ -171,7 +171,10 @@ void scx::send(property* p)
 
 void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
 {
-   handlers[ptype](this, std::move(p));
+   if (handlers[ptype])
+   {
+      handlers[ptype](this, std::move(p));
+   }
 
    if (get_state() == statemachine::CONN_STATE::STA13) {
       close_connection();
