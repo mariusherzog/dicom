@@ -31,16 +31,21 @@ class infrastrustructure_timer_stub : public Iinfrastructure_timeout_connection
 class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_connection
 {
    private:
-      std::ifstream in;
+      std::unique_ptr<std::ifstream> in;
       boost::system::error_code ec;
 
    public:
-      infrastructure_read_connection_stub(std::string binfile):
-         in {binfile, std::ios::binary},
+      infrastructure_read_connection_stub():
+         in {nullptr},
          ec {}
       {
-
       }
+
+      void set_next_segment(std::string file)
+      {
+         in = std::unique_ptr<std::ifstream> {new std::ifstream{file, std::ios::binary}};
+      }
+
 
       // Iinfrastructure_upperlayer_connection interface
       void write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
@@ -57,7 +62,7 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
       void read_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                      std::size_t len, std::function<void(const boost::system::error_code&, std::size_t)> on_complete) override
       {
-         std::istreambuf_iterator<char> instream {in};
+         std::istreambuf_iterator<char> instream {*in};
          std::copy_n(instream, len, std::begin(*buffer));
          std::advance(instream, 1);
          on_complete(ec, len);
@@ -67,7 +72,7 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
                      std::function<void (const boost::system::error_code&, std::size_t)> on_complete) override
       {
          auto size = buffer->size();
-         std::istreambuf_iterator<char> instream {in};
+         std::istreambuf_iterator<char> instream {*in};
          //std::copy(instream, std::istreambuf_iterator<char>(), std::begin(*buffer));
          std::copy_n(instream, size, std::begin(*buffer));
          std::advance(instream, 1);
