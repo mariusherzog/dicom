@@ -11,8 +11,6 @@
 #include <deque>
 
 #include <boost/optional.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/log/trivial.hpp>
 
 #include "upperlayer_properties.hpp"
