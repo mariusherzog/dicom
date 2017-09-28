@@ -210,6 +210,7 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
          std::size_t len = be_char_to_32b({nextbuflen->begin()+2, nextbuflen->begin()+6});
          nextbufdata->resize(len);
 
+
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
          connection()->read_data(nextbufdata, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
@@ -277,6 +278,7 @@ void scx::do_read()
    auto rem_data = std::make_shared<std::vector<unsigned char>>();
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
 
+
    connection()->read_data(size, 6, [=](const boost::system::error_code& error, std::size_t bytes)  {
          if (error) {
             throw boost::system::system_error(error);
@@ -293,6 +295,7 @@ void scx::do_read()
                if (error) {
                   throw boost::system::system_error(error);
                }
+
 
                compl_data->reserve(size->size() + rem_data->size());
                compl_data->insert(compl_data->end(), size->begin(), size->end());
