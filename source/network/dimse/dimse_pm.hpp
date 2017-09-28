@@ -122,6 +122,8 @@ class dimse_pm
        */
       void association_ac_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> ac);
 
+      void association_rj_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rj);
+
       /**
        * @brief data_handler is called when a p-data-tf property is received.
        * @param[in, out] sc upperlayer service received from

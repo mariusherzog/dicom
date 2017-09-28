@@ -42,6 +42,7 @@ class storage_scp : public Iserviceclass
       dicom::data::dictionary::dictionary& dict;
       std::vector<dicom::network::dimse::SOP_class> sop_classes;
       dicom::network::dimse::association_definition assoc_def;
+      asio_tcp_server_acceptor infrstr_scp;
       dicom::network::upperlayer::scp scp;
       dicom::network::dimse::dimse_pm_manager dimse_pm;
 

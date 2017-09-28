@@ -4,11 +4,10 @@
 #include <functional>
 #include <memory>
 
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/log/trivial.hpp>
 
 #include "upperlayer_connection.hpp"
+#include "infrastructure/asio_tcp_connection_manager.hpp"
 #include "data/dictionary/dictionary.hpp"
 
 
@@ -59,13 +58,14 @@ struct Iupperlayer_connection_handlers
 
 /**
  * @brief The scp class acts as a service class provider which can have
- *        and manages multiple connections simultaneously.
+ *        and manages multiple connections simultaneously as specified by the
+ *        constructor's parameters.
  */
 class scp: public Iupperlayer_connection_handlers
 {
    public:
-      scp(data::dictionary::dictionary& dict,
-          short port);
+      scp(Iinfrastructure_server_acceptor& infrstr_scp,
+          data::dictionary::dictionary& dict);
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -81,26 +81,28 @@ class scp: public Iupperlayer_connection_handlers
 
    private:
 
-      void accept_new(std::shared_ptr<boost::asio::ip::tcp::socket>, boost::system::error_code);
+      std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scp_connection>> scps;
+
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
+
+      void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::vector<std::unique_ptr<scp_connection>> connections;
-      boost::asio::io_service io_service;
-      boost::asio::ip::tcp::acceptor acptr;
+      Iinfrastructure_server_acceptor& acceptor;
       short port;
       data::dictionary::dictionary& dict;
 };
 
 /**
- * @brief The scu class
+ * @brief The scu class handles all connections to a remote application entity.
  */
 class scu: public Iupperlayer_connection_handlers
 {
    public:
-      scu(data::dictionary::dictionary& dict,
-          std::string host, std::string port,
+      scu(Iinfrastructure_client_acceptor& infr_scu,
+          data::dictionary::dictionary& dict,
           a_associate_rq& rq);
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
@@ -116,19 +118,22 @@ class scu: public Iupperlayer_connection_handlers
        * @brief accept_new starts a new association with the parameters
        *        specified in the constructor.
        */
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
+
       void accept_new();
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
 
    private:
+      void connection_end(Iinfrastructure_upperlayer_connection* conn);
+
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
-      std::vector<std::unique_ptr<scu_connection>> connections;
-      boost::asio::io_service io_service;
-      std::string host;
-      std::string port;
+      Iinfrastructure_client_acceptor& acceptor;
+
+      std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
       a_associate_rq& request;
       data::dictionary::dictionary& dict;
 };

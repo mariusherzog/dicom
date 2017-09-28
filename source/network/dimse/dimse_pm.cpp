@@ -103,6 +103,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
              std::bind(&dimse_pm::association_ac_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
              std::bind(&dimse_pm::association_rq_handler, this, _1, _2));
+   sc.inject(upperlayer::TYPE::A_ASSOCIATE_RJ,
+             std::bind(&dimse_pm::association_rj_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::P_DATA_TF,
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
@@ -208,6 +210,10 @@ void dimse_pm::release_association()
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_release_rq {}));
 }
 
+void dimse_pm::association_rj_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rq)
+{
+
+}
 
 void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rq)
 {

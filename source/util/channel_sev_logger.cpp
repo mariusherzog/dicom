@@ -23,6 +23,7 @@ void init_log()
             << "[" << expr::attr<std::string>("Channel")
             << "]\t [" << logging::trivial::severity
             << "]\t [" << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
+            << "]\t [" << boost::log::aux::this_thread::get_id()
             << "] " << expr::smessage
             )
          );

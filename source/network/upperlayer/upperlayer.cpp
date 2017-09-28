@@ -19,40 +19,35 @@ Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 }
 
 
-scp::scp(data::dictionary::dictionary& dict,
-         short port):
-   io_service {},
-   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
-   port {port},
+scp::scp(Iinfrastructure_server_acceptor& infrstr_scp,
+         data::dictionary::dictionary& dict):
+   acceptor {infrstr_scp},
    dict {dict}
 {
-   using namespace std::placeholders;
-   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   acptr.async_accept(*socket, [socket, this](boost::system::error_code ec) { accept_new(socket, ec); });
+   acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
+   acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
 }
 
 scp::~scp()
 {
 }
 
-void scp::accept_new(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code ec)
+void scp::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   using namespace std::placeholders;
-   if (!ec) {
-      connections.push_back(std::unique_ptr<scp_connection>
-         {
-            new scp_connection {io_service, sock, dict, port, handler_new_connection, handler_end_connection}
-         });
-   } else {
-      throw boost::system::system_error(ec);
-   }
-   auto newsock = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   acptr.async_accept(*newsock, [newsock, this](boost::system::error_code ec) { accept_new(newsock, ec); });
+   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, port, handler_new_connection, handler_end_connection)};
+}
+
+void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
+{
+   auto& sc = scps.at(conn);
+   handler_end_connection(sc.get());
+   //sc->reset();
+   scps.erase(conn);
 }
 
 void scp::run()
 {
-   io_service.run();
+   acceptor.run();
 }
 
 void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -62,46 +57,47 @@ void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
-   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
-      handler(conn);
-      for (auto& connection : connections) {
-         if (connection.get() == conn) {
-            connection.reset();
-         }
-      }
-   };
+   handler_end_connection = handler;
 }
 
 
-scu::scu(data::dictionary::dictionary& dict,
-         std::string host, std::string port,
+scu::scu(Iinfrastructure_client_acceptor& infr_scu,
+         data::dictionary::dictionary& dict,
          a_associate_rq& rq):
-   io_service {},
-   host {host},
-   port {port},
+   acceptor {infr_scu},
    request {rq},
    dict {dict}
 {
    using namespace std::placeholders;
+   acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
+   acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
 }
 
 scu::~scu()
 {
 }
 
+void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
+{
+   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection}};
+}
+
 void scu::accept_new()
 {
+   acceptor.accept_new_conn();
+}
 
-   connections.push_back(std::unique_ptr<scu_connection>
-   {
-      new scu_connection {io_service, dict, host, port, request, handler_new_connection, handler_end_connection}
-   });
+void scu::connection_end(Iinfrastructure_upperlayer_connection* conn)
+{
+   auto& sc = scus.at(conn);
+   handler_end_connection(sc.get());
+   //sc->reset();
+   scus.erase(conn);
 }
 
 void scu::run()
 {
-   accept_new();
-   io_service.run();
+   acceptor.run();
 }
 
 void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -111,14 +107,7 @@ void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
-   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
-      handler(conn);
-      for (auto& connection : connections) {
-         if (connection.get() == conn) {
-            connection.reset();
-         }
-      }
-   };
+   handler_end_connection = handler;
 }
 
 
