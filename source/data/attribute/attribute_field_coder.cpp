@@ -15,14 +15,17 @@ namespace attribute
 
 namespace convhelper
 {
+
 template <typename T>
 static std::vector<unsigned char> integral_to_little_endian(T data, int size)
 {
    static_assert(std::is_integral<T>::value, "Integral type expected");
    std::vector<unsigned char> buf(size);
+
    for (int i=0; i<size; ++i) {
       buf[i] = ((data >> 8*i) & 0xff);
    }
+
    return buf;
 }
 
@@ -364,6 +367,39 @@ std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::s
 }
 
 
+template <typename T, typename Fn>
+std::vector<unsigned char> apply_to_vmtype(vmtype<T>& vmdata, Fn&& function, const std::size_t size)
+{
+   auto fn = std::move(function);
+   std::vector<unsigned char> data;
+   data.reserve(size*data.size());
+   //for (const auto& value : vmdata) {
+   for (auto it = vmdata.begin(); it != vmdata.end(); ++it) {
+      const auto& value = *it;
+      auto serdata = fn(value, size);
+      data.insert(data.end(), serdata.begin(), serdata.end());
+   }
+   return data;
+}
+
+template <typename T, typename Fn>
+void deserialize_vmtype(const std::vector<unsigned char>& data, Fn&& function,
+                        const std::size_t begin, const std::size_t len,
+                        const std::size_t size,
+                        vmtype<T>& values)
+{
+   auto fn = std::move(function);
+   std::vector<T> vals;
+   vals.reserve(len/sizeof(T));
+   for (int i=0; i<len; i+=size)
+   {
+      T out;
+      fn(data, begin + i, size, out);
+      vals.emplace_back(std::move(out));
+   }
+   values.insert(vals.begin(), vals.end());
+}
+
 
 std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endianness, const VR vr)
 {
@@ -564,12 +600,14 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::US: {
-         unsigned short field;
-         get_value_field<VR::US>(attr, field);
+         //unsigned short field;
+         attribute::vmtype<unsigned short> us;
+         get_value_field<VR::US>(attr, us);
          if (endianness == ENDIANNESS::LITTLE) {
-            data = convhelper::integral_to_little_endian(field, 2);
+            //data = convhelper::integral_to_little_endian(field, 2);
+            data = apply_to_vmtype(us, convhelper::integral_to_little_endian<unsigned short>, 2);
          } else {
-            data = convhelper::integral_to_big_endian(field, 2);
+            //data = convhelper::integral_to_big_endian(field, 2);
          }
          break;
       }
@@ -585,7 +623,6 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
 
    return data;
 }
-
 
 
 
@@ -749,13 +786,16 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          return make_elementfield<VR::UR>(len, ur);
       }
       case VR::US: {
-         unsigned short val;
+         //unsigned short val;
+         vmtype<unsigned short> us;
          if (endianness == ENDIANNESS::LITTLE) {
-            convhelper::little_endian_to_integral(data, begin, 2, val);
+            //convhelper::little_endian_to_integral(data, begin, 2, val);
+            deserialize_vmtype(data, convhelper::little_endian_to_integral<unsigned short>, begin, len, 2, us);
          } else {
-            convhelper::big_endian_to_integral(data, begin, 2, val);
+            //convhelper::big_endian_to_integral(data, begin, 2, val);
+            deserialize_vmtype(data, convhelper::big_endian_to_integral<unsigned short>, begin, len, 2, us);
          }
-         return make_elementfield<VR::US>(len, val);
+         return make_elementfield<VR::US>(len, us);
       }
       case VR::UT: {
          auto ut = convhelper::decode_byte_string(data, vm, begin, len);
