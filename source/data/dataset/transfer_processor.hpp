@@ -9,6 +9,7 @@
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 #include "data/attribute/attribute.hpp"
+#include "util/channel_sev_logger.hpp"
 
 namespace dicom
 {
@@ -192,6 +193,9 @@ class transfer_processor
       std::string transfer_syntax;
       VR_TYPE vrtype;
       attribute::ENDIANNESS endianness;
+
+   protected:
+      mutable dicom::util::log::channel_sev_logger logger;
 };
 
 /**

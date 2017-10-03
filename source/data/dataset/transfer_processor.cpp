@@ -3,6 +3,8 @@
 #include <stack>
 #include <numeric>
 
+#include <boost/log/trivial.hpp>
+
 #include "data/attribute/attribute_field_coder.hpp"
 #include "data/attribute/constants.hpp"
 #include "data/dictionary/dictionary_entry.hpp" // vr of string
@@ -17,6 +19,7 @@ namespace data
 namespace dataset
 {
 
+using namespace boost::log::trivial;
 using namespace attribute;
 
 
@@ -361,8 +364,22 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
          repr = get_vr(attr.first);
       }
 
-
+      std::size_t value_length = attr.second.value_len;
       auto data = serialize_attribute(attr.second, endianness, repr);
+      if (data.size() != attr.second.value_len) {
+         BOOST_LOG_SEV(logger, warning) << "Mismatched value lengths for tag "
+                                        << attr.first << ": Expected "
+                                        << attr.second.value_len << ", actual "
+                                        << data.size();
+
+         if (attr.second.value_rep.is_initialized() &&
+             *attr.second.value_rep != VR::SQ &&
+             *attr.second.value_rep != VR::NN &&
+             *attr.second.value_rep != VR::NI) {
+            value_length = data.size();
+         }
+      }
+
       auto tag = encode_tag(attr.first, endianness);
       std::vector<unsigned char> len;
       stream.insert(stream.end(), tag.begin(), tag.end());
@@ -371,12 +388,12 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
          stream.insert(stream.end(), vr.begin(), vr.begin()+2);
          if (is_special_VR(repr)) {
             stream.push_back(0x00); stream.push_back(0x00);
-            len = encode_len(4, attr.second.value_len, endianness);
+            len = encode_len(4, value_length, endianness);
          } else {
-            len = encode_len(2, attr.second.value_len, endianness);
+            len = encode_len(2, value_length, endianness);
          }
       } else {
-         len = encode_len(4, attr.second.value_len, endianness);
+         len = encode_len(4, value_length, endianness);
       }
       if (repr == VR::SQ)
       {
@@ -411,7 +428,8 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> 
    dict(dict),
    transfer_syntax {tfs},
    vrtype {vrtype},
-   endianness {endianness}
+   endianness {endianness},
+   logger {"transfer processor"}
 {
    if (vrtype == VR_TYPE::IMPLICIT && !dict.is_initialized()) {
       throw std::runtime_error("Uninitialized dictionary with "
@@ -425,9 +443,10 @@ data::dictionary::dictionary& transfer_processor::get_dictionary() const
 }
 
 transfer_processor::transfer_processor(const transfer_processor& other):
-   dict(other.dict),
+   dict {other.dict},
    transfer_syntax {other.transfer_syntax},
-   vrtype (other.vrtype)
+   vrtype {other.vrtype},
+   logger {"transfer processor"}
 {
 }
 
