@@ -315,7 +315,11 @@ struct type_of<VR::US>
       static const std::size_t len = 2;
 };
 template<>
-struct type_of<VR::UL> { using type = unsigned int; };
+struct type_of<VR::UL>
+{
+      using type = attribute::vmtype<unsigned int>;
+      static const std::size_t len = 4;
+};
 template<>
 struct type_of<VR::UT>
 {

@@ -58,7 +58,6 @@ int main()
          outfile2 << file;
          outfile2.flush();
       }
-      return EXIT_SUCCESS;
    }
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
