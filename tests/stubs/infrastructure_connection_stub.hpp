@@ -34,11 +34,19 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
       std::unique_ptr<std::ifstream> in;
       boost::system::error_code ec;
 
+      std::function<void(std::size_t)> write_handler;
+
    public:
       infrastructure_read_connection_stub():
          in {nullptr},
-         ec {}
+         ec {},
+         write_handler {nullptr}
       {
+      }
+
+      void set_write_handler(decltype(write_handler) on_write)
+      {
+         write_handler = on_write;
       }
 
       void set_next_segment(std::string file)
@@ -51,11 +59,19 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
       void write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
                       std::function<void(const boost::system::error_code&, std::size_t)> on_complete) override
       {
+         if (write_handler) {
+            write_handler(buffer->size());
+         }
          on_complete(ec, buffer->size());
+
       }
+
       void write_data(void*, std::size_t len,
                       std::function<void (const boost::system::error_code&, std::size_t)> on_complete) override
       {
+         if (write_handler) {
+            write_handler(len);
+         }
          on_complete(ec, len);
       }
 

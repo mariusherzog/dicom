@@ -3,6 +3,7 @@
 #include <string>
 #include <exception>
 #include <memory>
+#include <deque>
 
 #include "stubs/infrastructure_connection_stub.hpp"
 #include "../source/data/dictionary/dictionary.hpp"
@@ -10,7 +11,7 @@
 
 using namespace dicom::network::upperlayer;
 
-SCENARIO("Usage of the upperlayer as a service class provider")
+SCENARIO("Usage of the upperlayer as a service class provider", "[network][upperlayer]")
 {
    dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
 
@@ -134,6 +135,112 @@ SCENARIO("Usage of the upperlayer as a service class provider")
          }
       }
    }
+
+
+   GIVEN("An accepted remote connection")
+   {
+      infrastructure_read_connection_stub stub;
+      stub.set_next_segment("a_associate_rq.bin");
+
+      const std::size_t remote_msg_length = 16384;
+
+      auto rqhandler = [&](Iupperlayer_comm_ops* ul, std::unique_ptr<property> prop)
+      {
+         auto rq = dynamic_cast<a_associate_rq*>(prop.get());
+         stub.set_next_segment("p_data_tf.bin");
+         a_associate_ac* ac = new a_associate_ac;
+         ac->called_ae = ac->calling_ae = "0123456789abcdef";
+         ac->max_message_length = rq->max_message_length;
+         ul->queue_for_write(std::unique_ptr<property> {ac});
+      };
+
+      WHEN("Data is sent")
+      {
+         std::deque<std::size_t> fragment_sizes;
+
+         auto datasent_handler = [&](Iupperlayer_comm_ops* ul, property*)
+         {
+            stub.set_write_handler([](std::size_t) {});
+            ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
+         };
+
+         auto datahandler = [&](Iupperlayer_comm_ops* ul, std::unique_ptr<property> prop)
+         {
+            ul->inject_conf(TYPE::P_DATA_TF, datasent_handler);
+            auto dat = dynamic_cast<p_data_tf*>(prop.get());
+            // set the remote message length of this pdu
+            dat->msg_length = remote_msg_length;
+
+            stub.set_write_handler([&](std::size_t count)
+            {
+               fragment_sizes.push_back(count);
+            });
+            ul->queue_for_write(std::unique_ptr<property> {new p_data_tf {*dat}});
+         };
+
+         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {
+               {TYPE::P_DATA_TF, datahandler},
+               {TYPE::A_ASSOCIATE_RQ, rqhandler}}};
+
+         // the first element is the command set
+         fragment_sizes.pop_front();
+
+         THEN("The last fragment size is equal or less than the message length")
+         {
+            auto last_fragment = fragment_sizes.back();
+            REQUIRE(last_fragment <= remote_msg_length);
+         }
+         AND_THEN("All other fragment sizes are equal to the message length")
+         {
+            bool all_equal = true;
+            fragment_sizes.pop_back();
+            std::all_of(fragment_sizes.begin(), fragment_sizes.end(),
+                        [](std::size_t sz) { return sz == remote_msg_length; });
+            REQUIRE(all_equal);
+         }
+      }
+
+
+      AND_WHEN("The association is released via release-rq from the peer")
+      {
+         bool received_release_rp = false;
+         std::unique_ptr<property> received_prop = nullptr;
+
+         auto datahandler = [&](Iupperlayer_comm_ops* ul, std::unique_ptr<property> prop)
+         {
+            stub.set_next_segment("a_release_rq.bin");
+            auto dat = dynamic_cast<p_data_tf*>(prop.get());
+            // set the remote message length of this pdu
+            dat->msg_length = remote_msg_length;
+            ul->queue_for_write(std::unique_ptr<property> {new p_data_tf {*dat}});
+         };
+
+         auto releasehandler = [&](Iupperlayer_comm_ops* ul, std::unique_ptr<property> prop)
+         {
+            received_release_rp = true;
+            received_prop = std::move(prop);
+            ul->queue_for_write(std::unique_ptr<property> {new a_release_rp{}});
+         };
+
+         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {
+               {TYPE::P_DATA_TF, datahandler},
+               {TYPE::A_ASSOCIATE_RQ, rqhandler},
+               {TYPE::A_RELEASE_RQ, releasehandler}}};
+
+         // TODO: check write confirmation handlers are called
+
+         THEN("The release-rp handler is called")
+         {
+            REQUIRE(received_release_rp);
+         }
+         AND_THEN("The received pdu is of type a_release_rq")
+         {
+            REQUIRE(received_prop->type() == TYPE::A_RELEASE_RQ);
+         }
+      }
+   }
 }
+
+
 
 
