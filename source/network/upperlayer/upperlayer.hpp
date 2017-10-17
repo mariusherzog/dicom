@@ -91,7 +91,6 @@ class scp: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
 
       Iinfrastructure_server_acceptor& acceptor;
-      short port;
       data::dictionary::dictionary& dict;
 };
 

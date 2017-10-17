@@ -203,6 +203,7 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
    auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
 
+
    connection()->read_data(nextbuflen, 6, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
          if (error) {
             throw boost::system::system_error(error);
@@ -295,7 +296,6 @@ void scx::do_read()
                if (error) {
                   throw boost::system::system_error(error);
                }
-
 
                compl_data->reserve(size->size() + rem_data->size());
                compl_data->insert(compl_data->end(), size->begin(), size->end());
@@ -471,7 +471,6 @@ statemachine::CONN_STATE scx::get_state()
 
 scp_connection::scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
                                data::dictionary::dictionary& dict,
-                               short port,
                                std::function<void (Iupperlayer_comm_ops*)> handler_new_conn,
                                std::function<void (Iupperlayer_comm_ops*)> handler_end_conn,
                                std::vector<std::pair<TYPE, std::function<void(scx*,std::unique_ptr<property>)>>> l):

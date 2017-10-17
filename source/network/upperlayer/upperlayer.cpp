@@ -34,7 +34,7 @@ scp::~scp()
 
 void scp::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, port, handler_new_connection, handler_end_connection)};
+   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, handler_new_connection, handler_end_connection)};
 }
 
 void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)

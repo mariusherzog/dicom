@@ -34,7 +34,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
          };
-         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {{TYPE::A_ASSOCIATE_RQ, handler}}};
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {{TYPE::A_ASSOCIATE_RQ, handler}}};
 
          THEN("The a-associate_rq handler is called")
          {
@@ -73,7 +73,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
          };
-         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
                {TYPE::P_DATA_TF, handler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler}}};
 
@@ -119,7 +119,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_release_rp{}});
          };
-         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
                {TYPE::P_DATA_TF, datahandler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler},
                {TYPE::A_RELEASE_RQ, handler}}};
@@ -178,7 +178,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             ul->queue_for_write(std::unique_ptr<property> {new p_data_tf {*dat}});
          };
 
-         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
                {TYPE::P_DATA_TF, datahandler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler}}};
 
@@ -222,7 +222,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             ul->queue_for_write(std::unique_ptr<property> {new a_release_rp{}});
          };
 
-         scp_connection scp {&stub, dict, 0, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
                {TYPE::P_DATA_TF, datahandler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler},
                {TYPE::A_RELEASE_RQ, releasehandler}}};

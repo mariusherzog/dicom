@@ -269,7 +269,6 @@ class scp_connection: public scx
    public:
       scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
                      data::dictionary::dictionary& dict,
-                     short port,
                      std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
                      std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
                      std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
