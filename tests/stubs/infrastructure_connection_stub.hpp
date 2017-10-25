@@ -54,6 +54,11 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
          in = std::unique_ptr<std::ifstream> {new std::ifstream{file, std::ios::binary}};
       }
 
+      void set_error_on_next(boost::system::errc::errc_t error = boost::system::errc::broken_pipe)
+      {
+         ec.assign(error, boost::system::generic_category());
+      }
+
 
       // Iinfrastructure_upperlayer_connection interface
       void write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
@@ -107,6 +112,7 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
 
       void close() override
       {
+         // call handler_end?
       }
 };
 
