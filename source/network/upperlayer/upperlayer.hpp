@@ -113,18 +113,18 @@ class scu: public Iupperlayer_connection_handlers
        */
       virtual void run() override;
 
-      /**
-       * @brief accept_new starts a new association with the parameters
-       *        specified in the constructor.
-       */
-      void accept_new(Iinfrastructure_upperlayer_connection* conn);
-
       void accept_new();
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
 
    private:
+      /**
+       * @brief accept_new starts a new association with the parameters
+       *        specified in the constructor.
+       */
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
+
       void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
