@@ -33,25 +33,41 @@ dictionary_dyn& dictionaries::get_dyn_datadic()
 
 dictionary_entry dictionaries::lookup_datadic(attribute::tag_type tag)
 {
-   return datadic.lookup(tag);
+   auto entry = datadic.lookup(tag);
+   if (entry == boost::none) {
+      return unknown;
+   } else {
+      return *entry;
+   }
 }
 
 dictionary_entry dictionaries::lookup(attribute::tag_type tag)
 {
    try {
-      return commanddic.lookup(tag);
-   } catch (std::exception& e) {
-      try {
-         return datadic.lookup(tag);
-      } catch (...) {
-         return unknown;
+      auto found_entry {commanddic.lookup(tag)};
+      if (found_entry == boost::none) {
+         auto found_data_entry {datadic.lookup(tag)};
+         if (found_data_entry == boost::none) {
+            return unknown;
+         } else {
+            return *found_data_entry;
+         }
       }
+
+      return *found_entry;
+   } catch (std::exception&) {
+      return unknown;
    }
 }
 
 dictionary_entry dictionaries::lookup_commanddic(attribute::tag_type tag)
 {
-   return commanddic.lookup(tag);
+   auto entry = commanddic.lookup(tag);
+   if (entry == boost::none) {
+      return unknown;
+   } else {
+      return *entry;
+   }
 }
 
 

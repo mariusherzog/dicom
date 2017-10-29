@@ -19,7 +19,7 @@ using namespace attribute;
 dictionary::dictionary_dyn dataset_iterator::commanddic =
 {"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
 dictionary::dictionary_dyn dataset_iterator::datadic =
-{"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/commanddictionary.txt"};
+{"/media/STORAGE/_files/Studium/Sem 5/Studienprojekt/dicom/dicom/datadictionary.txt"};
 
 dataset_iterator::dataset_iterator(typename std::map<attribute::tag_type, attribute::elementfield>::iterator it):
    cit {it},
@@ -164,8 +164,8 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
          cit = step_into_nested(cit);
          return cit;
       }
-   } else if (commanddic.lookup(cit->first).vr[0] == VR::SQ ||
-              datadic.lookup(cit->first).vr[0] == VR::SQ) {
+   } else if (commanddic.lookup(cit->first)->vr[0] == VR::SQ ||
+              datadic.lookup(cit->first)->vr[0] == VR::SQ) {
       // found another sequence in the current set; step into it.
       cit = step_into_nested(cit);
       return cit;
@@ -190,8 +190,8 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
          return (cit = step_backw_outof_nested());
       }
    } else if ((cit->second.value_rep.is_initialized() && cit->second.value_rep == VR::SQ) ||
-              commanddic.lookup(cit->first).vr[0] == VR::SQ ||
-               datadic.lookup(cit->first).vr[0] == VR::SQ) {
+              commanddic.lookup(cit->first)->vr[0] == VR::SQ ||
+               datadic.lookup(cit->first)->vr[0] == VR::SQ) {
       // previous item will be a sequence, step backwards into it.
       return (cit = step_backw_into_nested(cit));
    }

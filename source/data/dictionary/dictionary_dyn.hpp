@@ -45,7 +45,7 @@ class dictionary_dyn
        * @param eid element id
        * @return dictionary entry corresponding to the tag
        */
-      dictionary_entry lookup(attribute::tag_type tag);
+      boost::optional<dictionary_entry> lookup(attribute::tag_type tag);
 
    private:
       std::ifstream dictionary_file;
@@ -71,7 +71,7 @@ class dictionary_dyn
        * @param eid eid to be looked for
        * @return dictionary entry corresponding to the tag
        */
-      dictionary_entry lazylookup(attribute::tag_type tag);
+      boost::optional<dictionary_entry> lazylookup(attribute::tag_type tag);
 
       /**
        * @brief greedylookup performs a greedy lookup given the tag, ie. the
@@ -80,7 +80,7 @@ class dictionary_dyn
        * @param eid eid to be looked for
        * @return dictionary entry corresponding to the tag
        */
-      dictionary_entry greedylookup(attribute::tag_type tag);
+      boost::optional<dictionary_entry> greedylookup(attribute::tag_type tag);
 
 };
 

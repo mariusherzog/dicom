@@ -1,7 +1,6 @@
 #include "dictionary_dyn.hpp"
 
 #include <vector>
-#include <exception>
 #include <sstream>
 #include <array>
 
@@ -9,6 +8,7 @@
 
 #include <boost/scope_exit.hpp>
 #include <boost/bimap.hpp>
+#include <boost/optional.hpp>
 
 namespace dicom
 {
@@ -78,7 +78,7 @@ dictionary_dyn::dictionary_dyn(std::string file, MODE mode):
 }
 
 
-dictionary_entry dictionary_dyn::lookup(attribute::tag_type tag)
+boost::optional<dictionary_entry> dictionary_dyn::lookup(attribute::tag_type tag)
 {
    std::lock_guard<std::mutex> lock {access_lock};
    dictionary_file.clear();
@@ -89,6 +89,7 @@ dictionary_entry dictionary_dyn::lookup(attribute::tag_type tag)
    } BOOST_SCOPE_EXIT_END; // move the get pointer to the beginning of the
                            // dictionary file
 
+   /// @todo set buffermode individually for dictionaries
    if (buffermode == MODE::LAZY) {
       return lazylookup(tag);
    } else {
@@ -105,7 +106,7 @@ bool dictionary_dyn::comparetag(std::string strtag, attribute::tag_type tag) con
    return taggid == tag.group_id && tageid == tag.element_id;
 }
 
-dictionary_entry dictionary_dyn::lazylookup(attribute::tag_type tag)
+boost::optional<dictionary_entry> dictionary_dyn::lazylookup(attribute::tag_type tag)
 {
    const int num_fields = 6;
    std::string line;
@@ -134,10 +135,10 @@ dictionary_entry dictionary_dyn::lazylookup(attribute::tag_type tag)
 
       }
    }
-   throw std::runtime_error {"Tag not found"};
+   return boost::none;
 }
 
-dictionary_entry dictionary_dyn::greedylookup(attribute::tag_type tag)
+boost::optional<dictionary_entry> dictionary_dyn::greedylookup(attribute::tag_type tag)
 {
    using namespace dicom::data::attribute;
    const int num_fields = 6;
