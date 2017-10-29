@@ -25,7 +25,7 @@ class storage_scp : public Iserviceclass
 {
    public:
       storage_scp(dicom::network::connection endpoint,
-                  dicom::data::dictionary::dictionary& dict,
+                  dicom::data::dictionary::dictionaries& dict,
                   std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       ~storage_scp() override;
@@ -39,7 +39,7 @@ class storage_scp : public Iserviceclass
 
       handlermap cstore_sop;
 
-      dicom::data::dictionary::dictionary& dict;
+      dicom::data::dictionary::dictionaries& dict;
       std::vector<dicom::network::dimse::SOP_class> sop_classes;
       dicom::network::dimse::association_definition assoc_def;
       asio_tcp_server_acceptor infrstr_scp;

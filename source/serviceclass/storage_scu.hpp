@@ -21,7 +21,7 @@ class storage_scu : public Iserviceclass
 {
    public:
       storage_scu(dicom::network::connection endpoint,
-                  dicom::data::dictionary::dictionary& dict,
+                  dicom::data::dictionary::dictionaries& dict,
                   std::function<void(storage_scu*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       ~storage_scu();

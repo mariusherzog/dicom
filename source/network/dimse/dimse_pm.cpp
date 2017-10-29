@@ -31,7 +31,7 @@ using namespace data::dataset;
 
 dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                                    association_definition operations,
-                                   dictionary& dict):
+                                   dictionaries& dict):
    conn {conn},
    operations {operations},
    dict {dict}
@@ -64,7 +64,7 @@ association_definition& dimse_pm_manager::get_operations()
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
-                   dictionary& dict):
+                   dictionaries& dict):
    upperlayer_impl(sc),
    state {CONN_STATE::IDLE},
    connection_request {boost::none},

@@ -173,8 +173,8 @@ std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, 
 
 
 
-commandset_processor::commandset_processor(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
+commandset_processor::commandset_processor(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
 {
 }
 
@@ -420,7 +420,7 @@ elementfield commandset_processor::deserialize_attribute(std::vector<unsigned ch
 }
 
 
-transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> dict,
+transfer_processor::transfer_processor(boost::optional<dictionary::dictionaries&> dict,
                                        std::string tfs, VR_TYPE vrtype,
                                        ENDIANNESS endianness,
                                        std::initializer_list<vr_of_tag> tstags):
@@ -437,7 +437,7 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> 
    }
 }
 
-data::dictionary::dictionary& transfer_processor::get_dictionary() const
+data::dictionary::dictionaries& transfer_processor::get_dictionary() const
 {
    return *dict;
 }
@@ -464,8 +464,8 @@ VR transfer_processor::get_vr(tag_type tag) const
    }
 }
 
-little_endian_implicit::little_endian_implicit(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
+little_endian_implicit::little_endian_implicit(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
                        "1.2.840.10008.1.2",
                        VR_TYPE::IMPLICIT,
                        ENDIANNESS::LITTLE,
@@ -516,8 +516,8 @@ transfer_processor::vr_of_tag::vr_of_tag(tag_type tag,
 {
 }
 
-little_endian_explicit::little_endian_explicit(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
+little_endian_explicit::little_endian_explicit(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
                        "1.2.840.10008.1.2.1",
                        VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE,
                        {
@@ -549,8 +549,8 @@ elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned 
    return decode_value_field(data, end, len, vr, vm, pos);
 }
 
-big_endian_explicit::big_endian_explicit(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
+big_endian_explicit::big_endian_explicit(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
                        "1.2.840.10008.1.2.1",
                        VR_TYPE::EXPLICIT, ENDIANNESS::BIG,
                        {

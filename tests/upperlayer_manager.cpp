@@ -17,7 +17,7 @@ SCENARIO("Managing of multiple upperlayer connections as a server", "[network][u
 {
    /// TODO add case when using multiple connections and one fails
 
-   dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+   dicom::data::dictionary::dictionaries dict {"commanddictionary.csv", "datadictionary.csv"};
 
    GIVEN("An scp upperlayer connection manager")
    {
@@ -99,7 +99,7 @@ SCENARIO("Managing of multiple upperlayer connections as a server", "[network][u
 
 SCENARIO("Managing of multiple upperlayer connections as a client", "[network][upperlayer]")
 {
-   dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+   dicom::data::dictionary::dictionaries dict {"commanddictionary.csv", "datadictionary.csv"};
 
    a_associate_rq associate_rq;
    associate_rq.application_context = "1.2.840.10008.3.1.1.1";

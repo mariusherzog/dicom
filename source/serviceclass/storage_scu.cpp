@@ -21,7 +21,7 @@ namespace serviceclass
 {
 
 storage_scu::storage_scu(connection endpoint,
-                         dicom::data::dictionary::dictionary& dict,
+                         dicom::data::dictionary::dictionaries& dict,
                          std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):
    cstore_req {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}},
    cstore_resp {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}},

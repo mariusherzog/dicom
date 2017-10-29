@@ -20,7 +20,7 @@ Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 
 
 scp::scp(Iinfrastructure_server_acceptor& infrstr_scp,
-         data::dictionary::dictionary& dict):
+         data::dictionary::dictionaries& dict):
    acceptor {infrstr_scp},
    dict {dict}
 {
@@ -62,7 +62,7 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 
 scu::scu(Iinfrastructure_client_acceptor& infr_scu,
-         data::dictionary::dictionary& dict,
+         data::dictionary::dictionaries& dict,
          a_associate_rq& rq):
    acceptor {infr_scu},
    request {rq},

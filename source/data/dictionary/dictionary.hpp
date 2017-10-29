@@ -21,7 +21,7 @@ namespace dictionary
  * @brief The dictionary class is a facade for the different kind of
  *        dictionaries.
  */
-class dictionary
+class dictionaries
 {
    public:
       template <unsigned short gid>
@@ -36,7 +36,7 @@ class dictionary
        * @param cmddic_path path to the command dictionary
        * @param datadic_path path toe the data dictionary
        */
-      dictionary(std::string cmddic_path = "commanddictionary.csv",
+      dictionaries(std::string cmddic_path = "commanddictionary.csv",
                  std::string datadic_path = "datadictionary.csv");
 
 

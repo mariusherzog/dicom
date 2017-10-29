@@ -92,7 +92,7 @@ class scx: public Istate_trans_ops, public Iupperlayer_comm_ops
 {
    public:
 
-      explicit scx(data::dictionary::dictionary& dict,
+      explicit scx(data::dictionary::dictionaries& dict,
                    std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l);
       scx(const scx&) = delete;
       scx& operator=(const scx&) = delete;
@@ -268,7 +268,7 @@ class scp_connection: public scx
 {
    public:
       scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
-                     data::dictionary::dictionary& dict,
+                     data::dictionary::dictionaries& dict,
                      std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
                      std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
                      std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l = {{}});
@@ -295,7 +295,7 @@ class scu_connection: public scx
 {
    public:
       scu_connection(Iinfrastructure_upperlayer_connection* conn,
-          data::dictionary::dictionary& dict,
+          data::dictionary::dictionaries& dict,
           a_associate_rq& rq,
           std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
           std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
