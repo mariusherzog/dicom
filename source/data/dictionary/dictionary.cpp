@@ -15,7 +15,7 @@ static dictionary_entry unknown {{attribute::VR::UN}, "UNKNOWN", "UNKNOWN", "*",
 
 dictionaries::dictionaries(std::string cmddic_path,
                        std::string datadic_path):
-   commanddic {cmddic_path},
+   commanddic {cmddic_path, dictionary_dyn::MODE::GREEDY},
    datadic {datadic_path}
 {
 }

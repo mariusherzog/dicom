@@ -173,6 +173,11 @@ boost::optional<dictionary_entry> dictionary_dyn::greedylookup(attribute::tag_ty
             , dictionary_entry {{vrs[0], vrs[1], vrs[2]}, fields[1], fields[2], fields[3], retired});
       }
    }
+
+   if (dict_buffer.count(tag) <= 0) {
+      return boost::none;
+   }
+
    return dict_buffer.at(tag);
 }
 
