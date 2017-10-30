@@ -98,7 +98,13 @@ std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& da
    }
 
    for (auto& attr : dataset) {
-      VR repr = get_vr(attr.first);
+      VR repr;
+      if (vrtype == VR_TYPE::EXPLICIT) {
+         repr = attr.second.value_rep.get();
+      } else {
+         repr = get_vr(attr.first);
+      }
+
       if (repr != VR::SQ && !is_item_attribute(attr.first)) {
          accu += dataelement_length(attr.second);
       } else if (repr == VR::SQ) {
