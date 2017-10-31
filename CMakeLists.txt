@@ -56,7 +56,7 @@ include_directories(${CMAKE_SOURCE_DIR}/source)
 
 
 set(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/testsmain.cpp)
-file(GLOB_RECURSE TEST_SOURCES tests/dataset.cpp tests/types.cpp tests/testsmain.cpp tests/attribute.cpp tests/dimse.cpp tests/upperlayer_connection.cpp tests/stubs/upperlayer_communication_stub.hpp tests/stubs/infrastructure_connection_stub.hpp tests/upperlayer_manager.cpp tests/stubs/upperlayer_server_acceptor_stub.hpp tests/stubs/upperlayer_client_acceptor_stub.hpp)
+file(GLOB_RECURSE TEST_SOURCES tests/dataset.cpp tests/types.cpp tests/testsmain.cpp tests/attribute.cpp tests/dimse.cpp tests/upperlayer_connection.cpp tests/stubs/upperlayer_communication_stub.hpp tests/stubs/infrastructure_connection_stub.hpp tests/upperlayer_manager.cpp tests/stubs/upperlayer_server_acceptor_stub.hpp tests/stubs/upperlayer_client_acceptor_stub.hpp tests/dictionaries.cpp)
 add_executable(dicom_tests ${TEST_SOURCES})
 target_link_libraries(dicom_tests  Catch libdicom ${Boost_LIBRARIES})
 
