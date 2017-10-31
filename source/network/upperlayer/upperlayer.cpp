@@ -2,6 +2,10 @@
 
 #include "upperlayer_connection.hpp"
 
+#include <functional>
+
+using namespace std::placeholders;
+
 namespace dicom
 {
 
@@ -34,7 +38,10 @@ scp::~scp()
 
 void scp::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, handler_new_connection, handler_end_connection)};
+   scps[conn] = std::unique_ptr<scp_connection>
+   {
+         new scp_connection {conn, dict, handler_new_connection, handler_end_connection, [&](Iupperlayer_comm_ops* conn, std::exception_ptr exception) { this->error_handler(conn, exception); }}
+   };
 }
 
 void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
@@ -60,6 +67,17 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
    handler_end_connection = handler;
 }
 
+void scp::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
+{
+   try {
+      if (exception) {
+         std::rethrow_exception(exception);
+      }
+   } catch (std::exception& exc) {
+      std::cerr << exc.what() << " " << conn << "\n";
+   }
+
+}
 
 scu::scu(Iinfrastructure_client_acceptor& infr_scu,
          data::dictionary::dictionary& dict,
@@ -79,7 +97,7 @@ scu::~scu()
 
 void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection}};
+   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection, [&](Iupperlayer_comm_ops* conn, std::exception_ptr exception) { this->error_handler(conn, exception); }}};
 }
 
 void scu::accept_new()
@@ -109,6 +127,21 @@ void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
    handler_end_connection = handler;
 }
+
+void scu::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
+{
+   try {
+      if (exception) {
+         std::rethrow_exception(exception);
+      }
+   } catch (std::exception& exc) {
+      std::cerr << exc.what() << " " << conn << "\n";
+   }
+
+   // now end the connection ?
+   //connection_end(conn);
+}
+
 
 
 }
