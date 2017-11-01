@@ -6,6 +6,7 @@
 #include "data/dictionary/dictionary.hpp"
 #include "data/attribute/constants.hpp"
 
+#include "infrastructure/asio_tcp_connection_manager.hpp"
 
 using namespace dicom::data;
 using namespace dicom::data::attribute;
@@ -39,7 +40,8 @@ storage_scp::storage_scp(connection endpoint,
                {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
                dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
    },
-   scp {dict, endpoint.port},
+   infrstr_scp {endpoint.port, nullptr, nullptr},
+   scp {infrstr_scp, dict},
    dimse_pm {scp, assoc_def, dict},
    handler {handler}
 {

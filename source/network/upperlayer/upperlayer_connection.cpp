@@ -12,7 +12,6 @@
 #include <exception>
 
 #include <boost/optional.hpp>
-#include <boost/asio.hpp>
 
 #include "upperlayer_properties.hpp"
 
@@ -120,7 +119,7 @@ void scx::send(property* p)
       // call async_write after each sent property until the queue is
       // empty
       if (ptype != TYPE::P_DATA_TF) {
-         boost::asio::async_write(sock(), boost::asio::buffer(*pdu),
+         connection()->write_data(pdu,
             [this, p, ptype](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
@@ -137,7 +136,7 @@ void scx::send(property* p)
 
          std::size_t len = be_char_to_32b({pdu->begin()+6, pdu->begin()+10});
          auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
-         boost::asio::async_write(sock(), boost::asio::buffer(*commandset),
+         connection()->write_data(commandset,
             [this, commandset, len, pdu, p, ptype, pdataprop]
                (const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
@@ -171,13 +170,16 @@ void scx::send(property* p)
 
 void scx::handle_pdu(std::unique_ptr<property> p, TYPE ptype)
 {
-   handlers[ptype](this, std::move(p));
+   if (handlers[ptype])
+   {
+      handlers[ptype](this, std::move(p));
+   }
 
    if (get_state() == statemachine::CONN_STATE::STA13) {
       close_connection();
    } else {
       // be ready for new data
-      if (!io_s().stopped() && !shutdown_requested) {
+      if (!connection()->is_stopped() && !shutdown_requested) {
          do_read();
       }
    }
@@ -200,18 +202,19 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
    auto nextbuflen = std::make_shared<std::vector<unsigned char>>(6);
    auto nextbufdata = std::make_shared<std::vector<unsigned char>>();
    auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
-   boost::asio::async_read(sock(), boost::asio::buffer(*nextbuflen), boost::asio::transfer_exactly(6),
-      [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
+
+
+   connection()->read_data(nextbuflen, 6, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
          if (error) {
             throw boost::system::system_error(error);
          }
          std::size_t len = be_char_to_32b({nextbuflen->begin()+2, nextbuflen->begin()+6});
          nextbufdata->resize(len);
 
+
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         boost::asio::async_read(sock(), boost::asio::buffer(*nextbufdata),
-         [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
+         connection()->read_data(nextbufdata, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
             if (error) {
                throw boost::system::system_error(error);
             }
@@ -219,9 +222,9 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
             BOOST_LOG_SEV(logger, trace) << "Read data fragment of size " << bytes;
 
             nextbufcompl->reserve(len+6);
-            nextbufcompl->insert(nextbufcompl->end(), nextbuflen->begin(), nextbuflen->end());
-            nextbufcompl->insert(nextbufcompl->end(), nextbufdata->begin(), nextbufdata->end());
-            data->insert(data->end(), nextbufcompl->begin(), nextbufcompl->end());
+            nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbuflen->begin()), std::make_move_iterator(nextbuflen->end()));
+            nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbufdata->begin()), std::make_move_iterator(nextbufdata->end()));
+            data->insert(data->end(), std::make_move_iterator(nextbufcompl->begin()), std::make_move_iterator(nextbufcompl->end()));
 
             bool lastsegment = ((*nextbufcompl)[11] & 0x02);
             if (lastsegment) {
@@ -243,7 +246,7 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
 
    void* data_offset = (static_cast<void*>(data->data()+begin));
 
-   boost::asio::async_write(sock(), boost::asio::buffer(data_offset, len),
+   connection()->write_data(data_offset, len,
       [this, p, data, len, begin, data_offset](const boost::system::error_code& error, std::size_t bytes) {
          if (error) {
             throw boost::system::system_error(error);
@@ -276,8 +279,8 @@ void scx::do_read()
    auto rem_data = std::make_shared<std::vector<unsigned char>>();
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
 
-   boost::asio::async_read(sock(), boost::asio::buffer(*size), boost::asio::transfer_exactly(6),
-      [=](const boost::system::error_code& error, std::size_t bytes)  {
+
+   connection()->read_data(size, 6, [=](const boost::system::error_code& error, std::size_t bytes)  {
          if (error) {
             throw boost::system::system_error(error);
          }
@@ -288,7 +291,7 @@ void scx::do_read()
 
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         boost::asio::async_read(sock(), boost::asio::buffer(*rem_data), boost::asio::transfer_exactly(len),
+         connection()->read_data(rem_data, len,
             [=](const boost::system::error_code& error, std::size_t bytes) {
                if (error) {
                   throw boost::system::system_error(error);
@@ -400,13 +403,13 @@ void scx::reset_artim()
 
 void scx::stop_artim()
 {
-   artim_timer().cancel();
+   artim_timer()->cancel();
 }
 
 void scx::start_artim()
 {
    using namespace std::placeholders;
-   artim_timer().async_wait(std::bind(&scx::artim_expired, this, _1));
+   artim_timer()->wait_async();
       //member function artim_expired has implicit scx* as first parameter
 }
 
@@ -425,34 +428,37 @@ void scx::close_connection()
 
    // closing of the connection may only be done when there are no
    // outstanding operations
-   io_s().post([this]() {
-      sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-      sock().close();
-      handler_end_connection(this);
-      shutdown_requested = false;
-   });
+
+   connection()->close();
+
+   // TODO: update shutdown_requested
+
+//   io_s().post([this]() {
+//      sock().shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+//      sock().close();
+//      handler_end_connection(this);
+//      shutdown_requested = false;
+//   });
 }
 
 void scx::run()
 {
-   io_s().run();
+//   io_s().run();
 }
 
-void scx::artim_expired(const boost::system::error_code& error)
+void scx::artim_expired()
 {
-   if (error != boost::asio::error::operation_aborted) {
-      BOOST_LOG_SEV(this->logger, info) << "ARTIM timer expired";
-      statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
-   }
+   BOOST_LOG_SEV(this->logger, info) << "ARTIM timer expired";
+   statem.transition(statemachine::EVENT::ARTIM_EXPIRED);
 }
 
 
-void scx::inject(TYPE t, std::function<void (scx*, std::unique_ptr<property>)> f)
+void scx::inject(TYPE t, std::function<void (Iupperlayer_comm_ops*, std::unique_ptr<property>)> f)
 {
    handlers[t] = f;
 }
 
-void scx::inject_conf(TYPE t, std::function<void(scx*, property*)> f)
+void scx::inject_conf(TYPE t, std::function<void(Iupperlayer_comm_ops*, property*)> f)
 {
    handlers_conf[t] = f;
 }
@@ -463,68 +469,48 @@ statemachine::CONN_STATE scx::get_state()
 }
 
 
-scp_connection::scp_connection(boost::asio::io_service& io_service,
-         std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-         data::dictionary::dictionary& dict,
-         short port,
-         std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
-         std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
-         std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
+scp_connection::scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
+                               data::dictionary::dictionary& dict,
+                               std::function<void (Iupperlayer_comm_ops*)> handler_new_conn,
+                               std::function<void (Iupperlayer_comm_ops*)> handler_end_conn,
+                               std::vector<std::pair<TYPE, std::function<void(scx*,std::unique_ptr<property>)>>> l):
    scx {dict, l},
-   io_service {io_service},
-   socket {socket},
-   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
-//   handler_new_connection {handler_new_conn},
-//   handler_end_connection {handler_end_conn}
+   conn {tcp_conn},
+   artim {conn->timeout_timer(std::chrono::seconds(10), [this](){ artim_expired(); })}
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;
-   artim.cancel();
+   artim->cancel();
    statem.transition(statemachine::EVENT::TRANS_CONN_INDIC);
    handler_new_connection(this);
    do_read();
 }
 
+Iinfrastructure_timeout_connection* scp_connection::artim_timer()
+{
+   return artim.get();
+}
 
-
-scu_connection::scu_connection(boost::asio::io_service& io_service,
+scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
          data::dictionary::dictionary& dict,
-         std::string host, std::string port,
          a_associate_rq& rq,
          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    scx {dict, l},
-   io_service {io_service},
-   resolver {io_service},
-   query {host, port},
-   endpoint_iterator {resolver.resolve(query)},
-   socket {io_service},
-   artim {io_service, std::chrono::steady_clock::now() + std::chrono::seconds(10) }
+   conn {conn},
+   artim {conn->timeout_timer(std::chrono::seconds(10), [this](){ artim_expired(); })}
 {
    handler_new_connection = handler_new_conn;
    handler_end_connection = handler_end_conn;
    statem.transition(statemachine::EVENT::A_ASSOCIATE_RQ);
-
-   boost::asio::ip::tcp::resolver::iterator end;
-   boost::system::error_code error = boost::asio::error::host_not_found;
-   while(error && endpoint_iterator != end)
-   {
-     socket.close();
-     socket.connect(*endpoint_iterator++, error);
-   }
-
-   if (error) {
-      throw boost::system::system_error(error);
-   }
 
    statem.transition(statemachine::EVENT::TRANS_CONN_CONF);
 
    handler_new_connection(this);
 
    auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
-   boost::asio::async_write(socket, boost::asio::buffer(*pdu),
-      [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
+   conn->write_data(pdu, [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
          if (!error) {
             auto type = TYPE::A_ASSOCIATE_RQ;
             BOOST_LOG_SEV(logger, info) << "Sent property of type " << type;
@@ -540,34 +526,9 @@ scu_connection::scu_connection(boost::asio::io_service& io_service,
 }
 
 
-boost::asio::ip::tcp::socket& scp_connection::sock()
+Iinfrastructure_timeout_connection* scu_connection::artim_timer()
 {
-   return *socket;
-}
-
-boost::asio::io_service&scp_connection::io_s()
-{
-   return io_service;
-}
-
-boost::asio::steady_timer&scp_connection::artim_timer()
-{
-   return artim;
-}
-
-boost::asio::ip::tcp::socket& scu_connection::sock()
-{
-   return socket;
-}
-
-boost::asio::io_service& scu_connection::io_s()
-{
-   return io_service;
-}
-
-boost::asio::steady_timer&scu_connection::artim_timer()
-{
-   return artim;
+   return artim.get();
 }
 
 }

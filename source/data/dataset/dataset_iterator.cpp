@@ -98,6 +98,7 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
    auto last = parent_its.top();
    parent_its.pop();
    nested_sets.pop();
+   items.pop();
    nested_set_sizes.pop();
    return ++last;
 }
