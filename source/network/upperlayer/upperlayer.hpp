@@ -47,6 +47,9 @@ struct Iupperlayer_connection_handlers
        */
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
 
+
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> f) = 0;
+
       /**
        * @brief run starts the handling of the connections
        */
@@ -78,6 +81,7 @@ class scp: public Iupperlayer_connection_handlers
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler) override;
 
    private:
 
@@ -91,6 +95,7 @@ class scp: public Iupperlayer_connection_handlers
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+      std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
       Iinfrastructure_server_acceptor& acceptor;
       data::dictionary::dictionary& dict;
@@ -123,6 +128,7 @@ class scu: public Iupperlayer_connection_handlers
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler) override;
 
    private:
       void accept_new(Iinfrastructure_upperlayer_connection* conn);
@@ -133,6 +139,7 @@ class scu: public Iupperlayer_connection_handlers
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+      std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
       Iinfrastructure_client_acceptor& acceptor;
 

@@ -299,7 +299,7 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
       } catch (std::exception& excep) {
          BOOST_LOG_SEV(logger, error) << "Error writing fragment of p_data_tf\n"
                                       << excep.what();
-         //error_handler(this, std::current_exception());
+         error_handler(this, std::current_exception());
       }
    });
 

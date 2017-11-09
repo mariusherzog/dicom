@@ -67,6 +67,12 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
    handler_end_connection = handler;
 }
 
+void scp::connection_error(std::function<void (Iupperlayer_comm_ops *, std::exception_ptr)> f)
+{
+   handler_error = f;
+}
+
+
 void scp::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
 {
    try {
@@ -76,7 +82,10 @@ void scp::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception
    } catch (std::exception& exc) {
       std::cerr << exc.what() << " " << conn << "\n";
    }
-
+   if (handler_error)
+   {
+      handler_error(conn, exception);
+   }
 }
 
 scu::scu(Iinfrastructure_client_acceptor& infr_scu,
@@ -128,6 +137,11 @@ void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
    handler_end_connection = handler;
 }
 
+void scu::connection_error(std::function<void (Iupperlayer_comm_ops *, std::exception_ptr)> f)
+{
+   handler_error = f;
+}
+
 void scu::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
 {
    try {
@@ -138,8 +152,10 @@ void scu::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception
       std::cerr << exc.what() << " " << conn << "\n";
    }
 
-   // now end the connection ?
-   //connection_end(conn);
+   if (handler_error)
+   {
+      handler_error(conn, exception);
+   }
 }
 
 
