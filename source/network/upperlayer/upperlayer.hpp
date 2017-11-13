@@ -9,6 +9,7 @@
 #include "upperlayer_connection.hpp"
 #include "infrastructure/asio_tcp_connection_manager.hpp"
 #include "data/dictionary/dictionary.hpp"
+#include "util/channel_sev_logger.hpp"
 
 
 namespace dicom
@@ -99,6 +100,7 @@ class scp: public Iupperlayer_connection_handlers
 
       Iinfrastructure_server_acceptor& acceptor;
       data::dictionary::dictionary& dict;
+      util::log::channel_sev_logger logger;
 };
 
 /**
@@ -146,6 +148,7 @@ class scu: public Iupperlayer_connection_handlers
       std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
       a_associate_rq& request;
       data::dictionary::dictionary& dict;
+      util::log::channel_sev_logger logger;
 };
 
 }

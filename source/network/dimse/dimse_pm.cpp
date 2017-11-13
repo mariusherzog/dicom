@@ -28,26 +28,33 @@ namespace dimse
 using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
+using namespace util::log;
 
 dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                                    association_definition operations,
                                    dictionary& dict):
    conn {conn},
    operations {operations},
-   dict {dict}
+   dict {dict},
+   error_handler {nullptr},
+   logger {"dimse pm manager"}
 {
-   conn.new_connection([&](upperlayer::Iupperlayer_comm_ops* scx) {this->create_dimse(scx);});
-   conn.end_connection([&](upperlayer::Iupperlayer_comm_ops* scx) {this->remove_dimse(scx);});
+   using namespace upperlayer;
+   conn.new_connection([&](Iupperlayer_comm_ops* scx) {this->create_dimse(scx);});
+   conn.end_connection([&](Iupperlayer_comm_ops* scx) {this->remove_dimse(scx);});
+   conn.connection_error([&](Iupperlayer_comm_ops* scx, std::exception_ptr error) { this->connection_error(scx, error); });
 }
 
 void dimse_pm_manager::create_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
    protocol_machines[scx] =
          (std::unique_ptr<dimse_pm> {new dimse_pm {*scx, operations, dict} });
+   BOOST_LOG_SEV(logger, info) << "New dimse protocol machine created " << scx;
 }
 
 void dimse_pm_manager::remove_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
+   BOOST_LOG_SEV(logger, info) << "Removed dimse protocol machine " << scx;
    protocol_machines.erase(scx);
 }
 
@@ -59,6 +66,29 @@ void dimse_pm_manager::run()
 association_definition& dimse_pm_manager::get_operations()
 {
    return operations;
+}
+
+void dimse_pm_manager::connection_error_handler(std::function<void(dimse_pm*, std::exception_ptr)> handler)
+{
+   error_handler = handler;
+}
+
+void dimse_pm_manager::connection_error(upperlayer::Iupperlayer_comm_ops* scx, std::exception_ptr err)
+{
+   auto& dimse_pm = protocol_machines.find(scx)->second;
+
+   try {
+      if (err) {
+         std::rethrow_exception(err);
+      }
+   } catch(std::exception& excep) {
+      BOOST_LOG_SEV(logger, error) << "Error occured on connection " << dimse_pm.get()
+                                   << "Error message: " << excep.what();
+   }
+   remove_dimse(scx);
+   if (error_handler) {
+      error_handler(dimse_pm.get(), err);
+   }
 }
 
 
@@ -143,7 +173,6 @@ dimse_pm::~dimse_pm()
 void dimse_pm::send_response(response r)
 {
    using namespace upperlayer;
-   using namespace util::log;
    BOOST_LOG_SEV(logger, info) << "User-issued request / response indication "
                                   "of type " << r.get_response_type();
 

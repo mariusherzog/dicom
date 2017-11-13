@@ -52,6 +52,13 @@ class dimse_pm_manager
       void run();
 
       /**
+       * @brief connection_error_handler sets the callback for when an error
+       *        occurs on one of dimse_pm connection of this manager
+       * @param handler callback to be invoked upon an error
+       */
+      void connection_error_handler(std::function<void(dimse_pm*, std::exception_ptr)> handler);
+
+      /**
        * @brief get_operations returns a reference to the association definition
        * @return reference to association definition
        * note that changes will be only applied to new connection after run(),
@@ -65,10 +72,14 @@ class dimse_pm_manager
 
       void create_dimse(upperlayer::Iupperlayer_comm_ops* scx);
       void remove_dimse(upperlayer::Iupperlayer_comm_ops* scx);
+      void connection_error(upperlayer::Iupperlayer_comm_ops* scx, std::exception_ptr err);
 
       upperlayer::Iupperlayer_connection_handlers& conn;
       association_definition operations;
       data::dictionary::dictionary& dict;
+      std::function<void(dimse_pm*, std::exception_ptr)> error_handler;
+
+      util::log::channel_sev_logger logger;
 };
 
 
