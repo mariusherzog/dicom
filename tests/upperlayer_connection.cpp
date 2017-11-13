@@ -18,6 +18,15 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
    std::function<void(Iupperlayer_comm_ops*)> handler_new_conn = [](Iupperlayer_comm_ops*) {};
    std::function<void(Iupperlayer_comm_ops*)> handler_end_conn = [](Iupperlayer_comm_ops*) {};
 
+   // generic error callback which fails the test
+   auto error_handler_throw = [&](Iupperlayer_comm_ops*, std::exception_ptr ex)
+   {
+      // dont rethrow, set to local
+      if (ex) {
+         std::rethrow_exception(ex);
+      }
+   };
+
    GIVEN("A remote connection")
    {
       infrastructure_read_connection_stub stub;
@@ -34,7 +43,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
          };
-         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {{TYPE::A_ASSOCIATE_RQ, handler}}};
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler_throw, {{TYPE::A_ASSOCIATE_RQ, handler}}};
 
          THEN("The a-associate_rq handler is called")
          {
@@ -73,7 +82,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
          };
-         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler_throw, {
                {TYPE::P_DATA_TF, handler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler}}};
 
@@ -119,7 +128,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_release_rp{}});
          };
-         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler_throw, {
                {TYPE::P_DATA_TF, datahandler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler},
                {TYPE::A_RELEASE_RQ, handler}}};
@@ -132,6 +141,52 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
          {
             REQUIRE(received_prop != nullptr);
             REQUIRE(received_prop->type() == TYPE::A_RELEASE_RQ);
+         }
+      }
+
+      AND_WHEN("An error occurs reading data")
+      {
+         std::exception_ptr excep;
+         auto error_handler = [&](Iupperlayer_comm_ops*, std::exception_ptr ex)
+         {
+            excep = ex;
+         };
+
+         // set error broken pipe
+         stub.set_error_on_next();
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler};
+
+         THEN("The exception handler is called with the thrown exception")
+         {
+            REQUIRE(excep);
+         }
+         AND_THEN("The exception can be rethrown")
+         {
+            REQUIRE_THROWS(std::rethrow_exception(excep));
+         }
+      }
+
+      AND_WHEN("An error occurs after an initial successful read operation")
+      {
+         std::exception_ptr excep;
+         auto error_handler = [&](Iupperlayer_comm_ops*, std::exception_ptr ex)
+         {
+            excep = ex;
+         };
+
+         // set error broken pipe after 20 bytes read. This will successfully
+         // retrieve the length field (first 6 bytes), but fail on the actual
+         // data in the second operation.
+         stub.set_error_after_bytecount(20);
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler};
+
+         THEN("The exception handler is called with the thrown exception")
+         {
+            REQUIRE(excep);
+         }
+         AND_THEN("The exception can be rethrown")
+         {
+            REQUIRE_THROWS(std::rethrow_exception(excep));
          }
       }
    }
@@ -178,7 +233,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             ul->queue_for_write(std::unique_ptr<property> {new p_data_tf {*dat}});
          };
 
-         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler_throw, {
                {TYPE::P_DATA_TF, datahandler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler}}};
 
@@ -222,7 +277,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
             ul->queue_for_write(std::unique_ptr<property> {new a_release_rp{}});
          };
 
-         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, {
+         scp_connection scp {&stub, dict, handler_new_conn, handler_end_conn, error_handler_throw, {
                {TYPE::P_DATA_TF, datahandler},
                {TYPE::A_ASSOCIATE_RQ, rqhandler},
                {TYPE::A_RELEASE_RQ, releasehandler}}};
@@ -248,6 +303,14 @@ SCENARIO("Usage of the upperlayer as a service class user", "[network][upperlaye
 
    std::function<void(Iupperlayer_comm_ops*)> handler_new_conn = [](Iupperlayer_comm_ops*) {};
    std::function<void(Iupperlayer_comm_ops*)> handler_end_conn = [](Iupperlayer_comm_ops*) {};
+
+   // generic error callback which fails the test
+   auto error_handler_throw = [](Iupperlayer_comm_ops*, std::exception_ptr ex)
+   {
+      if (ex) {
+         std::rethrow_exception(ex);
+      }
+   };
 
    GIVEN("A remote connection accepting association requests")
    {
@@ -276,7 +339,7 @@ SCENARIO("Usage of the upperlayer as a service class user", "[network][upperlaye
             received_prop = std::move(prop);
             ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
          };
-         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn, {{TYPE::A_ASSOCIATE_AC, handler}}};
+         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn, error_handler_throw, {{TYPE::A_ASSOCIATE_AC, handler}}};
 
          THEN("The a_associate_ac handler is called")
          {
@@ -330,7 +393,7 @@ SCENARIO("Usage of the upperlayer as a service class user", "[network][upperlaye
             ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
          };
 
-         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn,
+         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn, error_handler_throw,
             {
                {TYPE::A_ASSOCIATE_AC, handler},
                {TYPE::P_DATA_TF, datahandler}
@@ -389,7 +452,7 @@ SCENARIO("Usage of the upperlayer as a service class user", "[network][upperlaye
             received_prop = std::move(prop);
          };
 
-         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn,
+         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn, error_handler_throw,
             {
                {TYPE::A_ASSOCIATE_AC, handler},
                {TYPE::P_DATA_TF, datahandler},
@@ -403,6 +466,54 @@ SCENARIO("Usage of the upperlayer as a service class user", "[network][upperlaye
          AND_THEN("The received pdu is of type a_release_rp")
          {
             REQUIRE(received_prop->type() == TYPE::A_RELEASE_RP);
+         }
+      }
+
+
+      AND_WHEN("An error occurs during send")
+      {
+         std::exception_ptr excep;
+         auto error_handler_throw2 = [&](Iupperlayer_comm_ops*, std::exception_ptr ex)
+         {
+            // dont rethrow, set to local
+            excep = ex;
+         };
+         auto handler = [&](Iupperlayer_comm_ops* ul, std::unique_ptr<property> prop)
+         {
+            // set error broken pipe
+            stub.set_error_on_next();
+            ul->queue_for_write(std::unique_ptr<property> {new a_abort{}});
+         };
+         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn, error_handler_throw2, {{TYPE::A_ASSOCIATE_AC, handler}}};
+
+         THEN("The exception handler is called")
+         {
+            REQUIRE(excep);
+         }
+         AND_THEN("The exception can be rethrown")
+         {
+            REQUIRE_THROWS(std::rethrow_exception(excep));
+         }
+      }
+
+      AND_WHEN("An error occurs writing the initial association request")
+      {
+         std::exception_ptr excep;
+         auto error_handler_throw2 = [&](Iupperlayer_comm_ops*, std::exception_ptr ex)
+         {
+            // dont rethrow, set to local
+            excep = ex;
+         };
+         stub.set_error_on_next();
+         scu_connection scu {&stub, dict, associate_rq, handler_new_conn, handler_end_conn, error_handler_throw2};
+
+         THEN("The exception handler is called")
+         {
+            REQUIRE(excep);
+         }
+         AND_THEN("The exception can be rethrown")
+         {
+            REQUIRE_THROWS(std::rethrow_exception(excep));
          }
       }
    }

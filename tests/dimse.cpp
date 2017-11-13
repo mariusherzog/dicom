@@ -222,6 +222,11 @@ SCENARIO("Data transmission on an established association", "[network][dimse]")
          }
       }
 
+      AND_WHEN("An error occurs during data transmission")
+      {
+         //ul_stub.invoke_sent_message();
+      }
+
    }
 }
 
