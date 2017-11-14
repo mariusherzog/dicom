@@ -1,5 +1,5 @@
 project(libdicom)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 #set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g -D BOOST_ASIO_HAS_STD_CHRONO -lboost_thread-mt")
@@ -31,11 +31,10 @@ if(Boost_FOUND)
 endif()
 
 # Copy files necessary at runtime
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/datadictionary.csv
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/commanddictionary.csv
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
+configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/datadictionary.csv COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/commanddictionary.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/commanddictionary.csv COPYONLY)
 
 project(dicom)
 
@@ -61,7 +60,6 @@ add_executable(dicom_tests ${TEST_SOURCES})
 target_link_libraries(dicom_tests  Catch libdicom ${Boost_LIBRARIES})
 
 # Copy test data, like prepared serialized sets etc.
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests/data
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/tests/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(NAME tests COMMAND dicom_tests)
