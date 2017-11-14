@@ -106,6 +106,14 @@ class dictionaries
       dictionary_dyn datadic;
 };
 
+/**
+ * @brief get_default_dictionaries returns a reference to a standard
+ *        dictionaries instance containing the command and data dictionaries.
+ * @return dictionary instance
+ */
+dictionaries& get_default_dictionaries();
+
+
 }
 
 }

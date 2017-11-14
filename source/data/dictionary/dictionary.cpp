@@ -70,6 +70,11 @@ dictionary_entry dictionaries::lookup_commanddic(attribute::tag_type tag)
    }
 }
 
+dictionaries& get_default_dictionaries()
+{
+   static dictionaries dict {"commanddictionary.csv", "datadictionary.csv"};
+   return dict;
+}
 
 
 }
