@@ -44,7 +44,7 @@ class dimse_pm_manager
    public:
       dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                        association_definition operations,
-                       data::dictionary::dictionary& dict);
+                       data::dictionary::dictionaries& dict);
 
       /**
        * @brief run starts handling connections
@@ -76,7 +76,8 @@ class dimse_pm_manager
 
       upperlayer::Iupperlayer_connection_handlers& conn;
       association_definition operations;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
       std::function<void(dimse_pm*, std::exception_ptr)> error_handler;
 
       util::log::channel_sev_logger logger;
@@ -97,7 +98,7 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                association_definition operations,
-               data::dictionary::dictionary& dict);
+               data::dictionary::dictionaries& dict);
       ~dimse_pm();
 
       /**
@@ -270,7 +271,7 @@ class dimse_pm
       upperlayer::p_data_tf assemble_ndelete_rq(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_ndelete_rsp(response r, int pres_context_id);
 
-      data::dictionary::dictionary& dict;
+      data::dictionary::dictionaries& dict;
 
       std::map<std::string, std::unique_ptr<data::dataset::transfer_processor>> transfer_processors;
 

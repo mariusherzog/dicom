@@ -69,7 +69,7 @@ class scp: public Iupperlayer_connection_handlers
 {
    public:
       scp(Iinfrastructure_server_acceptor& infrstr_scp,
-          data::dictionary::dictionary& dict);
+          data::dictionary::dictionaries& dict);
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -99,7 +99,8 @@ class scp: public Iupperlayer_connection_handlers
       std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
       Iinfrastructure_server_acceptor& acceptor;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
       util::log::channel_sev_logger logger;
 };
 
@@ -110,7 +111,7 @@ class scu: public Iupperlayer_connection_handlers
 {
    public:
       scu(Iinfrastructure_client_acceptor& infr_scu,
-          data::dictionary::dictionary& dict,
+          data::dictionary::dictionaries& dict,
           a_associate_rq& rq);
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
@@ -147,7 +148,8 @@ class scu: public Iupperlayer_connection_handlers
 
       std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
       a_associate_rq& request;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
       util::log::channel_sev_logger logger;
 };
 

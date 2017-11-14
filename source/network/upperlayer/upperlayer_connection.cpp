@@ -62,7 +62,7 @@ using namespace dicom::util::log;
 
 
 
-scx::scx(data::dictionary::dictionary& dict,
+scx::scx(data::dictionary::dictionaries& dict,
          std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> on_error,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
@@ -521,7 +521,7 @@ statemachine::CONN_STATE scx::get_state()
 
 
 scp_connection::scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
-                               data::dictionary::dictionary& dict,
+                               data::dictionary::dictionaries& dict,
                                std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
                                std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
                                std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> on_error,
@@ -544,7 +544,7 @@ Iinfrastructure_timeout_connection* scp_connection::artim_timer()
 }
 
 scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
-         data::dictionary::dictionary& dict,
+         data::dictionary::dictionaries& dict,
          a_associate_rq& rq,
          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,

@@ -15,7 +15,11 @@ namespace dictionary
 
 dictionary_entry::dictionary_entry(std::array<VR, max_vr_options> vr, std::string mf, std::string kw
                                    , std::string vm, bool ret):
-   vr(vr), message_field {mf}, keyword {kw}, vm {vm}, retired {ret}
+   vr {vr},
+   message_field {mf},
+   keyword {kw},
+   vm {vm},
+   retired {ret}
 {
 
 }

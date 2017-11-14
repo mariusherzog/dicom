@@ -19,7 +19,7 @@ using namespace dicom::data::dataset;
 SCENARIO("Association negotiation on the dimse protocol machine as SCP", "[network][dimse]")
 {
    upperlayer_communication_stub ul_stub;
-   dicom::data::dictionary::dictionary dict;
+   dicom::data::dictionary::dictionaries dict;
 
    GIVEN("An association with no presentation contexts")
    {
@@ -171,7 +171,7 @@ SCENARIO("Association negotiation on the dimse protocol machine as SCP", "[netwo
 SCENARIO("Data transmission on an established association", "[network][dimse]")
 {
    upperlayer_communication_stub ul_stub;
-   dicom::data::dictionary::dictionary dict;
+   dicom::data::dictionary::dictionaries dict;
 
    std::unique_ptr<property> response;
    ul_stub.set_handler_on_queue_for_write([&](std::unique_ptr<property> p)

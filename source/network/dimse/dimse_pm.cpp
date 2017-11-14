@@ -32,7 +32,7 @@ using namespace util::log;
 
 dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                                    association_definition operations,
-                                   dictionary& dict):
+                                   dictionaries& dict):
    conn {conn},
    operations {operations},
    dict {dict},
@@ -94,7 +94,7 @@ void dimse_pm_manager::connection_error(upperlayer::Iupperlayer_comm_ops* scx, s
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
-                   dictionary& dict):
+                   dictionaries& dict):
    upperlayer_impl(sc),
    state {CONN_STATE::IDLE},
    connection_request {boost::none},

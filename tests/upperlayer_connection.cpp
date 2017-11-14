@@ -13,7 +13,7 @@ using namespace dicom::network::upperlayer;
 
 SCENARIO("Usage of the upperlayer as a service class provider", "[network][upperlayer]")
 {
-   dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+   dicom::data::dictionary::dictionaries dict {"commanddictionary.csv", "datadictionary.csv"};
 
    std::function<void(Iupperlayer_comm_ops*)> handler_new_conn = [](Iupperlayer_comm_ops*) {};
    std::function<void(Iupperlayer_comm_ops*)> handler_end_conn = [](Iupperlayer_comm_ops*) {};
@@ -299,7 +299,7 @@ SCENARIO("Usage of the upperlayer as a service class provider", "[network][upper
 
 SCENARIO("Usage of the upperlayer as a service class user", "[network][upperlayer]")
 {
-   dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+   dicom::data::dictionary::dictionaries dict {"commanddictionary.csv", "datadictionary.csv"};
 
    std::function<void(Iupperlayer_comm_ops*)> handler_new_conn = [](Iupperlayer_comm_ops*) {};
    std::function<void(Iupperlayer_comm_ops*)> handler_end_conn = [](Iupperlayer_comm_ops*) {};

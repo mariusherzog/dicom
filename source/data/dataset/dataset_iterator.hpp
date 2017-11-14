@@ -7,7 +7,7 @@
 
 #include "datasets.hpp"
 #include "data/attribute/attribute.hpp"
-#include "data/dictionary/dictionary_dyn.hpp"
+#include "data/dictionary/dictionary.hpp"
 
 namespace dicom
 {
@@ -73,8 +73,7 @@ class dataset_iterator: public std::iterator<std::bidirectional_iterator_tag, st
 
       std::stack<nested_items> items;
 
-      static dictionary::dictionary_dyn commanddic;
-      static dictionary::dictionary_dyn datadic;
+      dictionary::dictionaries& dictionary;
 
       /**
        * @brief step_into_nested is called by next() if a sequence item is
