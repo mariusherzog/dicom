@@ -63,8 +63,10 @@ using namespace dicom::util::log;
 
 
 scx::scx(data::dictionary::dictionaries& dict,
+         std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> on_error,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
    statem {this},
+   error_handler {on_error},
    logger {"upperlayer"},
    proc {data::dataset::commandset_processor {dict}},
    received_pdu {boost::none},
@@ -120,15 +122,22 @@ void scx::send(property* p)
       // empty
       if (ptype != TYPE::P_DATA_TF) {
          connection()->write_data(pdu,
-            [this, p, ptype](const boost::system::error_code& error, std::size_t bytes) {
-               if (error) {
-                  throw boost::system::system_error(error);
+            [this, p, ptype](const boost::system::error_code& err, std::size_t bytes) {
+            try
+            {
+               if (err) {
+                  throw boost::system::system_error(err);
                }
 
                BOOST_LOG_SEV(logger, trace) << "Sent PDU of size " << bytes;
                BOOST_LOG_SEV(logger, info) << "Sent property of type " << ptype;
                BOOST_LOG_SEV(logger, debug) << "Property info: \n" << *p;
                handle_pdu_conf(p, ptype);
+            } catch (std::exception& excep) {
+               BOOST_LOG_SEV(logger, error) << "Error occured writing to connection\n"
+                                            << excep.what();
+               error_handler(this, std::current_exception());
+            }
          });
       } else {
          auto pdataprop = dynamic_cast<p_data_tf*>(p);
@@ -138,9 +147,11 @@ void scx::send(property* p)
          auto commandset = std::make_shared<std::vector<unsigned char>>(pdu->begin(), pdu->begin()+10+len);
          connection()->write_data(commandset,
             [this, commandset, len, pdu, p, ptype, pdataprop]
-               (const boost::system::error_code& error, std::size_t bytes) {
-               if (error) {
-                  throw boost::system::system_error(error);
+               (const boost::system::error_code& err, std::size_t bytes) {
+            try
+            {
+               if (err) {
+                  throw boost::system::system_error(err);
                }
 
                BOOST_LOG_SEV(logger, trace) << "Sent data fragment of size " << bytes;
@@ -162,8 +173,13 @@ void scx::send(property* p)
                } else {
                   assert(false);
                }
+            } catch (std::exception& excep) {
+               BOOST_LOG_SEV(logger, error) << "Error occured writing command set"
+                                            << "of p_data_tf to connection"
+                                            << excep.what();
+               error_handler(this, std::current_exception());
             }
-         );
+         });
       }
    }
 }
@@ -204,38 +220,53 @@ void scx::get_complete_dataset(std::shared_ptr<std::vector<unsigned char>> data)
    auto nextbufcompl = std::make_shared<std::vector<unsigned char>>();
 
 
-   connection()->read_data(nextbuflen, 6, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
-         if (error) {
-            throw boost::system::system_error(error);
+   connection()->read_data(nextbuflen, 6, [=] (const boost::system::error_code& err, std::size_t bytes) mutable {
+      try
+      {
+         if (err) {
+            throw boost::system::system_error(err);
          }
          std::size_t len = be_char_to_32b({nextbuflen->begin()+2, nextbuflen->begin()+6});
          nextbufdata->resize(len);
 
-
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
-         connection()->read_data(nextbufdata, [=] (const boost::system::error_code& error, std::size_t bytes) mutable {
-            if (error) {
-               throw boost::system::system_error(error);
-            }
+         connection()->read_data(nextbufdata, [=] (const boost::system::error_code& err, std::size_t bytes) mutable {
+            try
+            {
+               if (err) {
+                  throw boost::system::system_error(err);
+               }
 
-            BOOST_LOG_SEV(logger, trace) << "Read data fragment of size " << bytes;
+               BOOST_LOG_SEV(logger, trace) << "Read data fragment of size " << bytes;
 
-            nextbufcompl->reserve(len+6);
-            nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbuflen->begin()), std::make_move_iterator(nextbuflen->end()));
-            nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbufdata->begin()), std::make_move_iterator(nextbufdata->end()));
-            data->insert(data->end(), std::make_move_iterator(nextbufcompl->begin()), std::make_move_iterator(nextbufcompl->end()));
+               nextbufcompl->reserve(len+6);
+               nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbuflen->begin()), std::make_move_iterator(nextbuflen->end()));
+               nextbufcompl->insert(nextbufcompl->end(), std::make_move_iterator(nextbufdata->begin()), std::make_move_iterator(nextbufdata->end()));
+               data->insert(data->end(), std::make_move_iterator(nextbufcompl->begin()), std::make_move_iterator(nextbufcompl->end()));
 
-            bool lastsegment = ((*nextbufcompl)[11] & 0x02);
-            if (lastsegment) {
-               BOOST_LOG_SEV(logger, trace) << "Last data fragment";
-               auto pdu = make_property(*data);
-               handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
-            } else {
-               BOOST_LOG_SEV(logger, trace) << "More data fragments expected";
-               get_complete_dataset(data);
+               bool lastsegment = ((*nextbufcompl)[11] & 0x02);
+               if (lastsegment) {
+                  BOOST_LOG_SEV(logger, trace) << "Last data fragment";
+                  auto pdu = make_property(*data);
+                  handle_pdu(std::move(pdu), TYPE::P_DATA_TF);
+               } else {
+                  BOOST_LOG_SEV(logger, trace) << "More data fragments expected";
+                  get_complete_dataset(data);
+               }
+            } catch (std::exception& excep) {
+               BOOST_LOG_SEV(logger, error) << "Error occured reading from connection\n"
+                                            << "For the rest of the data\n"
+                                            << excep.what();
+               error_handler(this, std::current_exception());
             }
          });
+      } catch (std::exception& excep) {
+         BOOST_LOG_SEV(logger, error) << "Error occured reading from connection\n"
+                                      << "During read of first 6 bytes (length)\n"
+                                      << excep.what();
+         error_handler(this, std::current_exception());
+      }
    });
 }
 
@@ -247,9 +278,11 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
    void* data_offset = (static_cast<void*>(data->data()+begin));
 
    connection()->write_data(data_offset, len,
-      [this, p, data, len, begin, data_offset](const boost::system::error_code& error, std::size_t bytes) {
-         if (error) {
-            throw boost::system::system_error(error);
+      [this, p, data, len, begin, data_offset](const boost::system::error_code& err, std::size_t bytes) {
+      try
+      {
+         if (err) {
+            throw boost::system::system_error(err);
          }
 
          BOOST_LOG_SEV(logger, trace) << "Sent data fragment of size " << bytes;
@@ -263,6 +296,11 @@ void scx::write_complete_dataset(property* p, std::shared_ptr<std::vector<unsign
             std::size_t newbegin = begin + len;
             write_complete_dataset(p, data, newbegin);
          }
+      } catch (std::exception& excep) {
+         BOOST_LOG_SEV(logger, error) << "Error writing fragment of p_data_tf\n"
+                                      << excep.what();
+         error_handler(this, std::current_exception());
+      }
    });
 
 }
@@ -280,9 +318,11 @@ void scx::do_read()
    auto compl_data = std::make_shared<std::vector<unsigned char>>();
 
 
-   connection()->read_data(size, 6, [=](const boost::system::error_code& error, std::size_t bytes)  {
-         if (error) {
-            throw boost::system::system_error(error);
+   connection()->read_data(size, 6, [=](const boost::system::error_code& err, std::size_t bytes)  {
+      try
+      {
+         if (err) {
+            throw boost::system::system_error(err);
          }
          assert(bytes == 6);
 
@@ -292,9 +332,11 @@ void scx::do_read()
          BOOST_LOG_SEV(logger, trace) << "Size of incoming data unit: " << len;
 
          connection()->read_data(rem_data, len,
-            [=](const boost::system::error_code& error, std::size_t bytes) {
-               if (error) {
-                  throw boost::system::system_error(error);
+            [=](const boost::system::error_code& err, std::size_t bytes) {
+            try
+            {
+               if (err) {
+                  throw boost::system::system_error(err);
                }
 
                compl_data->reserve(size->size() + rem_data->size());
@@ -365,11 +407,20 @@ void scx::do_read()
                      handle_pdu(std::move(property), ptype);
                   }
                }
-
+            } catch (std::exception& excep) {
+               BOOST_LOG_SEV(logger, error) << "Error occured reading from connection\n"
+                                            << "For the rest of the data\n"
+                                            << excep.what();
+               error_handler(this, std::current_exception());
             }
-         );
+         });
+      } catch (std::exception& excep) {
+         BOOST_LOG_SEV(logger, error) << "Error occured reading from connection\n"
+                                      << "During read of first 6 bytes (length)\n"
+                                      << excep.what();
+         error_handler(this, std::current_exception());
       }
-   );
+   });
 }
 
 
@@ -471,10 +522,11 @@ statemachine::CONN_STATE scx::get_state()
 
 scp_connection::scp_connection(Iinfrastructure_upperlayer_connection* tcp_conn,
                                data::dictionary::dictionaries& dict,
-                               std::function<void (Iupperlayer_comm_ops*)> handler_new_conn,
-                               std::function<void (Iupperlayer_comm_ops*)> handler_end_conn,
+                               std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
+                               std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
+                               std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> on_error,
                                std::vector<std::pair<TYPE, std::function<void(scx*,std::unique_ptr<property>)>>> l):
-   scx {dict, l},
+   scx {dict, on_error, l},
    conn {tcp_conn},
    artim {conn->timeout_timer(std::chrono::seconds(10), [this](){ artim_expired(); })}
 {
@@ -496,8 +548,9 @@ scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
          a_associate_rq& rq,
          std::function<void(Iupperlayer_comm_ops*)> handler_new_conn,
          std::function<void(Iupperlayer_comm_ops*)> handler_end_conn,
+         std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> on_error,
          std::vector<std::pair<TYPE, std::function<void(scx*, std::unique_ptr<property>)>>> l):
-   scx {dict, l},
+   scx {dict, on_error, l},
    conn {conn},
    artim {conn->timeout_timer(std::chrono::seconds(10), [this](){ artim_expired(); })}
 {
@@ -510,8 +563,11 @@ scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
    handler_new_connection(this);
 
    auto pdu = std::make_shared<std::vector<unsigned char>>(rq.make_pdu());
-   conn->write_data(pdu, [this, pdu, &rq](const boost::system::error_code& error, std::size_t /*bytes*/) mutable {
-         if (!error) {
+   //this->queue_for_write(std::unique_ptr<property>(new a_associate_rq {rq}));/*
+   conn->write_data(pdu, [this, pdu, &rq](const boost::system::error_code& err, std::size_t) mutable {
+      try
+      {
+         if (!err) {
             auto type = TYPE::A_ASSOCIATE_RQ;
             BOOST_LOG_SEV(logger, info) << "Sent property of type " << type;
             BOOST_LOG_SEV(logger, debug) << "Property info: \n" << rq;
@@ -520,8 +576,13 @@ scu_connection::scu_connection(Iinfrastructure_upperlayer_connection* conn,
             }
             do_read();
          } else {
-            throw boost::system::system_error(error);
+            throw boost::system::system_error(err);
          }
+      } catch (std::exception& excep) {
+         BOOST_LOG_SEV(logger, error) << "Error occured writing initial a_associate_rq\n"
+                                      << excep.what();
+         error_handler(this, std::current_exception());
+      }
    });
 }
 

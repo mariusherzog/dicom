@@ -33,6 +33,8 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
    private:
       std::unique_ptr<std::ifstream> in;
       boost::system::error_code ec;
+      const boost::system::error_code success_ec;
+      std::size_t error_after_bytecount;
 
       std::function<void(std::size_t)> write_handler;
 
@@ -40,6 +42,8 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
       infrastructure_read_connection_stub():
          in {nullptr},
          ec {},
+         success_ec {},
+         error_after_bytecount {0},
          write_handler {nullptr}
       {
       }
@@ -59,6 +63,12 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
          ec.assign(error, boost::system::generic_category());
       }
 
+      void set_error_after_bytecount(std::size_t bytes = 0, boost::system::errc::errc_t error = boost::system::errc::broken_pipe)
+      {
+         set_error_on_next(error);
+         error_after_bytecount = bytes;
+      }
+
 
       // Iinfrastructure_upperlayer_connection interface
       void write_data(std::shared_ptr<std::vector<unsigned char>> buffer,
@@ -67,8 +77,16 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
          if (write_handler) {
             write_handler(buffer->size());
          }
-         on_complete(ec, buffer->size());
-
+         if (error_after_bytecount == 0) {
+            on_complete(ec, buffer->size());
+         } else {
+            if (buffer->size() <= error_after_bytecount) {
+               on_complete(success_ec, buffer->size());
+            } else {
+               on_complete(ec, error_after_bytecount);
+            }
+         }
+         set_error_on_next(boost::system::errc::success);
       }
 
       void write_data(void*, std::size_t len,
@@ -77,7 +95,16 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
          if (write_handler) {
             write_handler(len);
          }
-         on_complete(ec, len);
+         if (error_after_bytecount == 0) {
+            on_complete(ec, len);
+         } else {
+            if (len <= error_after_bytecount) {
+               on_complete(success_ec, len);
+            } else {
+               on_complete(ec, error_after_bytecount);
+            }
+         }
+         set_error_on_next(boost::system::errc::success);
       }
 
       void read_data(std::shared_ptr<std::vector<unsigned char>> buffer,
@@ -86,7 +113,17 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
          std::istreambuf_iterator<char> instream {*in};
          std::copy_n(instream, len, std::begin(*buffer));
          std::advance(instream, 1);
-         on_complete(ec, len);
+
+         if (error_after_bytecount == 0) {
+            on_complete(ec, len);
+         } else {
+            if (len <= error_after_bytecount) {
+               on_complete(success_ec, len);
+            } else {
+               on_complete(ec, error_after_bytecount);
+            }
+         }
+         set_error_on_next(boost::system::errc::success);
       }
 
       void read_data(std::shared_ptr<std::vector<unsigned char>> buffer,
@@ -97,7 +134,17 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
          //std::copy(instream, std::istreambuf_iterator<char>(), std::begin(*buffer));
          std::copy_n(instream, size, std::begin(*buffer));
          std::advance(instream, 1);
-         on_complete(ec, size);
+
+         if (error_after_bytecount == 0) {
+            on_complete(ec, size);
+         } else {
+            if (buffer->size() <= error_after_bytecount) {
+               on_complete(success_ec, buffer->size());
+            } else {
+               on_complete(ec, error_after_bytecount);
+            }
+         }
+         set_error_on_next(boost::system::errc::success);
       }
 
       std::unique_ptr<Iinfrastructure_timeout_connection> timeout_timer(std::chrono::duration<int>, std::function<void ()>) override
@@ -112,7 +159,7 @@ class infrastructure_read_connection_stub : public Iinfrastructure_upperlayer_co
 
       void close() override
       {
-         // call handler_end?
+
       }
 };
 
