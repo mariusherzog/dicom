@@ -261,7 +261,7 @@ std::size_t validate<VR::CS>(typename type_of<VR::CS>::type& value_field)
       std::transform(uid.begin(), uid.end(), uid.begin(), ::toupper);
       auto not_allowed_char = [](const char c)
       {
-         return !std::isdigit(c) && c != '_' && c != '_';
+         return !std::isalnum(c) && c != '_' && c != ' ';
 
       };
       uid.erase(std::remove_if(uid.begin(), uid.end(), not_allowed_char), uid.end());

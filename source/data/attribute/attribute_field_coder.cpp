@@ -347,7 +347,7 @@ tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin
 std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
 {
    std::size_t len;
-      convhelper::little_endian_to_integral(data, begin, lenbytes, len);
+   convhelper::little_endian_to_integral(data, begin, lenbytes, len);
    return len;
 }
 

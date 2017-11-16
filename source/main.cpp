@@ -33,7 +33,7 @@ int main()
    using namespace dicom::network;
    using namespace dicom::serviceclass;
 
-   dicom::data::dictionary::dictionaries dict {"commanddictionary.csv", "datadictionary.csv"};
+   dicom::data::dictionary::dictionaries& dict = get_default_dictionaries();
 
 
 //   {
