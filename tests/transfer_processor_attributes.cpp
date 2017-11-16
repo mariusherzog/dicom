@@ -114,14 +114,14 @@ SCENARIO("Deserialization of an individual attribute", "[attributes][transfer_pr
 
    GIVEN("A serialized length field")
    {
-      std::vector<unsigned char> length_bytes {0x0a, 0x20, 0x78, 0x7f};
+      std::vector<unsigned char> length_bytes {0xfa, 0x20, 0x78, 0xcf};
 
       WHEN("The length is deserialized in little-endian")
       {
          auto length = decode_len(length_bytes, ENDIANNESS::LITTLE, 4, 0);
          THEN("The length is correctly deserialized")
          {
-            auto expected = 0x7f78200a;
+            auto expected = 0xcf7820fa;
             REQUIRE(length == expected);
          }
       }
@@ -130,7 +130,7 @@ SCENARIO("Deserialization of an individual attribute", "[attributes][transfer_pr
          auto length = decode_len(length_bytes, ENDIANNESS::BIG, 4, 0);
          THEN("The length is correctly deserialized")
          {
-            auto expected = 0x0a20787f;
+            auto expected = 0xfa2078cf;
             REQUIRE(length == expected);
          }
       }
