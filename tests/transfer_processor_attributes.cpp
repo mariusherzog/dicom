@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../source/data/attribute/attribute.hpp"
+#include "../source/data/attribute/vmtype.hpp"
 #include "../source/data/attribute/attribute_field_coder.hpp"
 
 using namespace dicom::data;
@@ -60,6 +61,7 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
       }
    }
 
+   // covers everything string related
    GIVEN("A dicom value field of VR CS")
    {
       auto value = make_elementfield<VR::CS>("ST_SCP");
@@ -79,6 +81,68 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
          THEN("The value is correctly serialized")
          {
             auto expected = std::vector<unsigned char> {'S', 'T', '_', 'S', 'C', 'P'};
+            REQUIRE(value_data == expected);
+         }
+      }
+   }
+
+   // covers all (de)serialization for floating points
+   GIVEN("A dicom value field of VR FL")
+   {
+      vmtype<float> floatvalues {{"*"}, {1.0, 0.125}};
+      auto value = make_elementfield<VR::FL>(floatvalues);
+
+      WHEN("The value is serialized in little-endian")
+      {
+         auto value_data = encode_value_field(value, ENDIANNESS::LITTLE, VR::FL);
+         THEN("The value is correctly serialized")
+         {
+           std::vector<unsigned char> expected {0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x3e};
+           REQUIRE(value_data == expected);
+         }
+         AND_THEN("The size of the serialized data is count * sizeof(type)")
+         {
+            auto size = floatvalues.size() * 4;
+            REQUIRE(size == value_data.size());
+         }
+      }
+      AND_WHEN("The value is serialized in big-endian")
+      {
+         auto value_data = encode_value_field(value, ENDIANNESS::BIG, VR::FL);
+         THEN("The value is correctly serialized")
+         {
+           std::vector<unsigned char> expected {0x3f, 0x80, 0x00, 0x00, 0x3e, 0x00, 0x00, 0x00};
+           REQUIRE(value_data == expected);
+         }
+         AND_THEN("The size of the serialized data is count * sizeof(type)")
+         {
+            auto size = floatvalues.size() * 4;
+            REQUIRE(size == value_data.size());
+         }
+      }
+   }
+
+   // covers (de)serialization of word sequence requiring byte swapping
+   // covers everything string related
+   GIVEN("A dicom value field of VR OW")
+   {
+      auto value = make_elementfield<VR::OW>({0xffa0, 0x217c, 0xc143});
+
+      WHEN("The value is serialized in little-endian")
+      {
+         auto value_data = encode_value_field(value, ENDIANNESS::LITTLE, VR::OW);
+         THEN("The value is correctly serialized")
+         {
+            std::vector<unsigned char> expected {0xa0, 0xff, 0x7c, 0x21, 0x43, 0xc1};
+            REQUIRE(value_data == expected);
+         }
+      }
+      AND_WHEN("The value is serialized in big-endian")
+      {
+         auto value_data = encode_value_field(value, ENDIANNESS::BIG, VR::OW);
+         THEN("The value is correctly serialized")
+         {
+            std::vector<unsigned char> expected {0xff, 0xa0, 0x21, 0x7c, 0xc1, 0x43};
             REQUIRE(value_data == expected);
          }
       }
@@ -158,6 +222,39 @@ SCENARIO("Deserialization of an individual attribute", "[attributes][transfer_pr
             std::string value_string;
             get_value_field<VR::CS>(value, value_string);
             REQUIRE(value_string == "QRSCU1");
+         }
+      }
+   }
+
+   GIVEN("A serialized dicom value field of VR FL")
+   {
+      std::vector<unsigned char> float_bytes_le {0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x3e};
+      std::vector<unsigned char> float_bytes_be {0x3f, 0x80, 0x00, 0x00, 0x3e, 0x00, 0x00, 0x00};
+
+      WHEN("The value is deserialized in little-endian")
+      {
+         auto value = decode_value_field(float_bytes_le, ENDIANNESS::LITTLE, float_bytes_le.size(), VR::FL, "*", 0);
+         THEN("The value is correctly deserialized")
+         {
+            vmtype<float> float_values;
+            get_value_field<VR::FL>(value, float_values);
+            float a = *float_values.begin();
+            float b = float_values.back();
+            REQUIRE(a == 1.0);
+            REQUIRE(b == 0.125);
+         }
+      }
+      WHEN("The value is deserialized in little-endian")
+      {
+         auto value = decode_value_field(float_bytes_be, ENDIANNESS::BIG, float_bytes_be.size(), VR::FL, "*", 0);
+         THEN("The value is correctly deserialized")
+         {
+            vmtype<float> float_values;
+            get_value_field<VR::FL>(value, float_values);
+            float a = *float_values.begin();
+            float b = float_values.back();
+            REQUIRE(a == 1.0);
+            REQUIRE(b == 0.125);
          }
       }
    }

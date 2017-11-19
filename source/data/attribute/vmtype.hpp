@@ -98,6 +98,8 @@ std::size_t byte_length(const vmtype<T>& value_field)
 
 std::size_t byte_length(std::vector<unsigned char> value_field);
 
+std::size_t byte_length(std::vector<unsigned short> value_field);
+
 std::size_t byte_length(const std::string& value_field);
 
 std::size_t byte_length(const unsigned char);

@@ -86,8 +86,8 @@ static std::vector<unsigned char> float_to_big_endian(T data, int size)
    unsigned char floatbuf[sizeof(T)];
    unsigned char* floatbufin = floatbuf;
    floatbufin = reinterpret_cast<unsigned char*>(&data);
-   for (int i=size-1; i>=0; --i) {
-      buf[i] = floatbufin[i];
+   for (int i=0; i<size; ++i) {
+      buf[size-i-1] = floatbufin[i];
    }
    return buf;
 }
@@ -164,8 +164,8 @@ static std::vector<unsigned char> encode_word_array_be(const std::vector<unsigne
    std::vector<unsigned char> buf;
    buf.reserve(strdata.size() * 2);
    for (const auto v : strdata) {
-      buf.push_back((v & 0xff) >> 8);
-      buf.push_back((v & 0xff00));
+      buf.push_back((v & static_cast<unsigned short>(0xff00)) >> 8);
+      buf.push_back(v & static_cast<unsigned short>(0xff));
    }
    return buf;
 }
@@ -229,8 +229,8 @@ static std::vector<unsigned short> decode_word_array_be(const std::vector<unsign
 
    for (int i=begin; i<begin+len; i+=2) {
       unsigned short value = 0;
-      value |= (strdata[i + 1]);
       value |= (strdata[i] << 8);
+      value |= (strdata[i + 1]);
       str.push_back(value);
    }
 
