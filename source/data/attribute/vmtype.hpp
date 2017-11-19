@@ -491,8 +491,36 @@ vmtype<T>::~vmtype()
 {
 }
 
+/**
+ * @brief operator == compares two vmtypes for equality of each element
+ * @param a vmtype<T>
+ * @param b vmtype<T>
+ * @return true if a and b have the same elements, false otherwise
+ */
+template <typename T>
+bool operator==(const vmtype<T>& a, const vmtype<T>& b)
+{
+   if (a.size() != b.size()) {
+      return false;
+   }
+   bool is_same = true;
+   for (auto it = a.cbegin(), itb = b.cbegin(); it != a.cend(); ++it, ++itb) {
+      is_same &= (*it == *itb);
+   }
+   return is_same;
+}
 
-
+/**
+ * @brief operator == compares two vmtypes for inequality
+ * @param a vmtype<T>
+ * @param b vmtype<T>
+ * @return true if a and b differ, false otherwise
+ */
+template <typename T>
+bool operator!=(const vmtype<T>& a, const vmtype<T>& b)
+{
+   return !(a==b);
+}
 
 std::ostream& operator<<(std::ostream& os, vmtype<std::string> data);
 
