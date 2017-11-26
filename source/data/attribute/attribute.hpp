@@ -240,13 +240,13 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::vector<double>;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
 struct type_of<VR::OF>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::vector<float>;
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
@@ -340,6 +340,10 @@ struct type_of<VR::NI>
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OW>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OF>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OD>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 

@@ -19,6 +19,16 @@ std::size_t byte_length(std::vector<unsigned short> value_field)
    return 2 * value_field.size();
 }
 
+std::size_t byte_length(std::vector<float> value_field)
+{
+   return 4 * value_field.size();
+}
+
+std::size_t byte_length(std::vector<double> value_field)
+{
+   return 8 * value_field.size();
+}
+
 std::size_t byte_length(const std::string& value_field)
 {
    auto size = value_field.length();

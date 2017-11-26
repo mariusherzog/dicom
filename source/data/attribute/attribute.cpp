@@ -57,6 +57,20 @@ std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of
    return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OF>::type data)
+{
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OD>::type data)
+{
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::NN>::type)
 {
    return os;

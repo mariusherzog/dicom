@@ -54,6 +54,9 @@ int main()
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
+         auto& set = file.dataset();
+         set[{0x0080, 0x0080}] = make_elementfield<VR::OF>({1.3, 9.9, 2});
+
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;
          outfile2.flush();

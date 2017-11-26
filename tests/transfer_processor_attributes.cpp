@@ -170,6 +170,30 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
          }
       }
    }
+
+   GIVEN("A dicom value field of VR OF")
+   {
+      auto value = make_elementfield<VR::OF>({2.0, -10});
+
+      WHEN("The value is serialized in little-endian")
+      {
+         auto value_data = encode_value_field(value, ENDIANNESS::LITTLE, VR::OF);
+         THEN("The value is correctly serialized")
+         {
+            std::vector<unsigned char> expected {0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x20, 0xc1};
+            REQUIRE(value_data == expected);
+         }
+      }
+      AND_WHEN("The value is serialized in big-endian")
+      {
+         auto value_data = encode_value_field(value, ENDIANNESS::BIG, VR::OF);
+         THEN("The value is correctly serialized")
+         {
+            std::vector<unsigned char> expected {0x40, 0x00, 0x00, 0x00, 0xc1, 0x20, 0x00, 0x00};
+            REQUIRE(value_data == expected);
+         }
+      }
+   }
 }
 
 
@@ -339,6 +363,39 @@ SCENARIO("Deserialization of an individual attribute", "[attributes][transfer_pr
             std::vector<unsigned short> ow;
             get_value_field<VR::OW>(value, ow);
             REQUIRE(ow == expected);
+         }
+      }
+   }
+
+   GIVEN("A serialized dicom value field of VR OF")
+   {
+      std::vector<unsigned char> of_bytes_le {0xcd, 0xcc, 0x4c, 0xc0, 0x00, 0x00, 0x20, 0xc1};
+      std::vector<unsigned char> of_bytes_be {0xc0, 0x4c, 0xcc, 0xcd, 0xc1, 0x20, 0x00, 0x00};
+
+      WHEN("The value is deserialized in little-endian")
+      {
+         //0xc04ccccd
+         auto value = decode_value_field(of_bytes_le, ENDIANNESS::LITTLE, of_bytes_le.size(), VR::OF, "1", 0);
+         std::vector<float> expected {-3.2, -10};
+
+         THEN("The value is correctly deserialized")
+         {
+            std::vector<float> of;
+            get_value_field<VR::OF>(value, of);
+            REQUIRE(of == expected);
+         }
+
+      }
+      AND_WHEN("The value is deserialized in big-endian")
+      {
+         auto value = decode_value_field(of_bytes_be, ENDIANNESS::BIG, of_bytes_be.size(), VR::OF, "1", 0);
+         std::vector<float> expected {-3.2, -10};
+
+         THEN("The value is correctly deserialized")
+         {
+            std::vector<float> of;
+            get_value_field<VR::OF>(value, of);
+            REQUIRE(of == expected);
          }
       }
    }

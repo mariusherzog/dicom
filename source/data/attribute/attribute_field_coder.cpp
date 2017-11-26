@@ -170,6 +170,45 @@ static std::vector<unsigned char> encode_word_array_be(const std::vector<unsigne
    return buf;
 }
 
+template <typename FT>
+static std::vector<unsigned char> encode_float_array_le(const std::vector<FT>& strdata)
+{
+   static_assert(std::is_floating_point<FT>::value, "no floating point type");
+   static_assert(sizeof(FT) == 4 || sizeof(FT) == 8, "unexpected size of type");
+
+   // TODO: endianness of current machine
+   auto size = sizeof(FT);
+   std::vector<unsigned char> buf;
+   buf.reserve(strdata.size() * size);
+   for (const auto v : strdata) {
+      auto floatdata = reinterpret_cast<const unsigned char*>(&v);
+      for  (std::size_t i=0; i<size; ++i) {
+         buf.emplace_back(floatdata[i] & static_cast<unsigned char>(0xff));
+      }
+   }
+   return buf;
+}
+
+template <typename FT>
+static std::vector<unsigned char> encode_float_array_be(const std::vector<FT>& strdata)
+{
+   static_assert(std::is_floating_point<FT>::value, "no floating point type");
+   static_assert(sizeof(FT) == 4 || sizeof(FT) == 8, "unexpected size of type");
+
+   // TODO: endianness of current machine
+   auto size = sizeof(FT);
+   std::vector<unsigned char> buf;
+   buf.reserve(strdata.size() * size);
+   for (const auto v : strdata) {
+      auto floatdata = reinterpret_cast<const unsigned char*>(&v);
+      for  (std::size_t i=0; i<size; ++i) {
+         buf.emplace_back(floatdata[size-1-i] & 0xff);
+      }
+   }
+   return buf;
+}
+
+
 static attribute::vmtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, int begin, int len)
 {
    std::vector<std::string> strings;
@@ -240,6 +279,47 @@ static std::vector<unsigned short> decode_word_array_be(const std::vector<unsign
    assert(len % 2 == 0);
    return str;
 }
+
+template <typename FT>
+static std::vector<FT> decode_float_array_le(const std::vector<unsigned char>& strdata, int begin, int len)
+{
+   static_assert(std::is_floating_point<FT>::value, "no floating point type");
+   static_assert(sizeof(FT) == 4 || sizeof(FT) == 8, "unexpected size of type");
+
+   auto size = sizeof(FT);
+   std::vector<FT> values;
+   for (int i=begin; i<begin+len; i += size) {
+      FT value = 0.0;
+      std::array<unsigned char, sizeof(FT)> float_repr;
+      for (std::size_t b=0; b<size; ++b) {
+         float_repr[b] = (strdata[i+b]);
+      }
+      value = *reinterpret_cast<FT*>(&float_repr[0]);
+      values.push_back(value);
+   }
+   return values;
+}
+
+template <typename FT>
+static std::vector<FT> decode_float_array_be(const std::vector<unsigned char>& strdata, int begin, int len)
+{
+   static_assert(std::is_floating_point<FT>::value, "no floating point type");
+   static_assert(sizeof(FT) == 4 || sizeof(FT) == 8, "unexpected size of type");
+
+   auto size = sizeof(FT);
+   std::vector<FT> values;
+   for (int i=begin; i<begin+len; i += size) {
+      FT value = 0.0;
+      std::array<unsigned char, sizeof(FT)> float_repr;
+      for (std::size_t b=0; b<size; ++b) {
+         float_repr[b] = (strdata[i+(size-1-b)]);
+      }
+      value = *reinterpret_cast<FT*>(&float_repr[0]);
+      values.push_back(value);
+   }
+   return values;
+}
+
 
 }
 
@@ -500,15 +580,23 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::OD: {
-         attribute::vmtype<std::string> od;
+         std::vector<double> od;
          get_value_field<VR::OD>(attr, od);
-         data = convhelper::encode_byte_string(od);
+         if (endianness == ENDIANNESS::LITTLE) {
+             data = convhelper::encode_float_array_le<double>(od);
+         } else {
+             data = convhelper::encode_float_array_be<double>(od);
+         }
          break;
       }
       case VR::OF: {
-         attribute::vmtype<std::string> of;
+         std::vector<float> of;
          get_value_field<VR::OF>(attr, of);
-         data = convhelper::encode_byte_string(of);
+         if (endianness == ENDIANNESS::LITTLE) {
+             data = convhelper::encode_float_array_le<float>(of);
+         } else {
+             data = convhelper::encode_float_array_be<float>(of);
+         }
          break;
       }
       case VR::OW: {
@@ -711,11 +799,21 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          break;
       }
       case VR::OD: {
-         auto od = convhelper::decode_byte_string(data, vm, begin, len);
+         std::vector<double> od;
+         if (endianness == ENDIANNESS::LITTLE) {
+             od = convhelper::decode_float_array_le<double>(data, begin, len);
+         } else {
+             od = convhelper::decode_float_array_be<double>(data, begin, len);
+         }
          return make_elementfield<VR::OD>(len, od);
       }
       case VR::OF: {
-         auto of = convhelper::decode_byte_string(data, vm, begin, len);
+         std::vector<float> of;
+         if (endianness == ENDIANNESS::LITTLE) {
+             of = convhelper::decode_float_array_le<float>(data, begin, len);
+         } else {
+             of = convhelper::decode_float_array_be<float>(data, begin, len);
+         }
          return make_elementfield<VR::OF>(len, of);
       }
       case VR::OW: {
