@@ -114,3 +114,68 @@ SCENARIO("Serialization of a dataset with little-endian explicit transfer syntax
       }
    }
 }
+
+SCENARIO("Serialization of a dataset with big-endian explicit transfer syntax", "[dataset][transfer_processor]")
+{
+   auto& dictionaries = dicom::data::dictionary::get_default_dictionaries(); // use dictionary stub
+   big_endian_explicit bee_tp {dictionaries};
+
+   REQUIRE(bee_tp.get_transfer_syntax() == "1.2.840.10008.1.2.2");
+
+   GIVEN("A dataset containing a single attribute with 'short' length")
+   {
+      std::vector<unsigned char> expected =
+      {/*tag*/ 0x00, 0x28, 0x00, 0x10,
+       /*vr*/ 'U', 'S',
+       /*length*/ 0x00, 0x02,
+       /*data*/ 0x00, 10};
+
+      iod dataset;
+      dataset[{0x0028, 0x0010}] = make_elementfield<VR::US>(10);
+      WHEN("The dataset is deserialized")
+      {
+         std::vector<unsigned char> bytes = bee_tp.serialize(dataset);
+         THEN("The attribute is deserialized as expected")
+         {
+            REQUIRE(bytes == expected);
+         }
+      }
+      AND_WHEN("The length of a complete attribute is queried")
+      {
+         auto length = bee_tp.dataelement_length(dataset[{0x0028, 0x0010}]);
+         THEN("The byte length of the attribute is returned")
+         {
+            REQUIRE(length == expected.size());
+         }
+      }
+   }
+
+   GIVEN("A dataset containing a single attribute with 'long' length")
+   {
+      std::vector<unsigned char> expected =
+      {/*tag*/ 0x7f, 0xe0, 0x00, 0x10,
+       /*vr*/'O', 'B',
+       /*padding*/ 0x00, 0x00,
+       /*length*/ 0x00, 0x00, 0x00, 0x04,
+       /*data*/ 0xc4, 0x0e, 0x71, 0x33};
+
+      iod dataset;
+      dataset[{0x7fe0, 0x0010}] = make_elementfield<VR::OB>(4, {0xc4, 0x0e, 0x71, 0x33});
+      WHEN("The attribute is deserialized")
+      {
+         std::vector<unsigned char> bytes = bee_tp.serialize(dataset);
+         THEN("The attribute is deserialized as expected")
+         {
+            REQUIRE(bytes == expected);
+         }
+      }
+      AND_WHEN("The length of a complete attribute is queried")
+      {
+         auto length = bee_tp.dataelement_length(dataset[{0x7fe0, 0x0010}]);
+         THEN("The byte length of the attribute is returned")
+         {
+            REQUIRE(length == expected.size());
+         }
+      }
+   }
+}

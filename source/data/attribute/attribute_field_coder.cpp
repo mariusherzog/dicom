@@ -208,6 +208,18 @@ static std::vector<unsigned char> encode_float_array_be(const std::vector<FT>& s
    return buf;
 }
 
+static std::vector<unsigned char> encode_tags(const vmtype<tag_type>& tags, ENDIANNESS endianness)
+{
+   std::vector<unsigned char> buf;
+   buf.reserve(tags.size() * 4);
+   for (auto it = tags.cbegin(); it != tags.cend(); ++it) {
+      auto tag_bytes = encode_tag(*it, endianness);
+      buf.insert(buf.end(), tag_bytes.begin(), tag_bytes.end());
+   }
+   assert(buf.size() % 4 == 0);
+   return buf;
+}
+
 
 static attribute::vmtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, int begin, int len)
 {
@@ -318,6 +330,17 @@ static std::vector<FT> decode_float_array_be(const std::vector<unsigned char>& s
       values.push_back(value);
    }
    return values;
+}
+
+static attribute::vmtype<tag_type> decode_tags(const std::vector<unsigned char>& strdata, std::string vm, ENDIANNESS endianness, int begin, int len)
+{
+   const std::size_t tag_length = 4;
+   std::vector<tag_type> tags;
+   tags.reserve(len / tag_length);
+   for (int i=0; i<len; i+=tag_length) {
+      tags.emplace_back(decode_tag(strdata, begin+i, endianness));
+   }
+   return attribute::vmtype<tag_type>(vm, tags.begin(), tags.end());
 }
 
 
@@ -497,18 +520,9 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::AT: {
-         tag_type tag;
-         get_value_field<VR::AT>(attr, tag);
-         std::vector<unsigned char> group_le, elem_le;
-         if (endianness == ENDIANNESS::LITTLE) {
-            group_le = convhelper::integral_to_little_endian(tag.group_id, 2);
-            elem_le = convhelper::integral_to_little_endian(tag.element_id, 2);
-         } else {
-            group_le = convhelper::integral_to_big_endian(tag.group_id, 2);
-            elem_le = convhelper::integral_to_big_endian(tag.element_id, 2);
-         }
-         data.insert(data.begin(), elem_le.begin(), elem_le.end());
-         data.insert(data.begin(), group_le.begin(), group_le.end());
+         vmtype<tag_type> tags;
+         get_value_field<VR::AT>(attr, tags);
+         data = convhelper::encode_tags(tags, endianness);
          break;
       }
       case VR::CS: {
@@ -724,19 +738,8 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          return make_elementfield<VR::AS>(len, as);
       }
       case VR::AT: {
-         short gid, eid;
-         if (endianness == ENDIANNESS::LITTLE) {
-            convhelper::little_endian_to_integral(data, begin, 2, gid);
-            convhelper::little_endian_to_integral(data, begin, 2, eid);
-         } else {
-            convhelper::big_endian_to_integral(data, begin, 2, gid);
-            convhelper::big_endian_to_integral(data, begin, 2, eid);
-         }
-         tag_type tag;
-         tag.element_id = eid;
-         tag.group_id = gid;
-         return make_elementfield<VR::AT>(len, tag);
-         break;
+         auto at = convhelper::decode_tags(data, vm, endianness, begin, len);
+         return make_elementfield<VR::AT>(len, at);
       }
       case VR::CS: {
          auto cs = convhelper::decode_byte_string(data, vm, begin, len);

@@ -557,7 +557,7 @@ elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned 
 
 big_endian_explicit::big_endian_explicit(dictionary::dictionaries& dict):
    transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
-                       "1.2.840.10008.1.2.1",
+                       "1.2.840.10008.1.2.2",
                        VR_TYPE::EXPLICIT, ENDIANNESS::BIG,
                        {
                            {{0x7fe0, 0x0010}, VR::OW},
