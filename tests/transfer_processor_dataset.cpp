@@ -48,6 +48,38 @@ SCENARIO("Serialization of a dataset with little-endian implicit transfer syntax
          }
       }
    }
+
+   GIVEN("A dataset containing a sequence with two items")
+   {
+      iod dataset, seq1, seq2;
+      seq1[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
+      seq1[{0x0010, 0x0010}] = make_elementfield<VR::PN>("q^test");
+      seq1[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>(); // currently needed, remove later
+      seq2[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
+      seq2[{0x0010, 0x0010}] = make_elementfield<VR::PN>("r^test");
+      seq2[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>();
+      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2});
+
+      WHEN("The dataset is serialized")
+      {
+         auto data = lei_tp.serialize(dataset);
+
+         THEN("The data is deserialized as expected")
+         {
+            REQUIRE(data.size() == 52);
+
+            std::vector<unsigned char> expected
+            {
+                0x40,0x00,0x75,0x02,0x2c,0x00,0x00,0x00,0xfe,0xff,0x00,0xe0,0x0e,0x00,0x00,0x00
+               ,0x10,0x00,0x10,0x00,0x06,0x00,0x00,0x00,0x71,0x5e,0x74,0x65,0x73,0x74,0xfe,0xff
+               ,0x00,0xe0,0x0e,0x00,0x00,0x00,0x10,0x00,0x10,0x00,0x06,0x00,0x00,0x00,0x72,0x5e
+               ,0x74,0x65,0x73,0x74
+            };
+
+            REQUIRE(data == expected);
+         }
+      }
+   }
 }
 
 SCENARIO("Serialization of a dataset with little-endian explicit transfer syntax", "[dataset][transfer_processor]")
@@ -113,6 +145,38 @@ SCENARIO("Serialization of a dataset with little-endian explicit transfer syntax
          }
       }
    }
+
+   GIVEN("A dataset containing a sequence with two items")
+   {
+      iod dataset, seq1, seq2;
+      seq1[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
+      seq1[{0x0010, 0x0010}] = make_elementfield<VR::PN>("q^test");
+      seq1[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>(); // currently needed, remove later
+      seq2[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
+      seq2[{0x0010, 0x0010}] = make_elementfield<VR::PN>("r^test");
+      seq2[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>();
+      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2});
+
+      WHEN("The dataset is serialized")
+      {
+         auto data = lee_tp.serialize(dataset);
+
+         THEN("The data is deserialized as expected")
+         {
+            REQUIRE(data.size() == 56);
+
+            std::vector<unsigned char> expected
+            {
+                0x40,0x00,0x75,0x02,'S','Q',0x00, 0x00,0x2c,0x00,0x00,0x00,0xfe,0xff,0x00,0xe0,0x0e,0x00,0x00,0x00
+               ,0x10,0x00,0x10,0x00,'P','N',0x06,0x00,0x71,0x5e,0x74,0x65,0x73,0x74,0xfe,0xff
+               ,0x00,0xe0,0x0e,0x00,0x00,0x00,0x10,0x00,0x10,0x00,'P','N',0x06,0x00,0x72,0x5e
+               ,0x74,0x65,0x73,0x74
+            };
+
+            REQUIRE(data == expected);
+         }
+      }
+   }
 }
 
 SCENARIO("Serialization of a dataset with big-endian explicit transfer syntax", "[dataset][transfer_processor]")
@@ -175,6 +239,38 @@ SCENARIO("Serialization of a dataset with big-endian explicit transfer syntax", 
          THEN("The byte length of the attribute is returned")
          {
             REQUIRE(length == expected.size());
+         }
+      }
+   }
+
+   GIVEN("A dataset containing a sequence with two items")
+   {
+      iod dataset, seq1, seq2;
+      seq1[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
+      seq1[{0x0010, 0x0010}] = make_elementfield<VR::PN>("q^test");
+      seq1[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>(); // currently needed, remove later
+      seq2[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
+      seq2[{0x0010, 0x0010}] = make_elementfield<VR::PN>("r^test");
+      seq2[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>();
+      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2});
+
+      WHEN("The dataset is serialized")
+      {
+         auto data = bee_tp.serialize(dataset);
+
+         THEN("The data is deserialized as expected")
+         {
+            REQUIRE(data.size() == 56);
+
+            std::vector<unsigned char> expected
+            {
+                0x00,0x40,0x02,0x75,'S','Q',0x00, 0x00,0x00,0x00,0x00,0x2c,0xff,0xfe,0xe0,0x00,0x00,0x00,0x00,0x0e
+               ,0x00,0x10,0x00,0x10,'P','N',0x00,0x06,0x71,0x5e,0x74,0x65,0x73,0x74,0xff,0xfe
+               ,0xe0,0x00,0x00,0x00,0x00,0x0e,0x00,0x10,0x00,0x10,'P','N',0x00,0x06,0x72,0x5e
+               ,0x74,0x65,0x73,0x74
+            };
+
+            REQUIRE(data == expected);
          }
       }
    }
