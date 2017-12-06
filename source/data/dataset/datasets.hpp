@@ -29,7 +29,20 @@ struct dataset_type : std::map<attribute::tag_type, attribute::elementfield>
 using commandset_data = dataset_type;
 using iod = dataset_type;
 
+/**
+ * @brief traverse a dicom dataset in "normal" order, ie. stepping into
+ *        sequences and call a user-specified handler
+ * @param data dataset to traverse
+ * @param handler handler to be called for each attribute
+ */
+void traverse(const dataset_type& data, std::function<void(attribute::tag_type, const attribute::elementfield&)> handler);
 
+/**
+ * @brief operator << prints the dataset in a human - readable form
+ * @param os output stream
+ * @param data dataset to print
+ * @return modified stream the dataset was printed to
+ */
 std::ostream& operator<<(std::ostream& os, const dataset_type& data);
 
 
