@@ -101,7 +101,6 @@ std::ostream& operator<<(std::ostream& os, const dataset_type& data)
    return os;
 }
 
-
 std::ostream& operator<<(std::ostream& os, DIMSE_SERVICE_GROUP dsg)
 {
     switch (dsg) {

@@ -35,7 +35,6 @@ int main()
 
    dicom::data::dictionary::dictionaries& dict = get_default_dictionaries();
 
-
 //   {
 //      {
 //         dataset::iod dicm;
