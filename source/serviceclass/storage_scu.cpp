@@ -21,7 +21,7 @@ namespace serviceclass
 {
 
 storage_scu::storage_scu(connection endpoint,
-                         dicom::data::dictionary::dictionary& dict,
+                         dicom::data::dictionary::dictionaries& dict,
                          std::function<void(storage_scu*, dataset::commandset_data, std::unique_ptr<dataset::iod>)> handler):
    cstore_req {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}},
    cstore_resp {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->send_store_request(pm, command, std::move(data)); }}},
@@ -47,7 +47,8 @@ storage_scu::storage_scu(connection endpoint,
          dimse::association_definition::DIMSE_MSG_TYPE::INITIATOR)
    },
    initial_rq {assoc_def.get_initial_request()},
-   scu { dict, endpoint.host, std::to_string(endpoint.port), initial_rq},
+   infr_scu {endpoint.host, std::to_string(endpoint.port), nullptr, nullptr},
+   scu {infr_scu, dict, initial_rq},
    dimse_pm {scu, assoc_def, dict},
    senddata {},
    handler {handler},

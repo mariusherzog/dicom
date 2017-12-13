@@ -44,12 +44,19 @@ class dimse_pm_manager
    public:
       dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                        association_definition operations,
-                       data::dictionary::dictionary& dict);
+                       data::dictionary::dictionaries& dict);
 
       /**
        * @brief run starts handling connections
        */
       void run();
+
+      /**
+       * @brief connection_error_handler sets the callback for when an error
+       *        occurs on one of dimse_pm connection of this manager
+       * @param handler callback to be invoked upon an error
+       */
+      void connection_error_handler(std::function<void(dimse_pm*, std::exception_ptr)> handler);
 
       /**
        * @brief get_operations returns a reference to the association definition
@@ -65,10 +72,15 @@ class dimse_pm_manager
 
       void create_dimse(upperlayer::Iupperlayer_comm_ops* scx);
       void remove_dimse(upperlayer::Iupperlayer_comm_ops* scx);
+      void connection_error(upperlayer::Iupperlayer_comm_ops* scx, std::exception_ptr err);
 
       upperlayer::Iupperlayer_connection_handlers& conn;
       association_definition operations;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
+      std::function<void(dimse_pm*, std::exception_ptr)> error_handler;
+
+      util::log::channel_sev_logger logger;
 };
 
 
@@ -86,7 +98,7 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                association_definition operations,
-               data::dictionary::dictionary& dict);
+               data::dictionary::dictionaries& dict);
       ~dimse_pm();
 
       /**
@@ -113,21 +125,23 @@ class dimse_pm
        * @param[in, out] sc upperlayer service received from
        * @param[in] rq associate request data
        */
-      void association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq);
+      void association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rq);
 
       /**
        * @brief association_ac_handler is called upon reception of an a-associate-ac property.
        * @param[in, out] sc upperlayer service received from
        * @param[in] rq associate request data
        */
-      void association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> ac);
+      void association_ac_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> ac);
+
+      void association_rj_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rj);
 
       /**
        * @brief data_handler is called when a p-data-tf property is received.
        * @param[in, out] sc upperlayer service received from
        * @param[in] d data
        */
-      void data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> d);
+      void data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> d);
 
       /**
        * @brief release_rq_handler is called when an a-associate-rq property is
@@ -135,7 +149,7 @@ class dimse_pm
        * @param[in, out] sc upperlayer service received from
        * @param[in] r release
        */
-      void release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+      void release_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> r);
 
       /**
        * @brief release_rp_handler is called when an a-associate-rp property is
@@ -143,14 +157,14 @@ class dimse_pm
        * @param[in, out] sc upperlayer service received from
        * @param[in] r release
        */
-      void release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+      void release_rp_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> r);
 
       /**
        * @brief abort_handler is called upon reception of an a-abort pdu
        * @param[in, out] sc
        * @param r
        */
-      void abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> r);
+      void abort_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> r);
 
       /**
        * @brief sent_association_ac is set as a handler for the upperlayer when an
@@ -158,7 +172,7 @@ class dimse_pm
        * @param[in, out] sc
        * @param r
        */
-      void sent_association_ac(upperlayer::scx* sc, upperlayer::property* r);
+      void sent_association_ac(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r);
 
       /**
        * @brief sent_association_rq is set as a handler for the upperlayer when an
@@ -166,7 +180,7 @@ class dimse_pm
        * @param[in, out] sc
        * @param r
        */
-      void sent_association_rq(upperlayer::scx* sc, upperlayer::property* r);
+      void sent_association_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r);
 
       /**
        * @brief sent_data_tf is set as a handler for the upperlayer when an
@@ -174,7 +188,7 @@ class dimse_pm
        * @param[in, out] sc
        * @param r
        */
-      void sent_data_tf(upperlayer::scx* sc, upperlayer::property* r);
+      void sent_data_tf(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r);
 
       /**
        * @brief sent_release_rq is set as a handler for the upperlayer when an
@@ -182,7 +196,7 @@ class dimse_pm
        * @param[in, out] sc
        * @param r
        */
-      void sent_release_rq(upperlayer::scx* sc, upperlayer::property* r);
+      void sent_release_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r);
 
       /**
        * @brief sent_release_rp is set as a handler for the upperlayer when an
@@ -190,7 +204,7 @@ class dimse_pm
        * @param[in, out] sc
        * @param r
        */
-      void sent_release_rp(upperlayer::scx* sc, upperlayer::property* r);
+      void sent_release_rp(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r);
 
       /**
        * @brief sent_abort is set as a handler for the upperlayer when an
@@ -198,7 +212,7 @@ class dimse_pm
        * @param[in, out] sc
        * @param r
        */
-      void sent_abort(upperlayer::scx* sc, upperlayer::property* r);
+      void sent_abort(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r);
 
       /**
        * @brief next_message_id returns a free message id
@@ -208,11 +222,15 @@ class dimse_pm
 
       /**
        * @brief find_transfer_processor uses the connection properties and the
-       *        availabe transfer processors to return a machting transfer
-       *        processor.
+       *        availabe transfer processors to return a transfer processor
+       *        appropriate for the presentation context on which dicom
+       *        transmission / reception occurs.
+       * @param presentation_context_id presentation context id where data is
+       *        to be sent / received.
        * @return reference to a matching transfer processor
        */
-      data::dataset::transfer_processor& find_transfer_processor();
+
+      data::dataset::transfer_processor& find_transfer_processor(unsigned char presentation_context_id);
 
       //upperlayer::Iupperlayer_sethandlers& upperlayer_handlers;
       upperlayer::Iupperlayer_comm_ops& upperlayer_impl;
@@ -253,7 +271,7 @@ class dimse_pm
       upperlayer::p_data_tf assemble_ndelete_rq(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_ndelete_rsp(response r, int pres_context_id);
 
-      data::dictionary::dictionary& dict;
+      data::dictionary::dictionaries& dict;
 
       std::map<std::string, std::unique_ptr<data::dataset::transfer_processor>> transfer_processors;
 

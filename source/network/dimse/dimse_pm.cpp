@@ -28,26 +28,33 @@ namespace dimse
 using namespace data::attribute;
 using namespace data::dictionary;
 using namespace data::dataset;
+using namespace util::log;
 
 dimse_pm_manager::dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                                    association_definition operations,
-                                   dictionary& dict):
+                                   dictionaries& dict):
    conn {conn},
    operations {operations},
-   dict {dict}
+   dict {dict},
+   error_handler {nullptr},
+   logger {"dimse pm manager"}
 {
-   conn.new_connection([&](upperlayer::Iupperlayer_comm_ops* scx) {this->create_dimse(scx);});
-   conn.end_connection([&](upperlayer::Iupperlayer_comm_ops* scx) {this->remove_dimse(scx);});
+   using namespace upperlayer;
+   conn.new_connection([&](Iupperlayer_comm_ops* scx) {this->create_dimse(scx);});
+   conn.end_connection([&](Iupperlayer_comm_ops* scx) {this->remove_dimse(scx);});
+   conn.connection_error([&](Iupperlayer_comm_ops* scx, std::exception_ptr error) { this->connection_error(scx, error); });
 }
 
 void dimse_pm_manager::create_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
    protocol_machines[scx] =
          (std::unique_ptr<dimse_pm> {new dimse_pm {*scx, operations, dict} });
+   BOOST_LOG_SEV(logger, info) << "New dimse protocol machine created " << scx;
 }
 
 void dimse_pm_manager::remove_dimse(upperlayer::Iupperlayer_comm_ops* scx)
 {
+   BOOST_LOG_SEV(logger, info) << "Removed dimse protocol machine " << scx;
    protocol_machines.erase(scx);
 }
 
@@ -61,10 +68,33 @@ association_definition& dimse_pm_manager::get_operations()
    return operations;
 }
 
+void dimse_pm_manager::connection_error_handler(std::function<void(dimse_pm*, std::exception_ptr)> handler)
+{
+   error_handler = handler;
+}
+
+void dimse_pm_manager::connection_error(upperlayer::Iupperlayer_comm_ops* scx, std::exception_ptr err)
+{
+   auto& dimse_pm = protocol_machines.find(scx)->second;
+
+   try {
+      if (err) {
+         std::rethrow_exception(err);
+      }
+   } catch(std::exception& excep) {
+      BOOST_LOG_SEV(logger, error) << "Error occured on connection " << dimse_pm.get()
+                                   << "Error message: " << excep.what();
+   }
+   remove_dimse(scx);
+   if (error_handler) {
+      error_handler(dimse_pm.get(), err);
+   }
+}
+
 
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
-                   dictionary& dict):
+                   dictionaries& dict):
    upperlayer_impl(sc),
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
@@ -103,6 +133,8 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
              std::bind(&dimse_pm::association_ac_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_ASSOCIATE_RQ,
              std::bind(&dimse_pm::association_rq_handler, this, _1, _2));
+   sc.inject(upperlayer::TYPE::A_ASSOCIATE_RJ,
+             std::bind(&dimse_pm::association_rj_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::P_DATA_TF,
              std::bind(&dimse_pm::data_handler, this, _1, _2));
    sc.inject(upperlayer::TYPE::A_RELEASE_RQ,
@@ -141,7 +173,6 @@ dimse_pm::~dimse_pm()
 void dimse_pm::send_response(response r)
 {
    using namespace upperlayer;
-   using namespace util::log;
    BOOST_LOG_SEV(logger, info) << "User-issued request / response indication "
                                   "of type " << r.get_response_type();
 
@@ -167,7 +198,7 @@ void dimse_pm::send_response(response r)
       BOOST_LOG_SEV(logger, warning) << errormsg;
       throw std::runtime_error(errormsg);
    }
-
+   
 
    auto accepted = std::find_if(connection_properties.get().pres_contexts.begin(),
                 connection_properties.get().pres_contexts.end(),
@@ -185,7 +216,7 @@ void dimse_pm::send_response(response r)
 
    std::vector<unsigned char> dataset;
    if (r.get_data().is_initialized()) {
-      auto& tfproc = find_transfer_processor();
+      auto& tfproc = find_transfer_processor(pres_context->id);
       dataset = tfproc.serialize(r.get_data().get());
    }
    data.data_set = dataset;
@@ -208,8 +239,12 @@ void dimse_pm::release_association()
    upperlayer_impl.queue_for_write(std::unique_ptr<property>(new a_release_rq {}));
 }
 
+void dimse_pm::association_rj_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rq)
+{
 
-void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> rq)
+}
+
+void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> rq)
 {
    using namespace dicom::util::log;
    assert(sc == &upperlayer_impl);
@@ -253,9 +288,8 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
             auto pres_cont = *have_pres_cont;
             auto transfer_syntaxes = pres_cont.transfer_syntaxes;
             for (const auto ts : transfer_syntaxes) {
-               if (std::find(transfer_syntaxes.begin(), transfer_syntaxes.end(), ts)
-                   != transfer_syntaxes.end() /* &&
-                   std::find_if(transfer_processors.begin(), transfer_processors.end(),)*/) {
+               if (std::find(pc.transfer_syntaxes.begin(), pc.transfer_syntaxes.end(), ts)
+                   != pc.transfer_syntaxes.end() && transfer_processors.count(ts) > 0) {
                   ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
                   have_common_ts = true;
                   break;
@@ -265,11 +299,12 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
 
          if (!have_common_ts) {
             ac.pres_contexts.push_back({pc.id, RESULT::TRANSF_SYNT_NOT_SUPP, ""});
-            BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << pc.id << "\n";
+            BOOST_LOG_TRIVIAL(debug) << "No common transfer syntax for presentation context with id " << std::to_string(pc.id) << "\n";
          }
 
       } else {
          ac.pres_contexts.push_back({pc.id, RESULT::ABSTR_CONT_NOT_SUPP, ""});
+         BOOST_LOG_TRIVIAL(debug) << "Unsupported abstract syntax in presentation context with id " << std::to_string(pc.id) << "\n";
       }
 
    }
@@ -283,7 +318,7 @@ void dimse_pm::association_rq_handler(upperlayer::scx* sc, std::unique_ptr<upper
    state = CONN_STATE::CONNECTED;
 }
 
-void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> ac)
+void dimse_pm::association_ac_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> ac)
 {
    using namespace dicom::util::log;
    assert(sc == &upperlayer_impl);
@@ -319,12 +354,14 @@ void dimse_pm::association_ac_handler(upperlayer::scx* sc, std::unique_ptr<upper
             header[{0x0000, 0x0002}] = make_elementfield<VR::UI>(request.get_SOP_class_UID());
             header[{0x0000, 0x0120}] = make_elementfield<VR::US>(next_message_id());
             request(this, sg, header, nullptr);
+
+            return;
          }
       }
    }
 }
 
-void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property> da)
+void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property> da)
 {
    using namespace upperlayer;
    using namespace dicom::util::log;
@@ -344,10 +381,14 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
 
    iod dataset;
    if (!d->data_set.empty()) {
-      auto& tfproc = find_transfer_processor();
+      auto& tfproc = find_transfer_processor(d->pres_context_id);
 
       dataset = tfproc.deserialize(d->data_set);
    }
+
+   // TODO handle data on rejected presentation context? -> respond with failure
+   // http://dicom.nema.org/dicom/2013/output/chtml/part07/sect_C.5.html
+   // -> SOP Class not supported
 
    std::string SOP_UID;
    DIMSE_SERVICE_GROUP dsg;
@@ -380,7 +421,7 @@ void dimse_pm::data_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::pro
    }
 }
 
-void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::release_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -391,21 +432,21 @@ void dimse_pm::release_rq_handler(upperlayer::scx* sc, std::unique_ptr<upperlaye
    connection_properties = boost::none;
 }
 
-void dimse_pm::release_rp_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::release_rp_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received release_rp pdu from upperlayer implementation";
 }
 
-void dimse_pm::abort_handler(upperlayer::scx* sc, std::unique_ptr<upperlayer::property>)
+void dimse_pm::abort_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received a_abort pdu from upperlayer implementation";
 }
 
-void dimse_pm::sent_association_ac(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_association_ac(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -413,7 +454,7 @@ void dimse_pm::sent_association_ac(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_association_rq(upperlayer::scx* sc, upperlayer::property* r)
+void dimse_pm::sent_association_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -424,7 +465,7 @@ void dimse_pm::sent_association_rq(upperlayer::scx* sc, upperlayer::property* r)
    connection_request = *rq;
 }
 
-void dimse_pm::sent_data_tf(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_data_tf(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -432,7 +473,7 @@ void dimse_pm::sent_data_tf(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_release_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -440,7 +481,7 @@ void dimse_pm::sent_release_rq(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_release_rp(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_release_rp(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -448,7 +489,7 @@ void dimse_pm::sent_release_rp(upperlayer::scx* sc, upperlayer::property*)
                                    "from upperlayer implementation";
 }
 
-void dimse_pm::sent_abort(upperlayer::scx* sc, upperlayer::property*)
+void dimse_pm::sent_abort(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
    //assert(sc == &upperlayer_impl);
@@ -461,22 +502,21 @@ int dimse_pm::next_message_id()
    return msg_id++;
 }
 
-transfer_processor& dimse_pm::find_transfer_processor()
+transfer_processor& dimse_pm::find_transfer_processor(unsigned char presentation_context_id)
 {
    using kvpair = std::pair<const std::string, std::unique_ptr<data::dataset::transfer_processor>>;
-   return *(std::find_if(transfer_processors.begin(), transfer_processors.end(),
-                       [this](kvpair& kv) {
-      auto pres_contexts = connection_properties.get().pres_contexts;
-      std::string transfer_syntax = kv.first;
-      return std::find_if(pres_contexts.begin(), pres_contexts.end(),
-                          [transfer_syntax](upperlayer::a_associate_ac::presentation_context pc)
-      {
-         return pc.result_
-               == upperlayer::a_associate_ac::presentation_context::RESULT::ACCEPTANCE
-               && pc.transfer_syntax
-               == transfer_syntax;
-      }) != pres_contexts.end();
-   })->second);
+
+
+   // retrieve the negotiated transfer syntax of the presentation context
+   auto pres_contexts = connection_properties.get().pres_contexts;
+   std::string ts_of_presentation_context = (std::find_if(pres_contexts.begin(), pres_contexts.end(),
+      [presentation_context_id](upperlayer::a_associate_ac::presentation_context pc) { return pc.id == presentation_context_id; })
+         )->transfer_syntax;
+
+   // and return a reference to our corresponding transfer processor instance
+   return *((std::find_if(transfer_processors.begin(), transfer_processors.end(),
+      [this, ts_of_presentation_context](kvpair& kv) { return ts_of_presentation_context == kv.first; }))->second);
+
 }
 
 
@@ -498,10 +538,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cecho_rsp(response r, int pres_context_
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(0x0101);
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -529,10 +569,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cecho_rq(response r, int pres_context_i
    cresp[CommandDataSetType]  = make_elementfield<VR::US>(0x0101);
    cresp[Status]              = make_elementfield<VR::US>(r.get_status());
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -562,10 +602,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cfind_rq(response r,  int pres_context_
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[Status]                 = make_elementfield<VR::US>(r.get_status());
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -596,10 +636,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cfind_rsp(response r, int pres_context_
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -636,10 +676,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cstore_rq(response r, int pres_context_
    cresp[MoveOriginatorApplicationEntityTitle] = make_elementfield<VR::AE>(move_orig_ae.length(), move_orig_ae);
    cresp[MoveOriginatorMessageID]              = make_elementfield<VR::US>(move_orig_id);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -672,10 +712,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cstore_rsp(response r,  int pres_contex
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid.length(), aff_SOP_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -704,10 +744,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cget_rq(response r, int pres_context_id
    cresp[Priority]               = make_elementfield<VR::US>(static_cast<unsigned short>(r.get_priority()));
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -747,10 +787,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cget_rsp(response r, int pres_context_i
    cresp[NumberOfFailedSuboperations]    = make_elementfield<VR::US>(num_failed_sub);
    cresp[NumberOfWarningSuboperations]   = make_elementfield<VR::US>(num_warning_sub);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -782,10 +822,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cmove_rq(response r, int pres_context_i
    cresp[CommandDataSetType]     = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[MoveDestination]        = make_elementfield<VR::AE>(move_destination);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -825,10 +865,10 @@ upperlayer::p_data_tf dimse_pm::assemble_cmove_rsp(response r, int pres_context_
    cresp[NumberOfFailedSuboperations]    = make_elementfield<VR::US>(num_failed_sub);
    cresp[NumberOfWarningSuboperations]   = make_elementfield<VR::US>(num_warning_sub);*/
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -862,10 +902,10 @@ upperlayer::p_data_tf dimse_pm::assemble_neventreport_rq(response r, int pres_co
    cresp[AffectedSOPInstanceUID] = make_elementfield<VR::UI>(aff_SOP_uid);
    cresp[EventTypeID]            = make_elementfield<VR::US>(event_id);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc {dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc {dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -900,10 +940,10 @@ upperlayer::p_data_tf dimse_pm::assemble_neventreport_rsp(response r, int pres_c
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
    cresp[EventTypeID]               = make_elementfield<VR::US>(event_id);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc {dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc {dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -933,10 +973,10 @@ upperlayer::p_data_tf dimse_pm::assemble_nget_rq(response r, int pres_context_id
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -969,10 +1009,10 @@ upperlayer::p_data_tf dimse_pm::assemble_nget_rsp(response r, int pres_context_i
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1002,10 +1042,10 @@ upperlayer::p_data_tf dimse_pm::assemble_nset_rq(response r, int pres_context_id
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1036,10 +1076,10 @@ upperlayer::p_data_tf dimse_pm::assemble_nset_rsp(response r, int pres_context_i
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1073,10 +1113,10 @@ upperlayer::p_data_tf dimse_pm::assemble_naction_rq(response r, int pres_context
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
    cresp[ActionTypeID]              = make_elementfield<VR::US>(action_id);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1111,10 +1151,10 @@ upperlayer::p_data_tf dimse_pm::assemble_naction_rsp(response r, int pres_contex
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
    cresp[ActionTypeID]              = make_elementfield<VR::US>(action_id);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1144,10 +1184,10 @@ upperlayer::p_data_tf dimse_pm::assemble_ncreate_rq(response r, int pres_context
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(SOP_instance_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1180,10 +1220,10 @@ upperlayer::p_data_tf dimse_pm::assemble_ncreate_rsp(response r, int pres_contex
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1213,10 +1253,10 @@ upperlayer::p_data_tf dimse_pm::assemble_ndelete_rq(response r, int pres_context
    cresp[CommandDataSetType]        = make_elementfield<VR::US>(hasdata ? 0x0102 : 0x0101);
    cresp[RequestedSOPInstanceUID]   = make_elementfield<VR::UI>(SOP_instance_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;
@@ -1249,10 +1289,10 @@ upperlayer::p_data_tf dimse_pm::assemble_ndelete_rsp(response r, int pres_contex
    cresp[Status]                    = make_elementfield<VR::US>(r.get_status());
    cresp[AffectedSOPInstanceUID]    = make_elementfield<VR::UI>(aff_SOP_uid);
 
-   auto size = dataset_size(cresp);
+   commandset_processor proc{dict};
+   auto size = dataset_bytesize(cresp, proc);
    cresp[CommandGroupLength] = make_elementfield<VR::UL>(size);
 
-   commandset_processor proc{dict};
    auto serdata = proc.serialize(cresp);
 
    p_data_tf presp;

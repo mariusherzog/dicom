@@ -29,7 +29,7 @@ class dicomfile
       std::array<unsigned char, 128> preamble;
       std::array<unsigned char, 4> prefix;
 
-      dicom::data::dictionary::dictionary& dict;
+      dicom::data::dictionary::dictionaries& dict;
       std::unique_ptr<dicom::data::dataset::transfer_processor> transfer_proc;
 
       /**
@@ -45,7 +45,7 @@ class dicomfile
        * @param dict dictionary to be used, applies to little endian vr
        */
       dicomfile(dicom::data::dataset::iod dataset,
-                dicom::data::dictionary::dictionary& dict);
+                dicom::data::dictionary::dictionaries& dict);
 
       /**
        * @brief write_dataset writes the iod to the given stream in binary

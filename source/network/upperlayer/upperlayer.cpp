@@ -2,6 +2,10 @@
 
 #include "upperlayer_connection.hpp"
 
+#include <functional>
+
+using namespace std::placeholders;
+
 namespace dicom
 {
 
@@ -13,46 +17,48 @@ namespace network
 namespace upperlayer
 {
 
+using namespace util::log;
 
 Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 {
 }
 
 
-scp::scp(data::dictionary::dictionary& dict,
-         short port):
-   io_service {},
-   acptr {io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)},
-   port {port},
-   dict {dict}
+scp::scp(Iinfrastructure_server_acceptor& infrstr_scp,
+         data::dictionary::dictionaries& dict):
+   acceptor {infrstr_scp},
+   dict {dict},
+   logger {"scp"}
 {
-   using namespace std::placeholders;
-   auto socket = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   acptr.async_accept(*socket, [socket, this](boost::system::error_code ec) { accept_new(socket, ec); });
+   acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
+   acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
 }
 
 scp::~scp()
 {
 }
 
-void scp::accept_new(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code ec)
+void scp::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   using namespace std::placeholders;
-   if (!ec) {
-      connections.push_back(std::unique_ptr<scp_connection>
-         {
-            new scp_connection {io_service, sock, dict, port, handler_new_connection, handler_end_connection}
-         });
-   } else {
-      throw boost::system::system_error(ec);
-   }
-   auto newsock = std::make_shared<boost::asio::ip::tcp::socket>(acptr.get_io_service());
-   acptr.async_accept(*newsock, [newsock, this](boost::system::error_code ec) { accept_new(newsock, ec); });
+   scps[conn] = std::unique_ptr<scp_connection>
+   {
+         new scp_connection {conn, dict, handler_new_connection, handler_end_connection, [&](Iupperlayer_comm_ops* conn, std::exception_ptr exception) { this->error_handler(conn, exception); }}
+   };
+   BOOST_LOG_SEV(logger, info) << "New connection" << conn;
+}
+
+void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
+{
+   auto& sc = scps.at(conn);
+   handler_end_connection(sc.get());
+   //sc->reset();
+   scps.erase(conn);
+   BOOST_LOG_SEV(logger, info) << "Connection ended" << conn;
 }
 
 void scp::run()
 {
-   io_service.run();
+   acceptor.run();
 }
 
 void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -62,46 +68,71 @@ void scp::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
-   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
-      handler(conn);
-      for (auto& connection : connections) {
-         if (connection.get() == conn) {
-            connection.reset();
-         }
-      }
-   };
+   handler_end_connection = handler;
+}
+
+void scp::connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> f)
+{
+   handler_error = f;
 }
 
 
-scu::scu(data::dictionary::dictionary& dict,
-         std::string host, std::string port,
+void scp::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
+{
+   try {
+      if (exception) {
+         std::rethrow_exception(exception);
+      }
+   } catch (std::exception& exc) {
+      BOOST_LOG_SEV(logger, error) << "Error occured on connection " << conn
+                                   << "Error message: " << exc.what();
+   }
+   if (handler_error)
+   {
+      handler_error(conn, exception);
+   }
+}
+
+scu::scu(Iinfrastructure_client_acceptor& infr_scu,
+         data::dictionary::dictionaries& dict,
          a_associate_rq& rq):
-   io_service {},
-   host {host},
-   port {port},
+   acceptor {infr_scu},
    request {rq},
-   dict {dict}
+   dict {dict},
+   logger {"scu"}
 {
    using namespace std::placeholders;
+   acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
+   acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
 }
 
 scu::~scu()
 {
 }
 
+void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
+{
+   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection, [&](Iupperlayer_comm_ops* conn, std::exception_ptr exception) { this->error_handler(conn, exception); }}};
+   BOOST_LOG_SEV(logger, info) << "New connection " << conn;
+}
+
 void scu::accept_new()
 {
+   acceptor.accept_new_conn();
+}
 
-   connections.push_back(std::unique_ptr<scu_connection>
-   {
-      new scu_connection {io_service, dict, host, port, request, handler_new_connection, handler_end_connection}
-   });
+void scu::connection_end(Iinfrastructure_upperlayer_connection* conn)
+{
+   auto& sc = scus.at(conn);
+   handler_end_connection(sc.get());
+   //sc->reset();
+   scus.erase(conn);
+   BOOST_LOG_SEV(logger, info) << "Connection ended" << conn;
 }
 
 void scu::run()
 {
-   accept_new();
-   io_service.run();
+   acceptor.run();
 }
 
 void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
@@ -111,15 +142,31 @@ void scu::new_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 
 void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
-   handler_end_connection = [handler,this](Iupperlayer_comm_ops* conn) {
-      handler(conn);
-      for (auto& connection : connections) {
-         if (connection.get() == conn) {
-            connection.reset();
-         }
-      }
-   };
+   handler_end_connection = handler;
 }
+
+void scu::connection_error(std::function<void (Iupperlayer_comm_ops *, std::exception_ptr)> f)
+{
+   handler_error = f;
+}
+
+void scu::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
+{
+   try {
+      if (exception) {
+         std::rethrow_exception(exception);
+      }
+   } catch (std::exception& exc) {
+      BOOST_LOG_SEV(logger, error) << "Error occured on connection " << conn
+                                   << "Error message: " << exc.what();
+   }
+
+   if (handler_error)
+   {
+      handler_error(conn, exception);
+   }
+}
+
 
 
 }

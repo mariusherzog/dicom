@@ -6,6 +6,7 @@
 #include "data/dictionary/dictionary.hpp"
 #include "data/attribute/constants.hpp"
 
+#include "infrastructure/asio_tcp_connection_manager.hpp"
 
 using namespace dicom::data;
 using namespace dicom::data::attribute;
@@ -19,7 +20,7 @@ namespace serviceclass
 {
 
 storage_scp::storage_scp(connection endpoint,
-                         dicom::data::dictionary::dictionary& dict,
+                         dicom::data::dictionary::dictionaries& dict,
                          std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler):
    cstore_sop {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->handle_cstore(pm, command, std::move(data)); }}},
    dict {dict},
@@ -38,7 +39,8 @@ storage_scp::storage_scp(connection endpoint,
                {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
                dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
    },
-   scp {dict, endpoint.port},
+   infrstr_scp {endpoint.port, nullptr, nullptr},
+   scp {infrstr_scp, dict},
    dimse_pm {scp, assoc_def, dict},
    handler {handler}
 {

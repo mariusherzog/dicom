@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <functional>
+#include <cmath>
 
 namespace dicom
 {
@@ -44,7 +45,29 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
 {
-   std::copy(data.begin(), data.end(), std::ostream_iterator<char>(os, " "));
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OW>::type data)
+{
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OF>::type data)
+{
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OD>::type data)
+{
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
    return os;
 }
 
@@ -109,7 +132,7 @@ std::size_t validate_internal_multitext(vmtype<std::string>& value_field, std::v
 
       auto not_allowed_char = [not_allowed](const char c)
       {
-         return std::find(not_allowed.begin(), not_allowed.end(), c) == not_allowed.end();
+         return std::find(not_allowed.begin(), not_allowed.end(), c) != not_allowed.end();
 
       };
       val.erase(std::remove_if(val.begin(), val.end(), not_allowed_char), val.end());
@@ -252,7 +275,7 @@ std::size_t validate<VR::CS>(typename type_of<VR::CS>::type& value_field)
       std::transform(uid.begin(), uid.end(), uid.begin(), ::toupper);
       auto not_allowed_char = [](const char c)
       {
-         return !std::isdigit(c) && c != '_' && c != '_';
+         return !std::isalnum(c) && c != '_' && c != ' ';
 
       };
       uid.erase(std::remove_if(uid.begin(), uid.end(), not_allowed_char), uid.end());

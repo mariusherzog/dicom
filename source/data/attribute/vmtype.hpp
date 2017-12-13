@@ -8,6 +8,7 @@
 #include <string>
 #include <exception>
 #include <algorithm>
+#include <numeric>
 #include <iterator>
 
 #include <boost/algorithm/string.hpp>
@@ -97,21 +98,27 @@ std::size_t byte_length(const vmtype<T>& value_field)
 
 std::size_t byte_length(std::vector<unsigned char> value_field);
 
+std::size_t byte_length(std::vector<unsigned short> value_field);
+
+std::size_t byte_length(std::vector<float> value_field);
+
+std::size_t byte_length(std::vector<double> value_field);
+
 std::size_t byte_length(const std::string& value_field);
 
-std::size_t byte_length(unsigned char);
+std::size_t byte_length(const unsigned char);
 
-std::size_t byte_length(unsigned short);
+std::size_t byte_length(const unsigned short);
 
-std::size_t byte_length(short);
+std::size_t byte_length(const short);
 
-std::size_t byte_length(unsigned int);
+std::size_t byte_length(const unsigned int);
 
-std::size_t byte_length(long);
+std::size_t byte_length(const long);
 
-std::size_t byte_length(float);
+std::size_t byte_length(const float);
 
-std::size_t byte_length(double);
+std::size_t byte_length(const double);
 
 std::size_t byte_length(tag_type);
 
@@ -127,6 +134,19 @@ std::size_t byte_length(std::vector<dataset::dataset_type>);
 template <typename T>
 class vmtype
 {
+   private:
+      /**
+       * @brief the private vmtype constructor initializes the rules as specified
+       *        by the parameter
+       * @param mult multiplicity
+       * @param int dummy parameter to prevent ambiguous overloads for T = string
+       */
+      vmtype(std::string mult, int):
+         multiplicity {mult}
+      {
+         populate_mult_rules();
+      }
+
    public:
       using base_type = T;
 
@@ -136,23 +156,27 @@ class vmtype
        * @param mult multiplicity
        */
       vmtype(multiplicity_data mult):
-         multiplicity {mult.multiplicity}
+         multiplicity {mult.multiplicity, 0}
       {
          populate_mult_rules();
+         insert({});
       }
 
       /**
        * @brief vmtype constructs a multivalued field with one entry
        * @param value value to be added
        */
-      vmtype(T value)
+      vmtype(T value):
+         vmtype {"*", 0}
       {
          const T* value_addr = &value;
          insert(value_addr, value_addr+1);
       }
 
-      vmtype()
+      vmtype():
+         vmtype {"*", 0}
       {
+         insert({});
       }
 
       /**
@@ -161,7 +185,7 @@ class vmtype
        * @param values values to be stored
        */
       vmtype(multiplicity_data multiplicity, std::initializer_list<T> values):
-         vmtype(multiplicity)
+         vmtype {multiplicity.multiplicity, 0}
       {
          insert(values);
       }
@@ -175,7 +199,7 @@ class vmtype
        */
       template <typename Iter>
       vmtype(std::string multiplicity, Iter begin, Iter end):
-         vmtype(multiplicity_data(multiplicity))
+         vmtype {multiplicity, 0}
       {
          insert(begin, end);
       }
@@ -189,87 +213,99 @@ class vmtype
          return value_sequence.size();
       }
 
+   private:
+
       /**
         * @brief The iterator struct is the iterator to navigate through the
         *        value field.
         */
-      struct iterator : public std::iterator<std::random_access_iterator_tag, T>
+      template <bool Const = false>
+      struct iterator_t : public std::iterator<std::random_access_iterator_tag, T>
       {
          private:
-            vmtype* container;
+            using vmmaybeconst = typename std::conditional<Const, const vmtype*, vmtype*>::type;
+            using pointermaybeconst = typename std::conditional<Const, const T*, T*>::type;
+            using referencemaybeconst = typename std::conditional<Const, const T&, T&>::type;
+
+
+            vmmaybeconst container;
             std::size_t index;
 
          public:
-            iterator(vmtype* container, std::size_t index = 0):
+            iterator_t(vmmaybeconst container, std::size_t index = 0):
                container {container},
                index {index}
             {
             }
 
-            iterator operator++(int)
+            iterator_t operator++(int)
             {
                iterator temp = *this;
                index++;
                return temp;
             }
 
-            iterator& operator++()
+            iterator_t& operator++()
             {
                index++;
                return *this;
             }
 
-            iterator& operator+=(std::size_t s)
+            iterator_t& operator+=(std::size_t s)
             {
                index += s;
                return *this;
             }
 
-            friend iterator operator+(const iterator& a, std::size_t s)
+            friend iterator_t operator+(const iterator_t& a, std::size_t s)
             {
-               return a += s;
+               auto ret = a;
+               ret += s;
+               return ret;
             }
 
-            friend iterator operator+(std::size_t s, const iterator& a)
+            friend iterator_t operator+(std::size_t s, iterator_t& a)
             {
-               return a += s;
+               return a + s;
             }
 
-            iterator operator--(int)
+            iterator_t operator--(int)
             {
                iterator temp = *this;
                index--;
                return temp;
             }
 
-            iterator& operator--()
+            iterator_t& operator--()
             {
                index--;
                return *this;
             }
 
-            iterator& operator-=(std::size_t s)
+            iterator_t& operator-=(std::size_t s)
             {
                index -= s;
                return *this;
             }
 
-            friend iterator operator-(const iterator& a, std::size_t s)
+            friend iterator_t operator-(const iterator_t& a, std::size_t s)
             {
-               return a -= s;
+               auto ret = a;
+               ret -= s;
+               return ret;
             }
 
-            friend iterator operator-(std::size_t s, const iterator& a)
+            friend iterator_t operator-(std::size_t s, const iterator_t& a)
             {
-               return a -= s;
+               return a - s;
             }
 
-            T& operator[](std::size_t s) const
+            referencemaybeconst operator[](std::size_t s) const
             {
                return container->value_sequence[s];
             }
 
-            T& operator*()
+            referencemaybeconst operator*()
             {
                return container->value_sequence[index];
             }
@@ -279,57 +315,75 @@ class vmtype
                return container->value_sequence[index];
             }
 
-            T* operator->() const
+            pointermaybeconst operator->() const
             {
                return &container->value_sequence[index];
             }
 
-            friend bool operator==(const iterator& lhs, const iterator& rhs)
+            friend bool operator==(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs.container == rhs.container && lhs.index == rhs.index;
             }
 
-            friend bool operator!=(const iterator& lhs, const iterator& rhs)
+            friend bool operator!=(const iterator_t& lhs, const iterator_t& rhs)
             {
                return !(lhs == rhs);
             }
 
-            friend bool operator<(const iterator& lhs, const iterator& rhs)
+            friend bool operator<(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs.index < rhs.index;
             }
 
-            friend bool operator>(const iterator& lhs, const iterator& rhs)
+            friend bool operator>(const iterator_t& lhs, const iterator_t& rhs)
             {
                return !(lhs < rhs || lhs == rhs);
             }
 
-            friend bool operator<=(const iterator& lhs, const iterator& rhs)
+            friend bool operator<=(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs < rhs || lhs == rhs;
             }
 
-            friend bool operator>=(const iterator& lhs, const iterator& rhs)
+            friend bool operator>=(const iterator_t& lhs, const iterator_t& rhs)
             {
                return lhs > rhs || lhs == rhs;
             }
       };
 
+   public:
+      using iterator = iterator_t<false>;
+      using const_iterator = iterator_t<true>;
+
       iterator begin()
       {
-         return iterator {this};
+         return iterator_t<false> {this};
       }
 
       iterator end()
       {
-         return iterator {this, value_sequence.size()};
+         return iterator_t<false> {this, value_sequence.size()};
       }
+
+      const_iterator cbegin() const
+      {
+         return iterator_t<true> {this};
+      }
+
+      const_iterator cend() const
+      {
+         return iterator_t<true> {this, value_sequence.size()};
+      }
+
 
       std::size_t byte_size() const
       {
-         auto size = std::accumulate(value_sequence.begin(), value_sequence.end(), 0,
-                                [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
-         return size;
+         std::size_t bytesize = 0;
+         if (size() > 0) {
+            bytesize = std::accumulate(value_sequence.cbegin(), value_sequence.cend(), 0,
+                                   [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+         }
+         return bytesize;
       }
 
    private:
@@ -441,8 +495,36 @@ vmtype<T>::~vmtype()
 {
 }
 
+/**
+ * @brief operator == compares two vmtypes for equality of each element
+ * @param a vmtype<T>
+ * @param b vmtype<T>
+ * @return true if a and b have the same elements, false otherwise
+ */
+template <typename T>
+bool operator==(const vmtype<T>& a, const vmtype<T>& b)
+{
+   if (a.size() != b.size()) {
+      return false;
+   }
+   bool is_same = true;
+   for (auto it = a.cbegin(), itb = b.cbegin(); it != a.cend(); ++it, ++itb) {
+      is_same &= (*it == *itb);
+   }
+   return is_same;
+}
 
-
+/**
+ * @brief operator == compares two vmtypes for inequality
+ * @param a vmtype<T>
+ * @param b vmtype<T>
+ * @return true if a and b differ, false otherwise
+ */
+template <typename T>
+bool operator!=(const vmtype<T>& a, const vmtype<T>& b)
+{
+   return !(a==b);
+}
 
 std::ostream& operator<<(std::ostream& os, vmtype<std::string> data);
 

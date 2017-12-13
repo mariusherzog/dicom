@@ -29,18 +29,21 @@ struct dataset_type : std::map<attribute::tag_type, attribute::elementfield>
 using commandset_data = dataset_type;
 using iod = dataset_type;
 
-
-std::ostream& operator<<(std::ostream& os, const dataset_type& data);
+/**
+ * @brief traverse a dicom dataset in "normal" order, ie. stepping into
+ *        sequences and call a user-specified handler
+ * @param data dataset to traverse
+ * @param handler handler to be called for each attribute
+ */
+void traverse(const dataset_type& data, std::function<void(attribute::tag_type, const attribute::elementfield&)> handler);
 
 /**
- * @brief dataset_size calculates the size in bytes of the dataset
- * @param data dataset
- * @param explicitvr true if the VR is encoded (adds 2 bytes per attribute)
- * @return size of the dataset in bytes
- * @todo instead of bool param pass the transfer_processor. Calculation shall
- *       be performed given an underlying transfer syntax
+ * @brief operator << prints the dataset in a human - readable form
+ * @param os output stream
+ * @param data dataset to print
+ * @return modified stream the dataset was printed to
  */
-std::size_t dataset_size(dataset_type data, bool explicitvr = false);
+std::ostream& operator<<(std::ostream& os, const dataset_type& data);
 
 
 enum class DIMSE_SERVICE_GROUP : unsigned

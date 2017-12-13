@@ -29,7 +29,7 @@ class queryretrieve_scp : public Iserviceclass
 {
    public:
       queryretrieve_scp(dicom::network::connection endpoint,
-                        dicom::data::dictionary::dictionary& dict,
+                        dicom::data::dictionary::dictionaries& dict,
                         std::function<void(queryretrieve_scp*, dicom::data::dataset::commandset_data, std::shared_ptr<dicom::data::dataset::iod>)> handler);
 
       ~queryretrieve_scp();
@@ -53,9 +53,10 @@ class queryretrieve_scp : public Iserviceclass
 
       handlermap cmove_sop;
 
-      dicom::data::dictionary::dictionary& dict;
+      dicom::data::dictionary::dictionaries& dict;
       std::vector<dicom::network::dimse::SOP_class> sop_classes;
       dicom::network::dimse::association_definition assoc_def;
+      asio_tcp_server_acceptor infrstr_scp;
       dicom::network::upperlayer::scp scp;
       dicom::network::dimse::dimse_pm_manager dimse_pm;
 

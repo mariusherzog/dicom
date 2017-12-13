@@ -240,17 +240,17 @@ struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
 template<>
 struct type_of<VR::OD>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::vector<double>;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
 struct type_of<VR::OF>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::vector<float>;
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
-struct type_of<VR::OW> { using type = std::vector<unsigned char>; };
+struct type_of<VR::OW> { using type = std::vector<unsigned short>; };
 template<>
 struct type_of<VR::PN>
 {
@@ -315,7 +315,11 @@ struct type_of<VR::US>
       static const std::size_t len = 2;
 };
 template<>
-struct type_of<VR::UL> { using type = unsigned int; };
+struct type_of<VR::UL>
+{
+      using type = attribute::vmtype<unsigned int>;
+      static const std::size_t len = 4;
+};
 template<>
 struct type_of<VR::UT>
 {
@@ -334,6 +338,12 @@ struct type_of<VR::NI>
 };
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OW>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OF>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OD>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 
@@ -438,7 +448,6 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data
    e.value_field->accept<vr>(getter);
 }
 
-
 template <VR vr>
 void get_value_field(const elementfield& e, typename type_of<vr>::type::base_type& out_data)
 {
@@ -448,7 +457,6 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type::base_typ
    e.value_field->accept<vr>(getter);
    out_data = *wrapper.begin();
 }
-
 
 /**
  * @brief The set_visitor class is used to set a specified value into the
@@ -461,14 +469,24 @@ class set_visitor : public attribute_visitor<vr>
       typename type_of<vr>::type setdata;
 
    public:
-      set_visitor(typename type_of<vr>::type data) {
+      set_visitor(typename type_of<vr>::type data)
+      {
          setdata = data;
       }
 
-      virtual void apply(element_field<vr>* ef) override {
+      virtual void apply(element_field<vr>* ef) override
+      {
          ef->value_field = setdata;
       }
 };
+
+template <VR vr>
+void set_value_field(const elementfield& e, typename type_of<vr>::type& indata)
+{
+   set_visitor<vr> setter(indata);
+   e.value_field->accept<vr>(setter);
+}
+
 
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute
@@ -477,7 +495,7 @@ class set_visitor : public attribute_visitor<vr>
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type &data)
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type& data)
 {
    static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;
@@ -491,7 +509,7 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
 }
 
 template <VR vr>
-elementfield make_elementfield(const typename type_of<vr>::type &data)
+elementfield make_elementfield(const typename type_of<vr>::type& data)
 {
    std::size_t len = byte_length(data);
    // if len is uneven, validate
@@ -508,7 +526,7 @@ elementfield make_elementfield(const typename type_of<vr>::type &data)
  * @return prepared instance of elementfield
  */
 template <VR vr>
-elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type::base_type &data)
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::type::base_type& data)
 {
    static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
    elementfield el;

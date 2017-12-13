@@ -4,12 +4,12 @@
 #include <functional>
 #include <memory>
 
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/log/trivial.hpp>
 
 #include "upperlayer_connection.hpp"
+#include "infrastructure/asio_tcp_connection_manager.hpp"
 #include "data/dictionary/dictionary.hpp"
+#include "util/channel_sev_logger.hpp"
 
 
 namespace dicom
@@ -48,6 +48,9 @@ struct Iupperlayer_connection_handlers
        */
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
 
+
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> f) = 0;
+
       /**
        * @brief run starts the handling of the connections
        */
@@ -59,13 +62,14 @@ struct Iupperlayer_connection_handlers
 
 /**
  * @brief The scp class acts as a service class provider which can have
- *        and manages multiple connections simultaneously.
+ *        and manages multiple connections simultaneously as specified by the
+ *        constructor's parameters.
  */
 class scp: public Iupperlayer_connection_handlers
 {
    public:
-      scp(data::dictionary::dictionary& dict,
-          short port);
+      scp(Iinfrastructure_server_acceptor& infrstr_scp,
+          data::dictionary::dictionaries& dict);
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -78,29 +82,36 @@ class scp: public Iupperlayer_connection_handlers
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler) override;
 
    private:
 
-      void accept_new(std::shared_ptr<boost::asio::ip::tcp::socket>, boost::system::error_code);
+      std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scp_connection>> scps;
+
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
+
+      void error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception);
+
+      void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+      std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
-      std::vector<std::unique_ptr<scp_connection>> connections;
-      boost::asio::io_service io_service;
-      boost::asio::ip::tcp::acceptor acptr;
-      short port;
-      data::dictionary::dictionary& dict;
+      Iinfrastructure_server_acceptor& acceptor;
+
+      data::dictionary::dictionaries& dict;
+      util::log::channel_sev_logger logger;
 };
 
 /**
- * @brief The scu class
+ * @brief The scu class handles all connections to a remote application entity.
  */
 class scu: public Iupperlayer_connection_handlers
 {
    public:
-      scu(data::dictionary::dictionary& dict,
-          std::string host, std::string port,
+      scu(Iinfrastructure_client_acceptor& infr_scu,
+          data::dictionary::dictionaries& dict,
           a_associate_rq& rq);
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
@@ -120,17 +131,26 @@ class scu: public Iupperlayer_connection_handlers
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler) override;
 
    private:
+      void accept_new(Iinfrastructure_upperlayer_connection* conn);
+
+      void error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception);
+
+      void connection_end(Iinfrastructure_upperlayer_connection* conn);
+
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+      std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
-      std::vector<std::unique_ptr<scu_connection>> connections;
-      boost::asio::io_service io_service;
-      std::string host;
-      std::string port;
+      Iinfrastructure_client_acceptor& acceptor;
+
+      std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
       a_associate_rq& request;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
+      util::log::channel_sev_logger logger;
 };
 
 }

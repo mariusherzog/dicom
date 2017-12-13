@@ -9,6 +9,7 @@
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary_dyn.hpp"
 #include "data/attribute/attribute.hpp"
+#include "util/channel_sev_logger.hpp"
 
 namespace dicom
 {
@@ -67,7 +68,7 @@ class transfer_processor
        * @param vrtype enum instance defining if the ts is [ex|im]plicit VR.
        * @param tstags list of transfer-syntax-specific tag-to-VR-mapping
        */
-      transfer_processor(boost::optional<dictionary::dictionary&> dict,
+      transfer_processor(boost::optional<dictionary::dictionaries&> dict,
                          std::string tfs,
                          VR_TYPE vrtype,
                          attribute::ENDIANNESS endianness,
@@ -83,7 +84,7 @@ class transfer_processor
        */
       attribute::VR get_vr(attribute::tag_type tag) const;
 
-      dicom::data::dictionary::dictionary& get_dictionary() const;
+      dicom::data::dictionary::dictionaries& get_dictionary() const;
 
    public:
 
@@ -108,6 +109,8 @@ class transfer_processor
        * @return UID of the transfer syntax
        */
       std::string get_transfer_syntax() const;
+
+      std::size_t dataelement_length(const dicom::data::attribute::elementfield& ef) const;
 
       virtual ~transfer_processor();
 
@@ -175,12 +178,24 @@ class transfer_processor
        */
       std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg) const;
 
+      /**
+       * @brief calculate_item_lengths calculates the correct sequence and item lengths
+       *        given the specified transfer syntax.
+       * @param dataset dataset which will receive updated length values
+       * @return byte length of the set given in the parameter minus any item and / or
+       *         sequence sizes which are undefined length.
+       */
+      std::size_t calculate_item_lengths(data::dataset::dataset_type& dataset) const;
+
       std::vector<vr_of_tag> tstags;
 
-      boost::optional<dictionary::dictionary&> dict;
+      boost::optional<dictionary::dictionaries&> dict;
       std::string transfer_syntax;
       VR_TYPE vrtype;
       attribute::ENDIANNESS endianness;
+
+   protected:
+      mutable dicom::util::log::channel_sev_logger logger;
 };
 
 /**
@@ -191,7 +206,7 @@ class transfer_processor
 class commandset_processor: public transfer_processor
 {
    public:
-      explicit commandset_processor(dictionary::dictionary& dict);
+      explicit commandset_processor(dictionary::dictionaries& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -211,7 +226,7 @@ class commandset_processor: public transfer_processor
 class little_endian_implicit: public transfer_processor
 {
    public:
-      explicit little_endian_implicit(dictionary::dictionary& dict);
+      explicit little_endian_implicit(dictionary::dictionaries& dict);
 
       little_endian_implicit(const little_endian_implicit& other);
 
@@ -228,7 +243,7 @@ class little_endian_implicit: public transfer_processor
 class little_endian_explicit: public transfer_processor
 {
    public:
-      explicit little_endian_explicit(dictionary::dictionary& dict);
+      explicit little_endian_explicit(dictionary::dictionaries& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -244,7 +259,7 @@ class little_endian_explicit: public transfer_processor
 class big_endian_explicit: public transfer_processor
 {
    public:
-      explicit big_endian_explicit(dictionary::dictionary& dict);
+      explicit big_endian_explicit(dictionary::dictionaries& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -256,6 +271,19 @@ class big_endian_explicit: public transfer_processor
                             std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const;
 };
+
+
+
+/**
+ * @brief dataset_bytesize calculates the size in bytes of a dataset given a
+ *        certain transfer syntax.
+ * @param data dataset
+ * @param transfer_proc represents the underlying transfer syntax for the
+ *        calculation
+ * @return size of the dataset in bytes
+ */
+std::size_t dataset_bytesize(dataset_type data, const transfer_processor& transfer_proc);
+
 
 }
 

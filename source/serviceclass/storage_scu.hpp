@@ -21,7 +21,7 @@ class storage_scu : public Iserviceclass
 {
    public:
       storage_scu(dicom::network::connection endpoint,
-                  dicom::data::dictionary::dictionary& dict,
+                  dicom::data::dictionary::dictionaries& dict,
                   std::function<void(storage_scu*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
 
       ~storage_scu();
@@ -58,6 +58,7 @@ class storage_scu : public Iserviceclass
       std::vector<dicom::network::dimse::SOP_class> sop_classes_response;
       dicom::network::dimse::association_definition assoc_def;
       dicom::network::upperlayer::a_associate_rq initial_rq;
+      asio_tcp_client_acceptor infr_scu;
       dicom::network::upperlayer::scu scu;
       dicom::network::dimse::dimse_pm_manager dimse_pm;
 

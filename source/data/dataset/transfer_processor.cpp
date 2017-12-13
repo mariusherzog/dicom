@@ -1,6 +1,9 @@
 #include "transfer_processor.hpp"
 
 #include <stack>
+#include <numeric>
+
+#include <boost/log/trivial.hpp>
 
 #include "data/attribute/attribute_field_coder.hpp"
 #include "data/attribute/constants.hpp"
@@ -16,6 +19,7 @@ namespace data
 namespace dataset
 {
 
+using namespace boost::log::trivial;
 using namespace attribute;
 
 
@@ -23,6 +27,15 @@ static const std::vector<VR> specialVRs {VR::OB, VR::OW, VR::OF, VR::SQ, VR::UR,
 
 static const std::vector<tag_type> item_attributes {Item, ItemDelimitationItem, SequenceDelimitationItem};
 
+
+std::size_t dataset_bytesize(dicom::data::dataset::dataset_type data, const transfer_processor& transfer_proc)
+{
+   return std::accumulate(data.begin(), data.end(), 0,
+      [&transfer_proc](int acc, const std::pair<const tag_type, elementfield>& attr)
+      {
+         return acc += transfer_proc.dataelement_length(attr.second);
+      });
+}
 
 
 /**
@@ -51,6 +64,75 @@ static bool is_item_attribute(tag_type tag)
          != item_attributes.end();
 }
 
+std::size_t transfer_processor::dataelement_length(const elementfield& ef) const
+{
+   if (vrtype == VR_TYPE::IMPLICIT) {
+      return ef.value_len + 4 + 2 + 2;
+   } else {
+      std::size_t length = ef.value_len + 2 + 2;
+      if (is_special_VR(*ef.value_rep)) {
+         length += 2 + 2 + 4;
+      } else {
+         length += 2 + 2;
+      }
+      return length;
+   }
+}
+
+std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& dataset) const
+{
+   std::size_t accu = 0;
+
+   // skip undefined length items. The accumulator for this sequence will stay at 0.
+   // This is ok since it is not used for the sequence length, since when one item
+   // length is undefined, the sequence length is necessarily undefined as well.
+   if (dataset.count(Item) > 0 && dataset[Item].value_len == 0xffffffff) {
+      return accu;
+   }
+
+   // item only contains "item type" tags, so the length is essentially zero.
+   if (std::all_of(dataset.begin(), dataset.end(),
+                   [](std::pair<const tag_type, elementfield> attr) {
+                     return is_item_attribute(attr.first); })) {
+      return accu;
+   }
+
+   for (auto& attr : dataset) {
+      VR repr;
+      if (vrtype == VR_TYPE::EXPLICIT) {
+         repr = attr.second.value_rep.get();
+      } else {
+         repr = get_vr(attr.first);
+      }
+
+      if (repr != VR::SQ && !is_item_attribute(attr.first)) {
+         accu += dataelement_length(attr.second);
+      } else if (repr == VR::SQ) {
+         // now handle all sequence items
+         // sequences with undefined length need to be checked as well
+         // because they may contain items with defined length
+         typename type_of<VR::SQ>::type data;
+         get_value_field<VR::SQ>(attr.second, data);
+         std::size_t sequencesize = 0;
+         for (dataset_type& itemset : data) {
+            auto itemsize = calculate_item_lengths(itemset);
+            if (itemsize > 0) {
+               itemset[Item].value_len = itemsize;
+               sequencesize += itemsize + 8;
+            } else {
+               sequencesize += 0;
+            }
+         }
+
+         if (attr.second.value_len != 0xffffffff) {
+            attr.second.value_len = sequencesize;
+            set_value_field<VR::SQ>(attr.second, data);
+            accu += dataelement_length(attr.second); // update the sequence length
+         }
+      }
+   }
+   return accu;
+}
 
 
 transfer_processor::~transfer_processor()
@@ -97,8 +179,8 @@ std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, 
 
 
 
-commandset_processor::commandset_processor(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
+commandset_processor::commandset_processor(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict}, "", VR_TYPE::IMPLICIT, ENDIANNESS::LITTLE}
 {
 }
 
@@ -248,12 +330,14 @@ std::vector<unsigned char> commandset_processor::serialize_attribute(elementfiel
    return encode_value_field(e, end, vr);
 }
 
-std::vector<unsigned char> transfer_processor::serialize(iod data) const
+std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
 {
+   calculate_item_lengths(dataset);
+
    std::vector<unsigned char> stream;
    bool explicit_length_item = true;
    bool explicit_length_sequence = true;
-   for (const auto attr : dataset_iterator_adaptor(data)) {
+   for (const auto attr : dataset_iterator_adaptor(dataset)) {
       if (attr.first == SequenceDelimitationItem) {
          if (!explicit_length_sequence) {
             auto tag = encode_tag(attr.first, endianness);
@@ -286,8 +370,22 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          repr = get_vr(attr.first);
       }
 
-
+      std::size_t value_length = attr.second.value_len;
       auto data = serialize_attribute(attr.second, endianness, repr);
+      if (data.size() != attr.second.value_len) {
+         BOOST_LOG_SEV(logger, warning) << "Mismatched value lengths for tag "
+                                        << attr.first << ": Expected "
+                                        << attr.second.value_len << ", actual "
+                                        << data.size();
+
+         if (attr.second.value_rep.is_initialized() &&
+             *attr.second.value_rep != VR::SQ &&
+             *attr.second.value_rep != VR::NN &&
+             *attr.second.value_rep != VR::NI) {
+            value_length = data.size();
+         }
+      }
+
       auto tag = encode_tag(attr.first, endianness);
       std::vector<unsigned char> len;
       stream.insert(stream.end(), tag.begin(), tag.end());
@@ -296,12 +394,12 @@ std::vector<unsigned char> transfer_processor::serialize(iod data) const
          stream.insert(stream.end(), vr.begin(), vr.begin()+2);
          if (is_special_VR(repr)) {
             stream.push_back(0x00); stream.push_back(0x00);
-            len = encode_len(4, attr.second.value_len, endianness);
+            len = encode_len(4, value_length, endianness);
          } else {
-            len = encode_len(2, attr.second.value_len, endianness);
+            len = encode_len(2, value_length, endianness);
          }
       } else {
-         len = encode_len(4, attr.second.value_len, endianness);
+         len = encode_len(4, value_length, endianness);
       }
       if (repr == VR::SQ)
       {
@@ -328,7 +426,7 @@ elementfield commandset_processor::deserialize_attribute(std::vector<unsigned ch
 }
 
 
-transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> dict,
+transfer_processor::transfer_processor(boost::optional<dictionary::dictionaries&> dict,
                                        std::string tfs, VR_TYPE vrtype,
                                        ENDIANNESS endianness,
                                        std::initializer_list<vr_of_tag> tstags):
@@ -336,7 +434,8 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> 
    dict(dict),
    transfer_syntax {tfs},
    vrtype {vrtype},
-   endianness {endianness}
+   endianness {endianness},
+   logger {"transfer processor"}
 {
    if (vrtype == VR_TYPE::IMPLICIT && !dict.is_initialized()) {
       throw std::runtime_error("Uninitialized dictionary with "
@@ -344,15 +443,16 @@ transfer_processor::transfer_processor(boost::optional<dictionary::dictionary&> 
    }
 }
 
-data::dictionary::dictionary& transfer_processor::get_dictionary() const
+data::dictionary::dictionaries& transfer_processor::get_dictionary() const
 {
    return *dict;
 }
 
 transfer_processor::transfer_processor(const transfer_processor& other):
-   dict(other.dict),
+   dict {other.dict},
    transfer_syntax {other.transfer_syntax},
-   vrtype (other.vrtype)
+   vrtype {other.vrtype},
+   logger {"transfer processor"}
 {
 }
 
@@ -370,8 +470,8 @@ VR transfer_processor::get_vr(tag_type tag) const
    }
 }
 
-little_endian_implicit::little_endian_implicit(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
+little_endian_implicit::little_endian_implicit(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
                        "1.2.840.10008.1.2",
                        VR_TYPE::IMPLICIT,
                        ENDIANNESS::LITTLE,
@@ -422,8 +522,8 @@ transfer_processor::vr_of_tag::vr_of_tag(tag_type tag,
 {
 }
 
-little_endian_explicit::little_endian_explicit(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
+little_endian_explicit::little_endian_explicit(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
                        "1.2.840.10008.1.2.1",
                        VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE,
                        {
@@ -455,9 +555,9 @@ elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned 
    return decode_value_field(data, end, len, vr, vm, pos);
 }
 
-big_endian_explicit::big_endian_explicit(dictionary::dictionary& dict):
-   transfer_processor {boost::optional<dictionary::dictionary&> {dict},
-                       "1.2.840.10008.1.2.1",
+big_endian_explicit::big_endian_explicit(dictionary::dictionaries& dict):
+   transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
+                       "1.2.840.10008.1.2.2",
                        VR_TYPE::EXPLICIT, ENDIANNESS::BIG,
                        {
                            {{0x7fe0, 0x0010}, VR::OW},

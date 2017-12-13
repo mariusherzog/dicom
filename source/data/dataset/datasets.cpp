@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <iomanip>
-
+#include <stack>
+#include <vector>
+#include <map>
 
 #include "data/attribute/constants.hpp"
 #include "data/dictionary/dictionary.hpp"
@@ -23,59 +25,80 @@ namespace dataset
 using namespace attribute;
 
 
+
+void traverse(const dataset_type& data, std::function<void(attribute::tag_type, const attribute::elementfield&)> handler)
+{
+   std::stack<dataset_type> sets;
+   std::stack<dataset_type::const_iterator> positions;
+   std::stack<std::size_t> pos_cur;
+   std::stack<std::size_t> pos_end;
+
+   sets.push(data);
+   positions.push(sets.top().begin());
+
+   while (sets.size() > 0) {
+      auto& it = positions.top();
+
+      while (it != sets.top().end() && it->second.value_rep != VR::SQ) {
+         handler(it->first, it->second);
+         ++it;
+      }
+      if (it != sets.top().end()) {
+         handler(it->first, it->second);
+
+         std::vector<dataset_type> data;
+         get_value_field<VR::SQ>(it->second, data);
+
+         for (int i=data.size()-1; i >= 0; --i) {
+            dataset_type itemset = data[i];
+            sets.push(itemset);
+            positions.push(sets.top().begin());
+         }
+         ++it;
+      } else {
+         // consider emitting a dummy item delimitation item
+         sets.pop();
+         positions.pop();
+      }
+   }
+}
+
+
 std::ostream& operator<<(std::ostream& os, const dataset_type& data)
 {
-
    int depth = 0;
-   for (const auto attr : dataset_iterator_adaptor(data)) {
-      if (attr.first == Item) {
-         depth++;
+   traverse(data, [&](attribute::tag_type tag, const attribute::elementfield& ef) mutable
+   {
+      if (tag == ItemDelimitationItem) {
+         --depth;
       }
 
       std::fill_n(std::ostream_iterator<char>(os), depth, '\t');
-
-      os << attr.first << " ";
-      if (attr.second.value_rep.is_initialized()
-          && attr.second.value_rep.get() != VR::NN
-          && attr.second.value_rep.get() != VR::NI) {
-         os << dictionary::dictionary_entry::vr_of_string.right.at(attr.second.value_rep.get());
-      } else {
-         os << "(unknown) NN / NI";
-      }
-      if (attr.first != SequenceDelimitationItem
-          && attr.first != ItemDelimitationItem
-          && attr.first != Item
-          && attr.second.value_rep.is_initialized()
-          && attr.second.value_rep.get() != VR::NN
-          && attr.second.value_rep.get() != VR::NI) {
-         if (attr.second.value_rep.get() == VR::SQ ) {
-            os << " " << attr.second.value_len;
-            if ((attr.second.value_len & 0xffffffff) == 0xffffffff) {
+      os << tag << " ";
+      if (tag != SequenceDelimitationItem
+          && tag != ItemDelimitationItem
+          && tag != Item
+          && ef.value_rep.is_initialized()
+          && ef.value_rep.get() != VR::NN
+          && ef.value_rep.get() != VR::NI) {
+         if (ef.value_rep.get() == VR::SQ ) {
+            os << " " << ef.value_len;
+            if ((ef.value_len & 0xffffffff) == 0xffffffff) {
                os << "(undefined length)";
             }
             os << "\t\t";
          } else {
-            os << " " << attr.second.value_len << "\t\t";
-            attr.second.value_field->print(os);
+            os << " " << ef.value_len << "\t\t";
+            ef.value_field->print(os);
          }
       }
       os << "\n";
 
-      if (attr.first == ItemDelimitationItem) {
-         depth--;
+      if (tag == Item) {
+         ++depth;
       }
-   }
-
-   return os;
-}
-
-std::size_t dataset_size(dicom::data::dataset::dataset_type data, bool explicitvr)
-{
-   return std::accumulate(data.begin(), data.end(), 0,
-      [explicitvr](int acc, const std::pair<const tag_type, elementfield>& attr) {
-      return acc += attr.second.value_len + 4 + 4
-            + (explicitvr ? 2 : 0);
    });
+   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, DIMSE_SERVICE_GROUP dsg)

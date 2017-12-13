@@ -33,7 +33,7 @@ class storage_scu_thread
                          dicom::data::dataset::commandset_data cmove_cmd,
                          dicom::network::dimse::dimse_pm* cfind_pm,
                          std::function<boost::optional<dicom::data::dataset::iod>()> cmove_handler,
-                         dicom::data::dictionary::dictionary& dict):
+                         dicom::data::dictionary::dictionaries& dict):
          qr_scp {qr_scp},
          move_destination {move_destination},
          cmove_cmd {cmove_cmd},
@@ -69,10 +69,10 @@ class storage_scu_thread
       dicom::data::dataset::commandset_data cmove_cmd;
       dicom::network::dimse::dimse_pm* cfind_pm;
       std::function<boost::optional<dicom::data::dataset::iod>()> cmove_handler;
-      dicom::data::dictionary::dictionary& dict;
+      dicom::data::dictionary::dictionaries& dict;
 };
 
-queryretrieve_scp::queryretrieve_scp(connection endpoint, dicom::data::dictionary::dictionary& dict,
+queryretrieve_scp::queryretrieve_scp(connection endpoint, dicom::data::dictionary::dictionaries& dict,
                                      std::function<void(queryretrieve_scp*, dataset::commandset_data, std::shared_ptr<dataset::iod>)> handler):
    cmove_sop {{ dataset::DIMSE_SERVICE_GROUP::C_MOVE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->handle_cfind(pm, command, std::move(data)); }} },
    dict {dict},
@@ -90,7 +90,8 @@ queryretrieve_scp::queryretrieve_scp(connection endpoint, dicom::data::dictionar
                   dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
       }
    },
-   scp {dict, endpoint.port},
+   infrstr_scp {endpoint.port, nullptr, nullptr},
+   scp {infrstr_scp, dict},
    dimse_pm {scp, assoc_def, dict},
    storage_thread {nullptr},
    handler {handler}

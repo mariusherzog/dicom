@@ -27,7 +27,7 @@ namespace dicom
 namespace filesystem
 {
 
-dicomfile::dicomfile(iod dataset, data::dictionary::dictionary& dict):
+dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    dataset_ {dataset},
    preamble {0},
    prefix {'D', 'I', 'C', 'M'},
