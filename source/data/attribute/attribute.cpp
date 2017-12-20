@@ -250,7 +250,7 @@ std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field)
 template <>
 std::size_t validate<VR::LO>(typename type_of<VR::LO>::type& value_field)
 {
-   return validate_internal_multitext<VR::LO>(value_field, {});
+   return validate_internal_multitext<VR::LO>(value_field, {0x0a, 0x0c, 0x0d});
 }
 
 template <>
