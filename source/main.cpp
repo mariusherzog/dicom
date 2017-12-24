@@ -33,7 +33,7 @@ int main()
    using namespace dicom::network;
    using namespace dicom::serviceclass;
 
-   dicom::data::dictionary::dictionary dict {"commanddictionary.csv", "datadictionary.csv"};
+   dicom::data::dictionary::dictionaries& dict = get_default_dictionaries();
 
    dataset::iod dat;
    std::string a = "Hello";
@@ -45,16 +45,38 @@ int main()
 //   value_ref<VR::FD> val = dat[{0x0010, 0x0010}];
 //   *(val.value().begin()) = 2.3;
 
-   value<VR::PN> val2 = dat[{0x0010, 0x0010}];
+   value<VR::FD> val2 = dat[{0x0010, 0x0010}];
    value<VR::ST> val3 = dat[{0x007f, 0x0010}];
    auto v = *(val2.get().begin());
    dat[{0x0010, 0x0010}] = coord;
    val2 = dat[{0x0010, 0x0010}];
    v = *(val2.get().begin());
-   std::string c = val3;
+   std::string c = dat[{0x007f, 0x0010}].value<VR::ST>();
+   std::cout << c << std::flush;
 
 //   {
 //      {
+//         dataset::iod dicm;
+//         dicm[{0x0008, 0x0016}] = make_elementfield<VR::CS>("1.2.840.10008.5.1.4.1.1.7");
+//         dicm[{0x0008, 0x0018}] = make_elementfield<VR::CS>("1.2.840.10008.25.25.25.1");
+//         dicm[{0x0010, 0x0010}] = make_elementfield<VR::PN>("test^test");
+//         dicom::filesystem::dicomfile file(dicm, dict);
+//         std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
+//         outfile << file;
+//         outfile.flush();
+//      }
+//      {
+         dataset::iod dicm;
+         dicom::filesystem::dicomfile file(dicm, dict);
+         std::fstream outfile("20170926174145xwanl11x.j01_10.dcm", std::ios::in | std::ios::binary);
+         outfile >> file;
+         std::cout << file.dataset() << std::flush;
+
+         std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
+         outfile2 << file;
+         outfile2.flush();
+//      }
+//   }
 
    dimse::SOP_class echo {"1.2.840.10008.1.1",
    { { dataset::DIMSE_SERVICE_GROUP::C_ECHO_RSP,
@@ -193,7 +215,7 @@ int main()
 //            else
 //            sc->release();
 //      });
-//      store.set_store_data(dicm);
+//      store.set_store_data(file.dataset());
 //      store.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();

@@ -9,6 +9,7 @@
 #include "upperlayer_connection.hpp"
 #include "infrastructure/asio_tcp_connection_manager.hpp"
 #include "data/dictionary/dictionary.hpp"
+#include "util/channel_sev_logger.hpp"
 
 
 namespace dicom
@@ -47,6 +48,9 @@ struct Iupperlayer_connection_handlers
        */
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> f) = 0;
 
+
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> f) = 0;
+
       /**
        * @brief run starts the handling of the connections
        */
@@ -65,7 +69,7 @@ class scp: public Iupperlayer_connection_handlers
 {
    public:
       scp(Iinfrastructure_server_acceptor& infrstr_scp,
-          data::dictionary::dictionary& dict);
+          data::dictionary::dictionaries& dict);
       scp(const scp&) = delete;
       scp& operator=(const scp&) = delete;
 
@@ -78,6 +82,7 @@ class scp: public Iupperlayer_connection_handlers
 
       virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
       virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler) override;
 
    private:
 
@@ -85,13 +90,18 @@ class scp: public Iupperlayer_connection_handlers
 
       void accept_new(Iinfrastructure_upperlayer_connection* conn);
 
+      void error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception);
+
       void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+      std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
       Iinfrastructure_server_acceptor& acceptor;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
+      util::log::channel_sev_logger logger;
 };
 
 /**
@@ -101,7 +111,7 @@ class scu: public Iupperlayer_connection_handlers
 {
    public:
       scu(Iinfrastructure_client_acceptor& infr_scu,
-          data::dictionary::dictionary& dict,
+          data::dictionary::dictionaries& dict,
           a_associate_rq& rq);
       scu(const scu&) = delete;
       scu& operator=(const scu&) = delete;
@@ -113,28 +123,34 @@ class scu: public Iupperlayer_connection_handlers
        */
       virtual void run() override;
 
-      void accept_new();
-
-      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
-      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
-
-   private:
       /**
        * @brief accept_new starts a new association with the parameters
        *        specified in the constructor.
        */
+      void accept_new();
+
+      virtual void new_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void end_connection(std::function<void(Iupperlayer_comm_ops*)> handler) override;
+      virtual void connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler) override;
+
+   private:
       void accept_new(Iinfrastructure_upperlayer_connection* conn);
+
+      void error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception);
 
       void connection_end(Iinfrastructure_upperlayer_connection* conn);
 
       std::function<void(Iupperlayer_comm_ops*)> handler_new_connection;
       std::function<void(Iupperlayer_comm_ops*)> handler_end_connection;
+      std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> handler_error;
 
       Iinfrastructure_client_acceptor& acceptor;
 
       std::map<Iinfrastructure_upperlayer_connection*, std::unique_ptr<scu_connection>> scus;
       a_associate_rq& request;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
+      util::log::channel_sev_logger logger;
 };
 
 }

@@ -68,7 +68,7 @@ class transfer_processor
        * @param vrtype enum instance defining if the ts is [ex|im]plicit VR.
        * @param tstags list of transfer-syntax-specific tag-to-VR-mapping
        */
-      transfer_processor(boost::optional<dictionary::dictionary&> dict,
+      transfer_processor(boost::optional<dictionary::dictionaries&> dict,
                          std::string tfs,
                          VR_TYPE vrtype,
                          attribute::ENDIANNESS endianness,
@@ -84,7 +84,7 @@ class transfer_processor
        */
       attribute::VR get_vr(attribute::tag_type tag) const;
 
-      dicom::data::dictionary::dictionary& get_dictionary() const;
+      dicom::data::dictionary::dictionaries& get_dictionary() const;
 
    public:
 
@@ -189,7 +189,7 @@ class transfer_processor
 
       std::vector<vr_of_tag> tstags;
 
-      boost::optional<dictionary::dictionary&> dict;
+      boost::optional<dictionary::dictionaries&> dict;
       std::string transfer_syntax;
       VR_TYPE vrtype;
       attribute::ENDIANNESS endianness;
@@ -206,7 +206,7 @@ class transfer_processor
 class commandset_processor: public transfer_processor
 {
    public:
-      explicit commandset_processor(dictionary::dictionary& dict);
+      explicit commandset_processor(dictionary::dictionaries& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -226,7 +226,7 @@ class commandset_processor: public transfer_processor
 class little_endian_implicit: public transfer_processor
 {
    public:
-      explicit little_endian_implicit(dictionary::dictionary& dict);
+      explicit little_endian_implicit(dictionary::dictionaries& dict);
 
       little_endian_implicit(const little_endian_implicit& other);
 
@@ -243,7 +243,7 @@ class little_endian_implicit: public transfer_processor
 class little_endian_explicit: public transfer_processor
 {
    public:
-      explicit little_endian_explicit(dictionary::dictionary& dict);
+      explicit little_endian_explicit(dictionary::dictionaries& dict);
 
    private:
       virtual std::vector<unsigned char>
@@ -259,7 +259,7 @@ class little_endian_explicit: public transfer_processor
 class big_endian_explicit: public transfer_processor
 {
    public:
-      explicit big_endian_explicit(dictionary::dictionary& dict);
+      explicit big_endian_explicit(dictionary::dictionaries& dict);
 
    private:
       virtual std::vector<unsigned char>

@@ -44,12 +44,19 @@ class dimse_pm_manager
    public:
       dimse_pm_manager(upperlayer::Iupperlayer_connection_handlers& conn,
                        association_definition operations,
-                       data::dictionary::dictionary& dict);
+                       data::dictionary::dictionaries& dict);
 
       /**
        * @brief run starts handling connections
        */
       void run();
+
+      /**
+       * @brief connection_error_handler sets the callback for when an error
+       *        occurs on one of dimse_pm connection of this manager
+       * @param handler callback to be invoked upon an error
+       */
+      void connection_error_handler(std::function<void(dimse_pm*, std::exception_ptr)> handler);
 
       /**
        * @brief get_operations returns a reference to the association definition
@@ -65,10 +72,15 @@ class dimse_pm_manager
 
       void create_dimse(upperlayer::Iupperlayer_comm_ops* scx);
       void remove_dimse(upperlayer::Iupperlayer_comm_ops* scx);
+      void connection_error(upperlayer::Iupperlayer_comm_ops* scx, std::exception_ptr err);
 
       upperlayer::Iupperlayer_connection_handlers& conn;
       association_definition operations;
-      data::dictionary::dictionary& dict;
+
+      data::dictionary::dictionaries& dict;
+      std::function<void(dimse_pm*, std::exception_ptr)> error_handler;
+
+      util::log::channel_sev_logger logger;
 };
 
 
@@ -86,7 +98,7 @@ class dimse_pm
 
       dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                association_definition operations,
-               data::dictionary::dictionary& dict);
+               data::dictionary::dictionaries& dict);
       ~dimse_pm();
 
       /**
@@ -259,7 +271,7 @@ class dimse_pm
       upperlayer::p_data_tf assemble_ndelete_rq(response r, int pres_context_id);
       upperlayer::p_data_tf assemble_ndelete_rsp(response r, int pres_context_id);
 
-      data::dictionary::dictionary& dict;
+      data::dictionary::dictionaries& dict;
 
       std::map<std::string, std::unique_ptr<data::dataset::transfer_processor>> transfer_processors;
 

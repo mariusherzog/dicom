@@ -2,6 +2,10 @@
 
 #include "upperlayer_connection.hpp"
 
+#include <functional>
+
+using namespace std::placeholders;
+
 namespace dicom
 {
 
@@ -13,6 +17,7 @@ namespace network
 namespace upperlayer
 {
 
+using namespace util::log;
 
 Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 {
@@ -20,9 +25,10 @@ Iupperlayer_connection_handlers::~Iupperlayer_connection_handlers()
 
 
 scp::scp(Iinfrastructure_server_acceptor& infrstr_scp,
-         data::dictionary::dictionary& dict):
+         data::dictionary::dictionaries& dict):
    acceptor {infrstr_scp},
-   dict {dict}
+   dict {dict},
+   logger {"scp"}
 {
    acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
    acceptor.set_handler_end([this](Iinfrastructure_upperlayer_connection* conn) { connection_end(conn);});
@@ -34,7 +40,11 @@ scp::~scp()
 
 void scp::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   scps[conn] = std::unique_ptr<scp_connection> {new scp_connection(conn, dict, handler_new_connection, handler_end_connection)};
+   scps[conn] = std::unique_ptr<scp_connection>
+   {
+         new scp_connection {conn, dict, handler_new_connection, handler_end_connection, [&](Iupperlayer_comm_ops* conn, std::exception_ptr exception) { this->error_handler(conn, exception); }}
+   };
+   BOOST_LOG_SEV(logger, info) << "New connection" << conn;
 }
 
 void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
@@ -43,6 +53,7 @@ void scp::connection_end(Iinfrastructure_upperlayer_connection* conn)
    handler_end_connection(sc.get());
    //sc->reset();
    scps.erase(conn);
+   BOOST_LOG_SEV(logger, info) << "Connection ended" << conn;
 }
 
 void scp::run()
@@ -60,13 +71,35 @@ void scp::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
    handler_end_connection = handler;
 }
 
+void scp::connection_error(std::function<void(Iupperlayer_comm_ops*, std::exception_ptr)> f)
+{
+   handler_error = f;
+}
+
+
+void scp::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
+{
+   try {
+      if (exception) {
+         std::rethrow_exception(exception);
+      }
+   } catch (std::exception& exc) {
+      BOOST_LOG_SEV(logger, error) << "Error occured on connection " << conn
+                                   << "Error message: " << exc.what();
+   }
+   if (handler_error)
+   {
+      handler_error(conn, exception);
+   }
+}
 
 scu::scu(Iinfrastructure_client_acceptor& infr_scu,
-         data::dictionary::dictionary& dict,
+         data::dictionary::dictionaries& dict,
          a_associate_rq& rq):
    acceptor {infr_scu},
    request {rq},
-   dict {dict}
+   dict {dict},
+   logger {"scu"}
 {
    using namespace std::placeholders;
    acceptor.set_handler_new([this](Iinfrastructure_upperlayer_connection* conn) { accept_new(conn);});
@@ -79,7 +112,8 @@ scu::~scu()
 
 void scu::accept_new(Iinfrastructure_upperlayer_connection* conn)
 {
-   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection}};
+   scus[conn] = std::unique_ptr<scu_connection> {new scu_connection {conn, dict, request, handler_new_connection, handler_end_connection, [&](Iupperlayer_comm_ops* conn, std::exception_ptr exception) { this->error_handler(conn, exception); }}};
+   BOOST_LOG_SEV(logger, info) << "New connection " << conn;
 }
 
 void scu::accept_new()
@@ -93,6 +127,7 @@ void scu::connection_end(Iinfrastructure_upperlayer_connection* conn)
    handler_end_connection(sc.get());
    //sc->reset();
    scus.erase(conn);
+   BOOST_LOG_SEV(logger, info) << "Connection ended" << conn;
 }
 
 void scu::run()
@@ -109,6 +144,29 @@ void scu::end_connection(std::function<void(Iupperlayer_comm_ops*)> handler)
 {
    handler_end_connection = handler;
 }
+
+void scu::connection_error(std::function<void (Iupperlayer_comm_ops *, std::exception_ptr)> f)
+{
+   handler_error = f;
+}
+
+void scu::error_handler(Iupperlayer_comm_ops* conn, std::exception_ptr exception)
+{
+   try {
+      if (exception) {
+         std::rethrow_exception(exception);
+      }
+   } catch (std::exception& exc) {
+      BOOST_LOG_SEV(logger, error) << "Error occured on connection " << conn
+                                   << "Error message: " << exc.what();
+   }
+
+   if (handler_error)
+   {
+      handler_error(conn, exception);
+   }
+}
+
 
 
 }

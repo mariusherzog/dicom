@@ -47,7 +47,7 @@ static void little_endian_to_integral(const std::vector<unsigned char>& data
    static_assert(std::is_integral<T>::value, "Integral type expected");
    out = 0;
    for (int i=0; i<size; ++i) {
-      out |= ((data[begin+i] & 0xff) << 8*i);
+      out |= ((data[begin+i] & static_cast<T>(0xff)) << 8*i);
    }
 }
 
@@ -58,7 +58,7 @@ static void big_endian_to_integral(const std::vector<unsigned char>& data
    static_assert(std::is_integral<T>::value, "Integral type expected");
    out = 0;
    for (int i=0; i<size; ++i) {
-      out |= ((data[begin+i] & 0xff) << 8*(size-1-i));
+      out |= ((data[begin+i] & static_cast<T>(0xff)) << 8*(size-1-i));
    }
 }
 
@@ -347,7 +347,7 @@ tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin
 std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
 {
    std::size_t len;
-      convhelper::little_endian_to_integral(data, begin, lenbytes, len);
+   convhelper::little_endian_to_integral(data, begin, lenbytes, len);
    return len;
 }
 
@@ -390,7 +390,7 @@ void deserialize_vmtype(const std::vector<unsigned char>& data, Fn&& function,
    auto fn = std::move(function);
    std::vector<T> vals;
    vals.reserve(len/sizeof(T));
-   for (int i=0; i<len; i+=size)
+   for (std::size_t i=0; i<len; i+=size)
    {
       T out;
       fn(data, begin + i, size, out);

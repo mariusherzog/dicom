@@ -461,6 +461,14 @@ struct elementfield
          return data;
       }
 
+      template <VR vr>
+      typename type_of<vr>::type value() const
+      {
+         typename type_of<vr>::type data;
+         get_value_field<vr>(*this, data);
+         return data;
+      }
+
 //      template <VR vr>
 //      operator value_ref<vr>()
 //      {

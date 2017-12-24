@@ -21,7 +21,7 @@ namespace dictionary
  * @brief The dictionary class is a facade for the different kind of
  *        dictionaries.
  */
-class dictionary
+class dictionaries
 {
    public:
       template <unsigned short gid>
@@ -36,15 +36,20 @@ class dictionary
        * @param cmddic_path path to the command dictionary
        * @param datadic_path path toe the data dictionary
        */
-      dictionary(std::string cmddic_path = "commanddictionary.csv",
-                 std::string datadic_path = "datadictionary.csv");
+      dictionaries(std::string cmddic_path = "commanddictionary.csv",
+                   std::string datadic_path = "datadictionary.csv");
 
 
       /**
        * @brief lookup_commanddic performs a dynamic lookup of the given tag in
        *        the command dictionary.
        * @param tag
-       * @return dictionary entry corresponding the tag
+       * @return dictionary entry corresponding the tag, if not found, unknown
+       *         placeholder
+       * We do not return a boost::optional here because the clients may not
+       * want to do an extra check for an unlikely result. The "unknown" tag
+       * in case of an error has no constraints and the associated data element
+       * can still be processed.
        */
       dictionary_entry lookup_commanddic(attribute::tag_type tag);
 
@@ -100,6 +105,14 @@ class dictionary
       dictionary_dyn commanddic;
       dictionary_dyn datadic;
 };
+
+/**
+ * @brief get_default_dictionaries returns a reference to a standard
+ *        dictionaries instance containing the command and data dictionaries.
+ * @return dictionary instance
+ */
+dictionaries& get_default_dictionaries();
+
 
 }
 

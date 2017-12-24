@@ -20,7 +20,7 @@ namespace serviceclass
 {
 
 storage_scp::storage_scp(connection endpoint,
-                         dicom::data::dictionary::dictionary& dict,
+                         dicom::data::dictionary::dictionaries& dict,
                          std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler):
    cstore_sop {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->handle_cstore(pm, command, std::move(data)); }}},
    dict {dict},
