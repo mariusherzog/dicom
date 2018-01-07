@@ -80,9 +80,14 @@ dataset_iterator::step_into_nested(std::map<attribute::tag_type, attribute::elem
    nested_set_sizes.push({0, curr->second.value_len});
    std::vector<dataset_type> nested_set;
    get_value_field<VR::SQ>(curr->second, nested_set);
+
+   nested_set.erase(std::remove_if(nested_set.begin(), nested_set.end(),
+                                   [](const dataset_type& set) { return set.empty(); }),
+                    nested_set.end());
+
    nested_sets.push(nested_set);
    items.push({0, nested_sets.top().size()});
-   if (nested_set.size() == 0) {
+   if (nested_set.size() == 0 || /* empty set*/ nested_set[0].size() == 0) {
       return step_outof_nested();
    } else {
       curr = nested_sets.top().begin()->begin();
@@ -142,7 +147,7 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
 
 
    if (cit->first == SequenceDelimitationItem || cit->first == ItemDelimitationItem
-       || (is_in_nested() && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
+       || (is_in_nested() && cit->second.value_rep != VR::SQ && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
       // sequence delimitation item encountered, check if there are more items.
       // Otherwise, step out of the current sequence.
       auto& nes_items = items.top().nested_items_curr;
@@ -150,6 +155,8 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
       if (nes_items < items.top().nested_items_max-1) {
          nes_items++;
          return (cit = nested_sets.top()[nes_items].begin());
+      } else if (cit->first == ItemDelimitationItem) {
+         return ++cit; // we still have the sequenceDelimitationItem
       } else {
          delimiter = cit = step_outof_nested();
          return delimiter;

@@ -149,13 +149,13 @@ std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, 
    beginnings.push(pos);
 
    while (!beginnings.empty() && pos < data.size()) {
-      pos = beginnings.top();
+      //pos = beginnings.top();
       tag_type tag = decode_tag(data, pos, endianness);
-      if (tag == SequenceDelimitationItem) {
+      if (tag == SequenceDelimitationItem || tag == ItemDelimitationItem) {
          pos += 8;
          beginnings.pop();
-         std::size_t oldpos = beginnings.top();
-         beginnings.top() += pos-oldpos;
+//         std::size_t oldpos = beginnings.top();
+//         beginnings.top() += pos-oldpos;
          continue;
       }
       pos += 4;
@@ -174,7 +174,7 @@ std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, 
       }
 
    }
-   return beginnings.top()-beg;
+   return pos-beg;
 }
 
 
@@ -200,6 +200,8 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
    current_data.push(data);
    while (current_data.size() > 0) {
 
+      bool undefined_length_item = false;
+      bool undefined_length_sequence = false;
       // if we are coming right out of the deserialization of a nested sequence
       // of items, add it to the last item deserialized before the nested sq.
       if (lasttag.size() > 0) {
@@ -233,13 +235,14 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             // data on the stack so it will be processed next. Store the current
             // state of the deserialization on appropriate stacks.
             if (repr == VR::SQ) {
+               undefined_length_sequence = ((value_len & 0xffffffff) == 0xffffffff);
                value_len = ((value_len & 0xffffffff)== 0xffffffff)
                      ? find_enclosing(current_data.top(), pos)
                      : value_len;
                current_data.push({current_data.top().begin()+pos, current_data.top().begin()+pos+value_len});
                current_sequence.push({dataset_type {}});
                positions.push(0);
-               lasttag.push({tag, value_len});
+               lasttag.push({tag, undefined_length_sequence ? 0xffffffff : value_len});
             } else {
                auto multiplicity = get_dictionary().lookup(tag).vm;
                elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, multiplicity, pos);
@@ -250,21 +253,38 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             // Put Items and respective DelimitationItems into the deserialized
             // set.
             if (tag == Item) {
+               // detect if an ItemDelimitationItem was missed
                if (positions.top() > 8) {
                   current_sequence.top().back()[ItemDelimitationItem]
                         = make_elementfield<VR::NN>();
                   current_sequence.top().push_back(dataset_type {});
                }
-               current_sequence.top().back()[tag]
-                     = make_elementfield<VR::NI>(value_len, VR::NI);
+               undefined_length_item = ((value_len & 0xffffffff) == 0xffffffff);
+               if (!undefined_length_item) {
+                  current_sequence.top().back()[tag]
+                        = make_elementfield<VR::NI>(value_len, VR::NI);
+               } else {
+                  current_sequence.top().back()[tag]
+                        = make_elementfield<VR::NI>(0xffffffff, VR::NI);
+               }
 
             } else if (tag == ItemDelimitationItem) {
-               current_sequence.top().back()[ItemDelimitationItem]
-                     = make_elementfield<VR::NN>();
-               current_sequence.top().push_back(dataset_type {});
+               auto& itemset = current_sequence.top().back();
+               if (itemset.find(ItemDelimitationItem) == itemset.end()) {
+                  //current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
+               }
+//               current_sequence.top().back()[ItemDelimitationItem]
+//                     = make_elementfield<VR::NN>();
+//               current_sequence.top().push_back(dataset_type {}); // uncomment?
             } else if (tag == SequenceDelimitationItem) {
+               // sequence delimitation is in a separate, the last, vector
+               if (current_sequence.top().size() > 0) {
+                  current_sequence.top().push_back(dataset_type {});
+               } else {
+
+               }
                current_sequence.top().back()[tag] = make_elementfield<VR::NN>();
-               positions.pop();
+               //positions.pop();
             }
          }
       }
@@ -272,8 +292,21 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
       // add item and sequence delimination on the last item of a nested
       // sequence, leaving the outermost without.
       if (current_sequence.size() > 1) {
-         current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
-         current_sequence.top().back()[SequenceDelimitationItem] = make_elementfield<VR::NN>();
+         auto& itemset = current_sequence.top().back();
+         auto& prevset = *(current_sequence.top().end()-2);
+//         if (itemset.find(ItemDelimitationItem) == itemset.end()) {
+//           &&  (current_sequence.top().size() < 2 || prevset.find(ItemDelimitationItem) == itemset.end())) {
+            //current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
+         if (current_sequence.top().size() < 2) {
+            current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
+         } else {
+            if (prevset.find(Item) != prevset.end())
+            prevset[ItemDelimitationItem] = make_elementfield<VR::NN>();
+         }
+//         }
+//         if (itemset.find(SequenceDelimitationItem) == itemset.end()) {
+            current_sequence.top().back()[SequenceDelimitationItem] = make_elementfield<VR::NN>();
+//         }
       }
       current_data.pop();
    }

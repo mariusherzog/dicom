@@ -93,7 +93,6 @@ SCENARIO("DICOM Attributes can be added and removed from datasets", "[dataset]")
    }
 }
 
-
 SCENARIO("Traversal of DICOM datasets", "[dataset]")
 {
    GIVEN("An empty dataset")
@@ -219,3 +218,4 @@ SCENARIO("Traversal of DICOM datasets", "[dataset]")
       }
    }
 }
+
