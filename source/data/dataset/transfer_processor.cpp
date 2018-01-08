@@ -300,8 +300,16 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          if (current_sequence.top().size() < 2) {
             current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
          } else {
-            if (prevset.find(Item) != prevset.end())
-            prevset[ItemDelimitationItem] = make_elementfield<VR::NN>();
+            bool have_item_delimitation = false;
+            if (prevset.find(Item) != prevset.end() && prevset.find(ItemDelimitationItem) == prevset.end()) {
+               prevset[ItemDelimitationItem] = make_elementfield<VR::NN>();
+               have_item_delimitation = true;
+            }
+            if (!have_item_delimitation && itemset.find(ItemDelimitationItem) == itemset.end() &&
+                !(itemset.size() == 1 && itemset.find(SequenceDelimitationItem) != itemset.end())) {
+               itemset[ItemDelimitationItem] = make_elementfield<VR::NN>();
+               have_item_delimitation = true;
+            }
          }
 //         }
 //         if (itemset.find(SequenceDelimitationItem) == itemset.end()) {

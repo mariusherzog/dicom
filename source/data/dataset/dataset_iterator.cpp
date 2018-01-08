@@ -145,9 +145,11 @@ std::map<attribute::tag_type, attribute::elementfield>::iterator dataset_iterato
       nested_set_sizes.top().curr_nestedset_size += cit->second.value_len + 4 + 4;
    }
 
-
+   /// @todo check what happens when the last item in a sequence is another SQ
+   /// -> maybe put else if branch outside as a "standalone" if.
    if (cit->first == SequenceDelimitationItem || cit->first == ItemDelimitationItem
-       || (is_in_nested() && cit->second.value_rep != VR::SQ && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
+//       || (is_in_nested() && (cit->second.value_rep != VR::SQ || dictionary.lookup(cit->first).vr[0] == VR::SQ) && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
+      || (is_in_nested() && cit->second.value_rep != VR::SQ && nested_set_sizes.top().curr_nestedset_size >= nested_set_sizes.top().curr_nestedset_max)) {
       // sequence delimitation item encountered, check if there are more items.
       // Otherwise, step out of the current sequence.
       auto& nes_items = items.top().nested_items_curr;

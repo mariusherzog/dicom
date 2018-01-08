@@ -51,14 +51,15 @@ SCENARIO("Serialization of a dataset with little-endian implicit transfer syntax
 
    GIVEN("A dataset containing a sequence with two items")
    {
-      iod dataset, seq1, seq2;
+      iod dataset, seq1, seq2, seqdel;
       seq1[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
       seq1[{0x0010, 0x0010}] = make_elementfield<VR::PN>("q^test");
       seq1[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>(); // currently needed, remove later
       seq2[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
       seq2[{0x0010, 0x0010}] = make_elementfield<VR::PN>("r^test");
       seq2[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>();
-      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2});
+      seqdel[{0xfffe, 0xe0dd}] = make_elementfield<VR::NI>();
+      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2, seqdel});
 
       WHEN("The dataset is serialized")
       {
@@ -148,14 +149,15 @@ SCENARIO("Serialization of a dataset with little-endian explicit transfer syntax
 
    GIVEN("A dataset containing a sequence with two items")
    {
-      iod dataset, seq1, seq2;
+      iod dataset, seq1, seq2, seqdel;
       seq1[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
       seq1[{0x0010, 0x0010}] = make_elementfield<VR::PN>("q^test");
       seq1[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>(); // currently needed, remove later
       seq2[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
       seq2[{0x0010, 0x0010}] = make_elementfield<VR::PN>("r^test");
       seq2[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>();
-      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2});
+      seqdel[{0xfffe, 0xe0dd}] = make_elementfield<VR::NI>();
+      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2, seqdel});
 
       WHEN("The dataset is serialized")
       {
@@ -245,14 +247,15 @@ SCENARIO("Serialization of a dataset with big-endian explicit transfer syntax", 
 
    GIVEN("A dataset containing a sequence with two items")
    {
-      iod dataset, seq1, seq2;
+      iod dataset, seq1, seq2, seqdel;
       seq1[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
       seq1[{0x0010, 0x0010}] = make_elementfield<VR::PN>("q^test");
       seq1[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>(); // currently needed, remove later
       seq2[{0xfffe, 0xe000}] = make_elementfield<VR::NI>();
       seq2[{0x0010, 0x0010}] = make_elementfield<VR::PN>("r^test");
       seq2[{0xfffe, 0xe00d}] = make_elementfield<VR::NI>();
-      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2});
+      seqdel[{0xfffe, 0xe0dd}] = make_elementfield<VR::NI>();
+      dataset[{0x0040, 0x0275}] = make_elementfield<VR::SQ>(0, {seq1, seq2, seqdel});
 
       WHEN("The dataset is serialized")
       {
