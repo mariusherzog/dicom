@@ -269,22 +269,15 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                }
 
             } else if (tag == ItemDelimitationItem) {
-               auto& itemset = current_sequence.top().back();
-               if (itemset.find(ItemDelimitationItem) == itemset.end()) {
-                  //current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
-               }
-//               current_sequence.top().back()[ItemDelimitationItem]
-//                     = make_elementfield<VR::NN>();
-//               current_sequence.top().push_back(dataset_type {}); // uncomment?
+               // ItemDelimitationItem for this item is set when the next Item
+               // tag is encountered to handle possibly missing
+               // ItemDelimitationItems
             } else if (tag == SequenceDelimitationItem) {
                // sequence delimitation is in a separate, the last, vector
                if (current_sequence.top().size() > 0) {
                   current_sequence.top().push_back(dataset_type {});
-               } else {
-
                }
                current_sequence.top().back()[tag] = make_elementfield<VR::NN>();
-               //positions.pop();
             }
          }
       }
@@ -294,9 +287,6 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
       if (current_sequence.size() > 1) {
          auto& itemset = current_sequence.top().back();
          auto& prevset = *(current_sequence.top().end()-2);
-//         if (itemset.find(ItemDelimitationItem) == itemset.end()) {
-//           &&  (current_sequence.top().size() < 2 || prevset.find(ItemDelimitationItem) == itemset.end())) {
-            //current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
          if (current_sequence.top().size() < 2) {
             current_sequence.top().back()[ItemDelimitationItem] = make_elementfield<VR::NN>();
          } else {
@@ -311,10 +301,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                have_item_delimitation = true;
             }
          }
-//         }
-//         if (itemset.find(SequenceDelimitationItem) == itemset.end()) {
-            current_sequence.top().back()[SequenceDelimitationItem] = make_elementfield<VR::NN>();
-//         }
+         current_sequence.top().back()[SequenceDelimitationItem] = make_elementfield<VR::NN>();
       }
       current_data.pop();
    }
