@@ -244,8 +244,8 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                positions.push(0);
                lasttag.push({tag, undefined_length_sequence ? 0xffffffff : value_len});
             } else {
-               auto multiplicity = get_dictionary().lookup(tag).vm;
-               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, multiplicity, pos);
+               //auto multiplicity = get_dictionary().lookup(tag).vm;
+               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, "*", pos);
                current_sequence.top().back()[tag] = e;
             }
             pos += value_len;

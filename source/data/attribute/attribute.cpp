@@ -45,9 +45,8 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
 {
-   std::size_t printsize = std::min(data.size(), 128ul);
-   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
-   return os;
+   printer pr{os};
+   return boost::apply_visitor(pr, data);
 }
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OW>::type data)

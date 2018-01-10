@@ -148,6 +148,26 @@ static std::vector<unsigned char> encode_byte_array(const std::vector<unsigned c
    return std::vector<unsigned char> {strdata};
 }
 
+class encoder: public boost::static_visitor<std::vector<unsigned char>>
+{
+   public:
+    std::vector<unsigned char> operator()(const encapsulated& encapsulated_data) const
+    {
+       return std::vector<unsigned char>();
+    }
+
+    std::vector<unsigned char> operator()(const std::vector<unsigned char>& data) const
+    {
+       return data;
+    }
+};
+
+
+static std::vector<unsigned char> encode_byte_array(attribute::type_of<VR::OB>::type& data)
+{
+   return boost::apply_visitor(encoder{}, data);
+}
+
 static std::vector<unsigned char> encode_word_array_le(const std::vector<unsigned short>& strdata)
 {
    std::vector<unsigned char> buf;
@@ -588,7 +608,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
          break;
       }
       case VR::OB: {
-         std::vector<unsigned char> ob;
+         typename type_of<VR::OB>::type ob;
          get_value_field<VR::OB>(attr, ob);
          data = convhelper::encode_byte_array(ob);
          break;

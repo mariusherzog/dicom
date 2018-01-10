@@ -49,7 +49,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("1.3.6.1.4.1.5962.99.1.2280943358.716200484.1363785608958.363.0.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("20161205161312.e0t0oubi.s30.17.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
