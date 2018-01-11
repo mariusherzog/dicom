@@ -114,7 +114,7 @@ class transfer_processor
 
       virtual ~transfer_processor();
 
-   private:
+   protected:
       /**
        * @brief serialize_attribute is overriden by a subclass to implement
        *        transfer-syntax specific serialization of data.
@@ -150,7 +150,7 @@ class transfer_processor
        */
       attribute::VR deserialize_VR(std::vector<unsigned char> dataset,
                                    attribute::tag_type tag,
-                                   std::size_t& pos) const;
+                                   std::size_t& pos)  const;
 
       /**
        * @brief deserialize_length deserializes and returns the length of the
@@ -272,6 +272,24 @@ class big_endian_explicit: public transfer_processor
                             std::size_t pos) const;
 };
 
+
+class encapsulated: public little_endian_explicit
+{
+   public:
+      explicit encapsulated(dictionary::dictionaries& dict);
+
+   private:
+      virtual std::vector<unsigned char>
+      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
+
+      virtual attribute::elementfield
+      deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::ENDIANNESS end,
+                            std::size_t len, attribute::VR vr, std::string vm,
+                            std::size_t pos) const;
+
+      ::encapsulated deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos) const;
+};
 
 
 /**

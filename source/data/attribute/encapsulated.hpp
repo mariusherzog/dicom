@@ -8,8 +8,16 @@
 
 class encapsulated
 {
+   private:
+      std::vector<std::vector<unsigned char>> fragments;
+
    public:
       encapsulated();
+
+      //put_fragment(std::size_t index, std::vector<unsigned char> data);
+
+      void push_fragment(std::vector<unsigned char> data);
+
 };
 
 class byte_length : public boost::static_visitor<std::size_t>
@@ -18,7 +26,7 @@ public:
 
     std::size_t operator()(const encapsulated& encapsulated_data) const
     {
-        return 0;
+        return 920080;
     }
 
     std::size_t operator()(const std::vector<unsigned char>& str) const

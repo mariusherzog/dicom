@@ -27,6 +27,8 @@ namespace dicom
 namespace filesystem
 {
 
+using namespace dicom::data::attribute;
+
 dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    dataset_ {dataset},
    preamble {0},
@@ -86,6 +88,13 @@ std::istream& dicomfile::read_dataset(std::istream &is)
 
    this->filemetaheader = transfer_proc->deserialize(metaheader_bytes);
 
+   std::string transfer_syntax;
+   get_value_field<VR::UI>(filemetaheader[{0x0002, 0x0010}], transfer_syntax);
+
+   if (transfer_syntax == "1.2.840.10008.1.2.4.70") {
+      transfer_proc = std::unique_ptr<transfer_processor>(new data::dataset::encapsulated{dict});
+   }
+
    std::vector<unsigned char> bytes(in, std::istreambuf_iterator<char>());
    dataset_ = transfer_proc->deserialize(bytes);
    return is;
@@ -109,7 +118,6 @@ std::istream& operator>>(std::istream& is, dicomfile& dicom)
 
 void dicomfile::create_filemetaheader()
 {
-   using namespace dicom::data::attribute;
    filemetaheader[{0x0002, 0x0001}] = make_elementfield<VR::OB>({0x00, 0x01});
    filemetaheader[{0x0002, 0x0002}] = make_elementfield<VR::UI>("1.1.1.1");
    filemetaheader[{0x0002, 0x0003}] = make_elementfield<VR::UI>("1.1.1.1");

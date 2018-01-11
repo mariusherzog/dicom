@@ -247,8 +247,14 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                //auto multiplicity = get_dictionary().lookup(tag).vm;
                elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, "*", pos);
                current_sequence.top().back()[tag] = e;
+
+               if (repr == VR::OB && value_len == 0xffffffff) {
+                  value_len = e.value_len;
+               }
             }
+
             pos += value_len;
+
          } else {
             // Put Items and respective DelimitationItems into the deserialized
             // set.
@@ -614,6 +620,79 @@ elementfield big_endian_explicit::deserialize_attribute(std::vector<unsigned cha
                                                            std::size_t pos) const
 {
    return decode_value_field(data, end, len, vr, vm, pos);
+}
+
+
+
+encapsulated::encapsulated(dictionary::dictionaries& dict):
+   little_endian_explicit {dict}
+{
+
+}
+
+std::vector<unsigned char> encapsulated::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
+{
+   return encode_value_field(e, end, vr);
+}
+
+elementfield encapsulated::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
+                                                           std::size_t len, VR vr, std::string vm,
+                                                           std::size_t pos) const
+{
+   if (vr == VR::OB && len == 0xffffffff) {
+      //::encapsulated encapsulated_data;
+      auto encapsulated_data = deserialize_fragments(data, pos);
+      typename type_of<VR::OB>::type ob_data {encapsulated_data};
+      return make_elementfield<VR::OB>(920080, ob_data);
+   } else {
+      return decode_value_field(data, end, len, vr, vm, pos);
+   }
+}
+
+::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos) const
+{
+   ::encapsulated encapsulated_data;
+   tag_type tag = decode_tag(data, pos, ENDIANNESS::LITTLE);
+   auto beg = pos;
+
+   pos += 4;
+   if (tag == Item) {
+      // read basic offset table
+      auto length = deserialize_length(data, tag, VR::NI, pos);
+      if (length == 0) {
+         // implicit length
+         //pos += 4;
+         while (tag != SequenceDelimitationItem) {
+            pos += 4;
+            // shall be Item
+            auto item_length = deserialize_length(data, tag, VR::NI, pos);
+            pos += 4;
+            encapsulated_data.push_fragment(std::vector<unsigned char>(data.begin()+pos, data.begin()+pos+item_length));
+            pos += item_length;
+
+            // read the next tag
+            tag = decode_tag(data, pos, endianness);
+         }
+      } else {
+         // explicit length
+         std::size_t offset_table_length = length + 4 +4;
+         for (auto i=0; i<length; i += 4) {
+            auto offset = deserialize_length(data, tag, VR::NI, pos);
+
+            auto itempos = beg + offset + offset_table_length;
+            tag = decode_tag(data, itempos, endianness);
+            itempos += 4;
+            auto item_length = deserialize_length(data, tag, VR::NI, itempos);
+            encapsulated_data.push_fragment(std::vector<unsigned char>(data.begin()+itempos, data.begin()+itempos+item_length));
+
+            //pos += 4;
+         }
+
+         //pos += 4;
+      }
+   }
+
+   return encapsulated_data;
 }
 
 
