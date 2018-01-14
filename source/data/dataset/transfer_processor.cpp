@@ -675,20 +675,46 @@ elementfield encapsulated::deserialize_attribute(std::vector<unsigned char>& dat
          }
       } else {
          // explicit length
+         ::encapsulated encapsulated_data(::encapsulated::OFFSET_TABLE_INFO::COMPRESSED_FRAMES);
+
          std::size_t offset_table_length = length + 4 +4;
+
          for (auto i=0; i<length; i += 4) {
             auto offset = deserialize_length(data, tag, VR::NI, pos);
 
-            auto itempos = beg + offset + offset_table_length;
-            tag = decode_tag(data, itempos, endianness);
-            itempos += 4;
-            auto item_length = deserialize_length(data, tag, VR::NI, itempos);
-            encapsulated_data.push_fragment(std::vector<unsigned char>(data.begin()+itempos, data.begin()+itempos+item_length));
+            encapsulated_data.mark_compressed_frame_start();
 
-            //pos += 4;
+            auto itempos = beg + offset + offset_table_length;
+            std::size_t next;
+            if (i < length-4) {
+               auto nextpos = pos; // pos was already increment by the last call to deserialize_length
+               next = beg + deserialize_length(data, tag, VR::NI, nextpos) + offset_table_length;
+            }
+            while (itempos < next || i == length-4) {
+               tag = decode_tag(data, itempos, endianness);
+               itempos += 4;
+               auto item_length = deserialize_length(data, tag, VR::NI, itempos);
+
+               encapsulated_data.push_fragment(std::vector<unsigned char>(data.begin()+itempos, data.begin()+itempos+item_length));
+               itempos += item_length;
+
+               if (i == length-4) {
+                  pos = itempos;
+                  break;
+               }
+               itempos += 4;
+            }
          }
 
+         // attempt reading sequence delimitation item
+         tag = decode_tag(data, pos, endianness);
+         if (tag != SequenceDelimitationItem) {
+
+         }
+         auto item_length = deserialize_length(data, tag, VR::NI, pos);
+
          //pos += 4;
+         return encapsulated_data;
       }
    }
 

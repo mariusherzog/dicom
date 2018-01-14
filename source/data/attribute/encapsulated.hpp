@@ -8,15 +8,37 @@
 
 class encapsulated
 {
+   public:
+      enum class OFFSET_TABLE_INFO
+      {
+         COMPRESSED_FRAMES,
+         FRAGMENTS
+      };
+
    private:
+      OFFSET_TABLE_INFO offset_table;
       std::vector<std::vector<unsigned char>> fragments;
+      std::vector<std::size_t> compressed_frame_indices;
 
    public:
-      encapsulated();
+      encapsulated(OFFSET_TABLE_INFO offset_table = OFFSET_TABLE_INFO::FRAGMENTS);
 
-      //put_fragment(std::size_t index, std::vector<unsigned char> data);
+      bool have_compressed_frame_info() const;
 
+      /**
+       * @brief push_fragment adds another fragment to the encapsulated data
+       * @param data byte array of fragment data
+       */
       void push_fragment(std::vector<unsigned char> data);
+
+      std::vector<unsigned char> get_fragment(std::size_t index);
+
+
+      /**
+       * @brief mark_compressed_frame_start marks the beginning of a compressed
+       *        frame consisting of one or more fragments
+       */
+      void mark_compressed_frame_start();
 
 };
 
