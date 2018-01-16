@@ -24,6 +24,12 @@ namespace data
 namespace dataset
 {
 
+class transfer_processor;
+
+std::vector<std::string> supported_transfer_syntaxes();
+
+std::unique_ptr<transfer_processor> make_transfer_processor(std::string transfer_syntax_uid, dictionary::dictionaries& dict);
+
 /**
  * @brief The transfer_processor class defines the interface for serializing
  *        and deserializing attribute sets (IODs), honoring the transfer

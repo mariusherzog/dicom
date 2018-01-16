@@ -54,6 +54,7 @@ std::ostream& dicomfile::write_dataset(std::ostream &os)
 
 std::istream& dicomfile::read_dataset(std::istream &is)
 {
+   using namespace dicom::data::attribute;
    std::istreambuf_iterator<char> in(is);
    std::copy_n(in, 128, std::begin(preamble));
    std::advance(in, 1);
@@ -85,6 +86,13 @@ std::istream& dicomfile::read_dataset(std::istream &is)
    std::advance(in, 1);
 
    this->filemetaheader = transfer_proc->deserialize(metaheader_bytes);
+
+   try {
+      std::string transfer_syntax;
+      get_value_field<VR::UI>(filemetaheader[{0x0002, 0x0010}], transfer_syntax);
+      transfer_proc = make_transfer_processor(transfer_syntax, dict);
+   } catch (std::exception& error) {
+   }
 
    std::vector<unsigned char> bytes(in, std::istreambuf_iterator<char>());
    dataset_ = transfer_proc->deserialize(bytes);

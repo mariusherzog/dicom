@@ -158,12 +158,14 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
    sc.inject_conf(upperlayer::TYPE::A_ABORT,
              std::bind(&dimse_pm::sent_abort, this, _1, _2));
 
-   transfer_processors["1.2.840.10008.1.2"]
-         = std::unique_ptr<transfer_processor> {new little_endian_implicit(dict)};
-   transfer_processors["1.2.840.10008.1.2.1"]
-         = std::unique_ptr<transfer_processor> {new little_endian_explicit(dict)};
-   transfer_processors["1.2.840.10008.1.2.2"]
-         = std::unique_ptr<transfer_processor> {new big_endian_explicit(dict)};
+   for (const auto& transfer_syntax : supported_transfer_syntaxes()) {
+      transfer_processors[transfer_syntax]
+            = make_transfer_processor(transfer_syntax, dict);
+
+      BOOST_LOG_SEV(logger, info)
+            << "Added supported transfer processor for transfer syntax "
+            << transfer_syntax;
+   }
 }
 
 dimse_pm::~dimse_pm()
