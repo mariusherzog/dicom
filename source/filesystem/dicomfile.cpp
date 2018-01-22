@@ -32,6 +32,7 @@ dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    preamble {0},
    prefix {'D', 'I', 'C', 'M'},
    dict {dict},
+   metaheader_proc {new little_endian_explicit(dict)},
    transfer_proc {new little_endian_explicit(dict)}
 {
    create_filemetaheader();
@@ -43,7 +44,7 @@ std::ostream& dicomfile::write_dataset(std::ostream &os)
    std::copy(std::begin(preamble), std::end(preamble), out);
    std::copy(std::begin(prefix), std::end(prefix), out);
 
-   auto headerbytes = transfer_proc->serialize(filemetaheader);
+   auto headerbytes = metaheader_proc->serialize(filemetaheader);
    std::copy(std::begin(headerbytes), std::end(headerbytes), out);
 
    auto bytes = transfer_proc->serialize(dataset_);
@@ -85,7 +86,7 @@ std::istream& dicomfile::read_dataset(std::istream &is)
    std::copy_n(in, metaheader_length, std::back_inserter(metaheader_bytes));
    std::advance(in, 1);
 
-   this->filemetaheader = transfer_proc->deserialize(metaheader_bytes);
+   this->filemetaheader = metaheader_proc->deserialize(metaheader_bytes);
 
    try {
       std::string transfer_syntax;

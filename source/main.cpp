@@ -49,12 +49,12 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("1.3.6.1.4.1.5962.99.1.2280943358.716200484.1363785608958.363.0.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("out.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
          auto& set = file.dataset();
-         set[{0x0080, 0x0080}] = make_elementfield<VR::OF>({1.3, 9.9, 2});
+         set[{0x0080, 0x0080}] = make_elementfield<VR::LO>( vmtype<std::string> {{"*"},{"awfs", "asd"}});
 
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;
