@@ -34,7 +34,7 @@ dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    preamble {0},
    prefix {'D', 'I', 'C', 'M'},
    dict {dict},
-   transfer_proc {new little_endian_explicit(dict)}
+   transfer_proc {new dicom::data::dataset::encapsulated(dict)}
 {
    create_filemetaheader();
 }

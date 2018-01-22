@@ -25,6 +25,8 @@ class encapsulated
 
       bool have_compressed_frame_info() const;
 
+      std::size_t fragment_count() const;
+
       /**
        * @brief push_fragment adds another fragment to the encapsulated data
        * @param data byte array of fragment data
@@ -32,6 +34,8 @@ class encapsulated
       void push_fragment(std::vector<unsigned char> data);
 
       std::vector<unsigned char> get_fragment(std::size_t index);
+
+      bool marks_frame_start(std::size_t index) const;
 
 
       /**

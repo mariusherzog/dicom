@@ -2,6 +2,7 @@
 
 #include <stack>
 #include <numeric>
+#include <vector>
 
 #include <boost/log/trivial.hpp>
 
@@ -359,7 +360,7 @@ std::size_t transfer_processor::deserialize_length(std::vector<unsigned char> da
 }
 
 
-std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield e, ENDIANNESS end, VR vr) const
+std::vector<unsigned char> commandset_processor::serialize_attribute(elementfield& e, ENDIANNESS end, VR vr) const
 {
    return encode_value_field(e, end, vr);
 }
@@ -371,7 +372,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
    std::vector<unsigned char> stream;
    bool explicit_length_item = true;
    bool explicit_length_sequence = true;
-   for (const auto attr : dataset_iterator_adaptor(dataset)) {
+   for (auto attr : dataset_iterator_adaptor(dataset)) {
       if (attr.first == SequenceDelimitationItem) {
          if (!explicit_length_sequence) {
             auto tag = encode_tag(attr.first, endianness);
@@ -404,18 +405,20 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
          repr = get_vr(attr.first);
       }
 
-      std::size_t value_length = attr.second.value_len;
-      auto data = serialize_attribute(attr.second, endianness, repr);
-      if (data.size() != attr.second.value_len) {
+      auto& value_field = attr.second;
+      auto data = serialize_attribute(value_field, endianness, repr);
+      std::size_t value_length = value_field.value_len;
+      if (data.size() != value_field.value_len
+          && value_field.value_len != 0xffffffff) {
          BOOST_LOG_SEV(logger, warning) << "Mismatched value lengths for tag "
                                         << attr.first << ": Expected "
-                                        << attr.second.value_len << ", actual "
+                                        << value_field.value_len << ", actual "
                                         << data.size();
 
-         if (attr.second.value_rep.is_initialized() &&
-             *attr.second.value_rep != VR::SQ &&
-             *attr.second.value_rep != VR::NN &&
-             *attr.second.value_rep != VR::NI) {
+         if (value_field.value_rep.is_initialized() &&
+             *value_field.value_rep != VR::SQ &&
+             *value_field.value_rep != VR::NN &&
+             *value_field.value_rep != VR::NI) {
             value_length = data.size();
          }
       }
@@ -531,7 +534,7 @@ little_endian_implicit::little_endian_implicit(const little_endian_implicit& oth
 
 }
 
-std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield e, ENDIANNESS end, attribute::VR vr) const
+std::vector<unsigned char> little_endian_implicit::serialize_attribute(elementfield& e, ENDIANNESS end, attribute::VR vr) const
 {
    return encode_value_field(e, end, vr);
 }
@@ -577,7 +580,7 @@ little_endian_explicit::little_endian_explicit(dictionary::dictionaries& dict):
 
 }
 
-std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
+std::vector<unsigned char> little_endian_explicit::serialize_attribute(elementfield& e, attribute::ENDIANNESS end, VR vr) const
 {
    return encode_value_field(e, end, vr);
 }
@@ -610,7 +613,7 @@ big_endian_explicit::big_endian_explicit(dictionary::dictionaries& dict):
 
 }
 
-std::vector<unsigned char> big_endian_explicit::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
+std::vector<unsigned char> big_endian_explicit::serialize_attribute(elementfield& e, attribute::ENDIANNESS end, VR vr) const
 {
    return encode_value_field(e, end, vr);
 }
@@ -630,9 +633,21 @@ encapsulated::encapsulated(dictionary::dictionaries& dict):
 
 }
 
-std::vector<unsigned char> encapsulated::serialize_attribute(elementfield e, attribute::ENDIANNESS end, VR vr) const
+std::vector<unsigned char> encapsulated::serialize_attribute(elementfield& e, attribute::ENDIANNESS end, VR vr) const
 {
-   return encode_value_field(e, end, vr);
+   if (vr == VR::OB) {
+      boost::variant<std::vector<unsigned char>, ::encapsulated> data;
+      get_value_field<VR::OB>(e, data);
+      if (data.type() == typeid(::encapsulated)) {
+         e.value_len = 0xffffffff;
+         auto encapsulated = boost::get<::encapsulated>(data);
+         return serialize_fragments(encapsulated);
+      } else {
+         return encode_value_field(e, end, vr);
+      }
+   } else {
+      return encode_value_field(e, end, vr);
+   }
 }
 
 elementfield encapsulated::deserialize_attribute(std::vector<unsigned char>& data, ENDIANNESS end,
@@ -716,6 +731,56 @@ elementfield encapsulated::deserialize_attribute(std::vector<unsigned char>& dat
          //pos += 4;
          return encapsulated_data;
       }
+   }
+
+   return encapsulated_data;
+}
+
+std::vector<unsigned char> encapsulated::serialize_fragments(::encapsulated data) const
+{
+   std::vector<unsigned char> encapsulated_data;
+   if (data.have_compressed_frame_info()) {
+      // write basic offset table
+      std::vector<unsigned char> offset_table;
+      std::size_t accu = 0;
+      for (int i=0; i<data.fragment_count(); ++i) {
+         if (data.marks_frame_start(i)) {
+            auto frag_len = encode_len(4, accu, endianness);
+            offset_table.insert(offset_table.end(), std::begin(frag_len), std::end(frag_len));
+            //accu = 0;
+         } else {
+         }
+         accu += 4;
+         accu += 4;
+         const auto& fragment = data.get_fragment(i);
+         accu += fragment.size();
+      }
+
+      auto offset_table_entries = encode_len(4, offset_table.size(), endianness);
+      auto item_tag = encode_tag(Item, endianness);
+      encapsulated_data.insert(encapsulated_data.end(), std::begin(item_tag), std::end(item_tag));
+      encapsulated_data.insert(encapsulated_data.end(), std::begin(offset_table_entries), std::end(offset_table_entries));
+
+      std::copy(std::begin(offset_table), std::end(offset_table), std::back_inserter(encapsulated_data));
+      //const tag_type item_tag = Item;
+      // now the actual values
+      for (int i=0; i<data.fragment_count(); ++i) {
+         const auto& fragment = data.get_fragment(i);
+
+         auto item_tag = encode_tag(Item, endianness);
+         encapsulated_data.insert(encapsulated_data.end(), std::begin(item_tag), std::end(item_tag));
+         auto frag_len = encode_len(4, fragment.size(), endianness);
+         encapsulated_data.insert(encapsulated_data.end(), std::begin(frag_len), std::end(frag_len));
+         std::copy(std::begin(fragment), std::end(fragment), std::back_inserter(encapsulated_data));
+      }
+
+      // sequence delimitation item
+      auto seq_del = encode_tag(SequenceDelimitationItem, endianness);
+      auto zero_len = encode_len(4, 0, endianness);
+      encapsulated_data.insert(encapsulated_data.end(), std::begin(seq_del), std::end(seq_del));
+      encapsulated_data.insert(encapsulated_data.end(), std::begin(zero_len), std::end(zero_len));
+   } else {
+
    }
 
    return encapsulated_data;

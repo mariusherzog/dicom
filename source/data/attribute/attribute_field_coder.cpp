@@ -610,7 +610,8 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
       case VR::OB: {
          typename type_of<VR::OB>::type ob;
          get_value_field<VR::OB>(attr, ob);
-         data = convhelper::encode_byte_array(ob);
+         std::vector<unsigned char> ob_data = boost::get<std::vector<unsigned char>>(ob);
+         data = convhelper::encode_byte_array(ob_data);
          break;
       }
       case VR::OD: {
