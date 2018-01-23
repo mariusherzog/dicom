@@ -288,7 +288,7 @@ class encapsulated: public little_endian_explicit
                             std::size_t len, attribute::VR vr, std::string vm,
                             std::size_t pos) const;
 
-      attribute::encapsulated deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos) const;
+      attribute::encapsulated deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos, std::size_t& outsize) const;
 
       std::vector<unsigned char> serialize_fragments(attribute::encapsulated data) const;
 };

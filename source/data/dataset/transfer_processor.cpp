@@ -656,19 +656,20 @@ elementfield encapsulated::deserialize_attribute(std::vector<unsigned char>& dat
 {
    if (vr == VR::OB && len == 0xffffffff) {
       //::encapsulated encapsulated_data;
-      auto encapsulated_data = deserialize_fragments(data, pos);
+      std::size_t fragment_size = 0;
+      auto encapsulated_data = deserialize_fragments(data, pos, fragment_size);
       typename type_of<VR::OB>::type ob_data {encapsulated_data};
-      return make_elementfield<VR::OB>(920080, ob_data);
+      return make_elementfield<VR::OB>(fragment_size, ob_data);
    } else {
       return decode_value_field(data, end, len, vr, vm, pos);
    }
 }
 
-attribute::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos) const
+attribute::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos, std::size_t& outsize) const
 {
    attribute::encapsulated encapsulated_data;
    tag_type tag = decode_tag(data, pos, ENDIANNESS::LITTLE);
-   auto beg = pos;
+   std::size_t beg = pos;
 
    pos += 4;
    if (tag == Item) {
@@ -676,33 +677,35 @@ attribute::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned
       auto length = deserialize_length(data, tag, VR::NI, pos);
       if (length == 0) {
          // implicit length
-         //pos += 4;
+         //pos += 4; // the length zero
          while (tag != SequenceDelimitationItem) {
-            pos += 4;
+            pos += 4; // skip item tag
             // shall be Item
             auto item_length = deserialize_length(data, tag, VR::NI, pos);
-            pos += 4;
+            //pos += 4; // skip length
             encapsulated_data.push_fragment(std::vector<unsigned char>(data.begin()+pos, data.begin()+pos+item_length));
             pos += item_length;
 
             // read the next tag
             tag = decode_tag(data, pos, endianness);
          }
+         pos += 4;
+         pos += 4;
       } else {
          // explicit length
          attribute::encapsulated encapsulated_data(attribute::encapsulated::OFFSET_TABLE_INFO::COMPRESSED_FRAMES);
 
          std::size_t offset_table_length = length + 4 +4;
 
-         for (auto i=0; i<length; i += 4) {
+         for (std::size_t i=0; i<length; i += 4) {
             auto offset = deserialize_length(data, tag, VR::NI, pos);
 
             encapsulated_data.mark_compressed_frame_start();
 
-            auto itempos = beg + offset + offset_table_length;
-            std::size_t next;
+            std::size_t itempos = beg + offset + offset_table_length;
+            std::size_t next = 0;
             if (i < length-4) {
-               auto nextpos = pos; // pos was already increment by the last call to deserialize_length
+               std::size_t nextpos = pos; // pos was already increment by the last call to deserialize_length
                next = beg + deserialize_length(data, tag, VR::NI, nextpos) + offset_table_length;
             }
             while (itempos < next || i == length-4) {
@@ -723,16 +726,21 @@ attribute::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned
 
          // attempt reading sequence delimitation item
          tag = decode_tag(data, pos, endianness);
+         pos += 4;
          if (tag != SequenceDelimitationItem) {
 
          }
          auto item_length = deserialize_length(data, tag, VR::NI, pos);
 
          //pos += 4;
+         outsize = pos - beg;
+         assert(outsize > 0);
          return encapsulated_data;
       }
    }
 
+   outsize = pos - beg;
+   assert(outsize > 0);
    return encapsulated_data;
 }
 
@@ -786,7 +794,7 @@ std::vector<unsigned char> encapsulated::serialize_fragments(attribute::encapsul
       encapsulated_data.insert(encapsulated_data.end(), std::begin(item_tag), std::end(item_tag));
       encapsulated_data.insert(encapsulated_data.end(), std::begin(offset_table_entries), std::end(offset_table_entries));
 
-      for (int i=0; i<data.fragment_count(); ++i) {
+      for (std::size_t i=0; i<data.fragment_count(); ++i) {
          const auto& fragment = data.get_fragment(i);
 
          auto item_tag = encode_tag(Item, endianness);
