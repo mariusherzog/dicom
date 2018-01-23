@@ -1,5 +1,15 @@
 #include "encapsulated.hpp"
 
+namespace dicom
+{
+
+namespace data
+{
+
+namespace attribute
+{
+
+
 encapsulated::encapsulated(OFFSET_TABLE_INFO offset_table):
    offset_table {offset_table}
 {
@@ -37,4 +47,10 @@ void encapsulated::mark_compressed_frame_start()
       throw std::runtime_error("Encapsulated data object has no frame information!");
    }
    compressed_frame_indices.push_back(fragments.size());
+}
+
+}
+
+}
+
 }

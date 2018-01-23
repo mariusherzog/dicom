@@ -6,6 +6,20 @@
 
 #include "boost/variant.hpp"
 
+namespace dicom
+{
+
+namespace data
+{
+
+namespace attribute
+{
+
+
+/**
+ * @brief The encapsulated class manages encapsulated data consisting of
+ *        fragments and possibly information about compressed frames
+ */
 class encapsulated
 {
    public:
@@ -23,8 +37,17 @@ class encapsulated
    public:
       encapsulated(OFFSET_TABLE_INFO offset_table = OFFSET_TABLE_INFO::FRAGMENTS);
 
+      /**
+       * @brief have_compressed_frame_info checks whether there is information
+       *        of compressed frames
+       * @return true if compressed frame info exists
+       */
       bool have_compressed_frame_info() const;
 
+      /**
+       * @brief fragment_count returns the number of fragments
+       * @return number of fragments
+       */
       std::size_t fragment_count() const;
 
       /**
@@ -33,8 +56,19 @@ class encapsulated
        */
       void push_fragment(std::vector<unsigned char> data);
 
+      /**
+       * @brief get_fragment retrieves the fragment at index
+       * @param index fragment index to retrieve
+       * @return raw fragment byte data
+       */
       std::vector<unsigned char> get_fragment(std::size_t index);
 
+      /**
+       * @brief marks_frame_start checks whether the fragment at index is the
+       *        beginning of a compressed frame
+       * @param index fragment index
+       * @return true if fragment is start of a frame, false otherwise
+       */
       bool marks_frame_start(std::size_t index) const;
 
 
@@ -45,6 +79,8 @@ class encapsulated
       void mark_compressed_frame_start();
 
 };
+
+
 
 class byte_length : public boost::static_visitor<std::size_t>
 {
@@ -86,5 +122,11 @@ public:
     }
 
 };
+
+}
+
+}
+
+}
 
 #endif // ENCAPSULATED_HPP
