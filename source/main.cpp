@@ -49,7 +49,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("XA-MONO2-8-12x-catheter.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("XA-MONO2-8-12x-catheter-wooft.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 

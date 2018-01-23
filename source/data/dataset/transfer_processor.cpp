@@ -3,6 +3,8 @@
 #include <stack>
 #include <numeric>
 #include <vector>
+#include <string>
+#include <algorithm>
 
 #include <boost/log/trivial.hpp>
 
@@ -626,7 +628,6 @@ elementfield big_endian_explicit::deserialize_attribute(std::vector<unsigned cha
 }
 
 
-
 encapsulated::encapsulated(dictionary::dictionaries& dict):
    little_endian_explicit {dict}
 {
@@ -812,6 +813,40 @@ std::vector<unsigned char> encapsulated::serialize_fragments(attribute::encapsul
    }
 
    return encapsulated_data;
+}
+
+
+std::vector<std::string> supported_transfer_syntaxes()
+{
+   return std::vector<std::string>
+   {
+      "1.2.840.10008.1.2",
+      "1.2.840.10008.1.2.1",
+      "1.2.840.10008.1.2.2",
+      "1.2.840.10008.1.2.4.70"
+   };
+}
+
+std::unique_ptr<transfer_processor> make_transfer_processor(std::string transfer_syntax_uid, dictionary::dictionaries& dict)
+{
+   auto supported = supported_transfer_syntaxes();
+   transfer_syntax_uid.erase(std::remove_if(std::begin(transfer_syntax_uid), std::end(transfer_syntax_uid), [](char c) {return c==0;}), std::end(transfer_syntax_uid));
+   if (std::find(std::begin(supported), std::end(supported), transfer_syntax_uid) != supported.end()) {
+      if (transfer_syntax_uid == "1.2.840.10008.1.2") {
+         return std::unique_ptr<transfer_processor>(new little_endian_implicit {dict});
+      }
+      if (transfer_syntax_uid == "1.2.840.10008.1.2.1") {
+         return std::unique_ptr<transfer_processor>(new little_endian_explicit {dict});
+      }
+      if (transfer_syntax_uid == "1.2.840.10008.1.2.2") {
+         return std::unique_ptr<transfer_processor>(new big_endian_explicit {dict});
+      }
+      if (transfer_syntax_uid == "1.2.840.10008.1.2.4.70") {
+         return std::unique_ptr<transfer_processor>(new encapsulated {dict});
+      }
+   } else {
+      throw std::runtime_error("unsupported transfer syntax " + transfer_syntax_uid);
+   }
 }
 
 

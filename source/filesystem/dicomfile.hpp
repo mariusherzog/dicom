@@ -30,6 +30,7 @@ class dicomfile
       std::array<unsigned char, 4> prefix;
 
       dicom::data::dictionary::dictionaries& dict;
+      std::unique_ptr<dicom::data::dataset::transfer_processor> metaheader_proc;
       std::unique_ptr<dicom::data::dataset::transfer_processor> transfer_proc;
 
       /**

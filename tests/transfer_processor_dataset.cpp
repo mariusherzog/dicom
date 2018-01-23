@@ -518,3 +518,45 @@ SCENARIO("Deserialization of a dataset with big-endian explicit transfer syntax"
       }
    }
 }
+
+SCENARIO("Creation of transfer processors")
+{
+   auto& dictionaries = dicom::data::dictionary::get_default_dictionaries();
+
+   WHEN("A little endian implicit transfer processor is requested")
+   {
+      auto lei_tp = make_transfer_processor("1.2.840.10008.1.2", dictionaries);
+
+      THEN("The correct instance is created")
+      {
+         REQUIRE(lei_tp->get_transfer_syntax() == "1.2.840.10008.1.2");
+      }
+   }
+   AND_WHEN("A little endian explicit transfer processor is requested")
+   {
+      auto lee_tp = make_transfer_processor("1.2.840.10008.1.2.1", dictionaries);
+
+      THEN("The correct instance is created")
+      {
+         REQUIRE(lee_tp->get_transfer_syntax() == "1.2.840.10008.1.2.1");
+      }
+   }
+   AND_WHEN("A big endian explicit transfer processor is requested")
+   {
+      auto bee_tp = make_transfer_processor("1.2.840.10008.1.2.2", dictionaries);
+
+      THEN("The correct instance is created")
+      {
+         REQUIRE(bee_tp->get_transfer_syntax() == "1.2.840.10008.1.2.2");
+      }
+   }
+   AND_WHEN("A unknown transfer processor is requested")
+   {
+      std::string unsupported = "1.1.1.1";
+      THEN("An exception is thrown")
+      {
+         REQUIRE_THROWS(make_transfer_processor(unsupported, dictionaries));
+      }
+   }
+}
+
