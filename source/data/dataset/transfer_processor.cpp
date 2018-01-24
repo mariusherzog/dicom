@@ -696,32 +696,35 @@ attribute::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned
          // explicit length
          attribute::encapsulated encapsulated_data(attribute::encapsulated::OFFSET_TABLE_INFO::COMPRESSED_FRAMES);
 
-         std::size_t offset_table_length = length + 4 +4;
+         std::size_t offset_table_length = length + 4 + 4;
 
+         std::size_t next = 0;
          for (std::size_t i=0; i<length; i += 4) {
             auto offset = deserialize_length(data, tag, VR::NI, pos);
 
             encapsulated_data.mark_compressed_frame_start();
 
             std::size_t itempos = beg + offset + offset_table_length;
-            std::size_t next = 0;
             if (i < length-4) {
                std::size_t nextpos = pos; // pos was already increment by the last call to deserialize_length
                next = beg + deserialize_length(data, tag, VR::NI, nextpos) + offset_table_length;
             }
             while (itempos < next || i == length-4) {
                tag = decode_tag(data, itempos, endianness);
+               if (tag == SequenceDelimitationItem) {
+                  pos = itempos;
+                  break;
+               }
                itempos += 4;
                auto item_length = deserialize_length(data, tag, VR::NI, itempos);
 
                encapsulated_data.push_fragment(std::vector<unsigned char>(data.begin()+itempos, data.begin()+itempos+item_length));
                itempos += item_length;
 
-               if (i == length-4) {
+               if (i == length-4 && tag != Item) {
                   pos = itempos;
                   break;
                }
-               itempos += 4;
             }
          }
 
@@ -823,7 +826,8 @@ std::vector<std::string> supported_transfer_syntaxes()
       "1.2.840.10008.1.2",
       "1.2.840.10008.1.2.1",
       "1.2.840.10008.1.2.2",
-      "1.2.840.10008.1.2.4.70"
+      "1.2.840.10008.1.2.4.70",
+      "1.2.840.10008.1.2.4.57"
    };
 }
 
@@ -841,7 +845,8 @@ std::unique_ptr<transfer_processor> make_transfer_processor(std::string transfer
       if (transfer_syntax_uid == "1.2.840.10008.1.2.2") {
          return std::unique_ptr<transfer_processor>(new big_endian_explicit {dict});
       }
-      if (transfer_syntax_uid == "1.2.840.10008.1.2.4.70") {
+      if (transfer_syntax_uid == "1.2.840.10008.1.2.4.70" ||
+          transfer_syntax_uid == "1.2.840.10008.1.2.4.57") {
          return std::unique_ptr<transfer_processor>(new encapsulated {dict});
       }
    } else {
