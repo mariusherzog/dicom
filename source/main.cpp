@@ -49,12 +49,12 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("out.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("XA-MONO2-8-12x-catheter10kb.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
          auto& set = file.dataset();
-         set[{0x0080, 0x0080}] = make_elementfield<VR::LO>( vmtype<std::string> {{"*"},{"awfs", "asd"}});
+//         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
 
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;

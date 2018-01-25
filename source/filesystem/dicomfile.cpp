@@ -27,6 +27,8 @@ namespace dicom
 namespace filesystem
 {
 
+using namespace dicom::data::attribute;
+
 dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    dataset_ {dataset},
    preamble {0},
@@ -118,7 +120,6 @@ std::istream& operator>>(std::istream& is, dicomfile& dicom)
 
 void dicomfile::create_filemetaheader()
 {
-   using namespace dicom::data::attribute;
    filemetaheader[{0x0002, 0x0001}] = make_elementfield<VR::OB>({0x00, 0x01});
    filemetaheader[{0x0002, 0x0002}] = make_elementfield<VR::UI>("1.1.1.1");
    filemetaheader[{0x0002, 0x0003}] = make_elementfield<VR::UI>("1.1.1.1");

@@ -120,7 +120,7 @@ class transfer_processor
 
       virtual ~transfer_processor();
 
-   private:
+   protected:
       /**
        * @brief serialize_attribute is overriden by a subclass to implement
        *        transfer-syntax specific serialization of data.
@@ -129,7 +129,7 @@ class transfer_processor
        * @return vector of bytes with serialized data
        */
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const = 0;
+      serialize_attribute(attribute::elementfield& e, attribute::ENDIANNESS end, attribute::VR vr) const = 0;
 
       /**
        * @brief deserialize_attribute is overriden by a subclass to implement
@@ -156,7 +156,7 @@ class transfer_processor
        */
       attribute::VR deserialize_VR(std::vector<unsigned char> dataset,
                                    attribute::tag_type tag,
-                                   std::size_t& pos) const;
+                                   std::size_t& pos)  const;
 
       /**
        * @brief deserialize_length deserializes and returns the length of the
@@ -216,7 +216,7 @@ class commandset_processor: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const override;
+      serialize_attribute(attribute::elementfield& e, attribute::ENDIANNESS end, attribute::VR vr) const override;
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
@@ -238,7 +238,7 @@ class little_endian_implicit: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
+      serialize_attribute(attribute::elementfield& e, attribute::ENDIANNESS end, attribute::VR vr) const;
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data, attribute::ENDIANNESS end,
@@ -253,7 +253,7 @@ class little_endian_explicit: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
+      serialize_attribute(attribute::elementfield& e, attribute::ENDIANNESS end, attribute::VR vr) const;
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
@@ -269,7 +269,7 @@ class big_endian_explicit: public transfer_processor
 
    private:
       virtual std::vector<unsigned char>
-      serialize_attribute(attribute::elementfield e, attribute::ENDIANNESS end, attribute::VR vr) const;
+      serialize_attribute(attribute::elementfield& e, attribute::ENDIANNESS end, attribute::VR vr) const;
 
       virtual attribute::elementfield
       deserialize_attribute(std::vector<unsigned char>& data,
@@ -278,6 +278,26 @@ class big_endian_explicit: public transfer_processor
                             std::size_t pos) const;
 };
 
+
+class encapsulated: public little_endian_explicit
+{
+   public:
+      explicit encapsulated(dictionary::dictionaries& dict);
+
+   private:
+      virtual std::vector<unsigned char>
+      serialize_attribute(attribute::elementfield& e, attribute::ENDIANNESS end, attribute::VR vr) const;
+
+      virtual attribute::elementfield
+      deserialize_attribute(std::vector<unsigned char>& data,
+                            attribute::ENDIANNESS end,
+                            std::size_t len, attribute::VR vr, std::string vm,
+                            std::size_t pos) const;
+
+      attribute::encapsulated deserialize_fragments(std::vector<unsigned char>& data, std::size_t pos, std::size_t& outsize) const;
+
+      std::vector<unsigned char> serialize_fragments(attribute::encapsulated data) const;
+};
 
 
 /**
