@@ -94,11 +94,13 @@ std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& da
    }
 
    // item only contains "item type" tags, so the length is essentially zero.
-   if (std::all_of(dataset.begin(), dataset.end(),
-                   [](std::pair<const tag_type, elementfield> attr) {
-                     return is_item_attribute(attr.first); })) {
-      return accu;
+   if (dataset.size() == 3 &&
+       std::all_of(dataset.begin(), dataset.end(),
+                   [](std::pair<const tag_type, elementfield> attr)
+                     { return is_item_attribute(attr.first); })) {
+      return 0;
    }
+
 
    for (auto& attr : dataset) {
       VR repr;
@@ -117,13 +119,23 @@ std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& da
          typename type_of<VR::SQ>::type data;
          get_value_field<VR::SQ>(attr.second, data);
          std::size_t sequencesize = 0;
-         for (dataset_type& itemset : data) {
+         for (dataset_type& itemset : data) {            
             auto itemsize = calculate_item_lengths(itemset);
             if (itemsize > 0) {
                itemset[Item].value_len = itemsize;
                sequencesize += itemsize + 8;
             } else {
-               sequencesize += 0;
+               // subset only contains delimitation items. When we write with
+               // explicit lengths, this amounts to a sequence of size zero.
+               if (std::all_of(itemset.begin(), itemset.end(),
+                               [](std::pair<const tag_type, elementfield> attr) {
+                                 return attr.first == ItemDelimitationItem
+                                    || attr.first == SequenceDelimitationItem; }))
+               {
+                  sequencesize += 0;
+               } else {
+                  sequencesize += 8;
+               }
             }
          }
 
@@ -239,7 +251,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             // state of the deserialization on appropriate stacks.
             if (repr == VR::SQ) {
                undefined_length_sequence = ((value_len & 0xffffffff) == 0xffffffff);
-               value_len = ((value_len & 0xffffffff)== 0xffffffff)
+               value_len = ((value_len & 0xffffffff) == 0xffffffff)
                      ? find_enclosing(current_data.top(), pos)
                      : value_len;
                current_data.push({current_data.top().begin()+pos, current_data.top().begin()+pos+value_len});
@@ -412,15 +424,15 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
       std::size_t value_length = value_field.value_len;
       if (data.size() != value_field.value_len
           && value_field.value_len != 0xffffffff) {
-         BOOST_LOG_SEV(logger, warning) << "Mismatched value lengths for tag "
-                                        << attr.first << ": Expected "
-                                        << value_field.value_len << ", actual "
-                                        << data.size();
 
          if (value_field.value_rep.is_initialized() &&
              *value_field.value_rep != VR::SQ &&
              *value_field.value_rep != VR::NN &&
              *value_field.value_rep != VR::NI) {
+            BOOST_LOG_SEV(logger, warning) << "Mismatched value lengths for tag "
+                                           << attr.first << ": Expected "
+                                           << value_field.value_len << ", actual "
+                                           << data.size();
             value_length = data.size();
          }
       }
@@ -440,10 +452,12 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
       } else {
          len = encode_len(4, value_length, endianness);
       }
+
       if (repr == VR::SQ)
       {
          explicit_length_sequence = (attr.second.value_len != 0xffffffff);
       }
+
       stream.insert(stream.end(), len.begin(), len.end());
       stream.insert(stream.end(), data.begin(), data.end());
    }
