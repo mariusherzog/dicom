@@ -36,7 +36,7 @@ std::size_t dataset_bytesize(dicom::data::dataset::dataset_type data, const tran
    return std::accumulate(data.begin(), data.end(), 0,
       [&transfer_proc](int acc, const std::pair<const tag_type, elementfield>& attr)
       {
-         return acc += transfer_proc.dataelement_length(attr.second);
+         return acc += transfer_proc.dataelement_length(attr);
       });
 }
 
@@ -67,12 +67,30 @@ static bool is_item_attribute(tag_type tag)
          != item_attributes.end();
 }
 
-std::size_t transfer_processor::dataelement_length(const elementfield& ef) const
+std::size_t transfer_processor::dataelement_length(const std::pair<tag_type, const elementfield&>& attribute) const
 {
+   const elementfield& ef = attribute.second;
    if (vrtype == VR_TYPE::IMPLICIT) {
       return ef.value_len + 4 + 2 + 2;
    } else {
-      std::size_t length = ef.value_len + 2 + 2;
+      //std::size_t length = ef.value_len + 2 + 2;
+      //std::size_t length = ef.value_field->byte_size();
+      std::size_t length = ef.value_len;
+      if (ef.value_field->byte_size() != ef.value_len
+          && ef.value_len != 0xffffffff) {
+
+         if (ef.value_rep.is_initialized() &&
+             *ef.value_rep != VR::SQ &&
+             *ef.value_rep != VR::NN &&
+             *ef.value_rep != VR::NI) {
+            length = ef.value_field->byte_size();
+            BOOST_LOG_SEV(logger, warning) << "Mismatched value lengths for tag " << ef.value_len
+                                           << attribute.first << ": Expected "
+                                           << ef.value_len << ", actual "
+                                           << length;
+         }
+      }
+      length += 2 + 2;
       if (is_special_VR(*ef.value_rep)) {
          length += 2 + 2 + 4;
       } else {
@@ -111,7 +129,7 @@ std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& da
       }
 
       if (repr != VR::SQ && !is_item_attribute(attr.first)) {
-         accu += dataelement_length(attr.second);
+         accu += dataelement_length(attr);
       } else if (repr == VR::SQ) {
          // now handle all sequence items
          // sequences with undefined length need to be checked as well
@@ -142,7 +160,7 @@ std::size_t transfer_processor::calculate_item_lengths(dataset::dataset_type& da
          if (attr.second.value_len != 0xffffffff) {
             attr.second.value_len = sequencesize;
             set_value_field<VR::SQ>(attr.second, data);
-            accu += dataelement_length(attr.second); // update the sequence length
+            accu += dataelement_length(attr); // update the sequence length
          }
       }
    }

@@ -91,7 +91,7 @@ class encapsulated
 
 
 
-class byte_length : public boost::static_visitor<std::size_t>
+class byte_size : public boost::static_visitor<std::size_t>
 {
    public:
 
@@ -105,6 +105,8 @@ class byte_length : public boost::static_visitor<std::size_t>
            return str.size();
        }
 };
+
+std::size_t byte_length(const boost::variant<std::vector<unsigned char>, encapsulated>& data);
 
 class printer : public boost::static_visitor<std::ostream&>
 {

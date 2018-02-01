@@ -379,9 +379,11 @@ class vmtype
       std::size_t byte_size() const
       {
          std::size_t bytesize = 0;
+         constexpr std::size_t delimiter_size = std::is_arithmetic<T>::value ? 0 : 1;
          if (size() > 0) {
             bytesize = std::accumulate(value_sequence.cbegin(), value_sequence.cend(), 0,
-                                   [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+                                   [](std::size_t accu, const T& val)
+               { return accu + byte_length(val) + delimiter_size; }) - delimiter_size;
          }
          return bytesize;
       }

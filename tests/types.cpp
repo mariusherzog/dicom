@@ -55,9 +55,9 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
          {
             REQUIRE(size_previous + 1 == type.size());
          }
-         AND_THEN("the byte size increases by sizeof(T) plus the one-byte delimiter")
+         AND_THEN("the byte size increases by sizeof(T) plus the zero-byte delimiter")
          {
-            int bytesize_diff = sizeof(int) + 1;
+            int bytesize_diff = sizeof(int) + 0;
             REQUIRE(bytesize_previous + bytesize_diff == type.byte_size());
          }
          AND_THEN("the element's value can be retrieved from the back")

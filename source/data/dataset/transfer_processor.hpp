@@ -116,7 +116,7 @@ class transfer_processor
        */
       std::string get_transfer_syntax() const;
 
-      std::size_t dataelement_length(const dicom::data::attribute::elementfield& ef) const;
+      std::size_t dataelement_length(const std::pair<attribute::tag_type, const attribute::elementfield&>& attribute) const;
 
       virtual ~transfer_processor();
 

@@ -67,7 +67,7 @@ std::size_t byte_length(const float)
 
 std::size_t byte_length(const double)
 {
-   return 4;
+   return 8;
 }
 
 std::size_t byte_length(tag_type)

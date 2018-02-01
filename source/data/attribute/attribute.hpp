@@ -85,6 +85,8 @@ struct empty_t
 //      empty_t& operator=(const empty_t&) = delete;
 };
 
+std::size_t byte_length(empty_t data);
+
 
 struct elementfield_base;
 
@@ -131,6 +133,8 @@ struct elementfield_base
       }
 
       virtual std::unique_ptr<elementfield_base> deep_copy() = 0;
+
+      virtual std::size_t byte_size() = 0;
 
       virtual std::ostream& print(std::ostream& os) = 0;
 
@@ -411,6 +415,11 @@ struct element_field: elementfield_base
          element_field<vr>* ef = new element_field<vr> {};
          ef->value_field = value_field;
          return std::unique_ptr<elementfield_base> {ef};
+      }
+
+      std::size_t byte_size() override
+      {
+         return byte_length(value_field);
       }
 
       std::ostream& print(std::ostream& os) override

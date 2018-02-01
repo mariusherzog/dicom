@@ -41,7 +41,10 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
-
+std::size_t byte_length(empty_t data)
+{
+   return 0;
+}
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
 {

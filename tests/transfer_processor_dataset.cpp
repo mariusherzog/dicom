@@ -10,6 +10,7 @@
 #include "../source/data/dataset/transfer_processor.hpp"
 #include "../source/data/dictionary/dictionary.hpp"
 
+
 using namespace dicom::data::attribute;
 using namespace dicom::data;
 using namespace dicom::data::dataset;
@@ -41,7 +42,7 @@ SCENARIO("Serialization of a dataset with little-endian implicit transfer syntax
       }
       AND_WHEN("The length of a complete attribute is queried")
       {
-         auto length = lei_tp.dataelement_length(dataset[{0x0008, 0x0018}]);
+         auto length = lei_tp.dataelement_length(*dataset.find({0x0008, 0x0018}));
          THEN("The byte length of the attribute is returned")
          {
             REQUIRE(length == expected.size());
@@ -110,7 +111,7 @@ SCENARIO("Serialization of a dataset with little-endian explicit transfer syntax
       }
       AND_WHEN("The length of a complete attribute is queried")
       {
-         auto length = lee_tp.dataelement_length(dataset[{0x0028, 0x0010}]);
+         auto length = lee_tp.dataelement_length(*dataset.find({0x0028, 0x0010}));
          THEN("The byte length of the attribute is returned")
          {
             REQUIRE(length == expected.size());
@@ -139,7 +140,7 @@ SCENARIO("Serialization of a dataset with little-endian explicit transfer syntax
       }
       AND_WHEN("The length of a complete attribute is queried")
       {
-         auto length = lee_tp.dataelement_length(dataset[{0x7fe0, 0x0010}]);
+         auto length = lee_tp.dataelement_length(*dataset.find({0x7fe0, 0x0010}));
          THEN("The byte length of the attribute is returned")
          {
             REQUIRE(length == expected.size());
@@ -208,7 +209,7 @@ SCENARIO("Serialization of a dataset with big-endian explicit transfer syntax", 
       }
       AND_WHEN("The length of a complete attribute is queried")
       {
-         auto length = bee_tp.dataelement_length(dataset[{0x0028, 0x0010}]);
+         auto length = bee_tp.dataelement_length(*dataset.find({0x0028, 0x0010}));
          THEN("The byte length of the attribute is returned")
          {
             REQUIRE(length == expected.size());
@@ -237,7 +238,7 @@ SCENARIO("Serialization of a dataset with big-endian explicit transfer syntax", 
       }
       AND_WHEN("The length of a complete attribute is queried")
       {
-         auto length = bee_tp.dataelement_length(dataset[{0x7fe0, 0x0010}]);
+         auto length = bee_tp.dataelement_length(*dataset.find({0x7fe0, 0x0010}));
          THEN("The byte length of the attribute is returned")
          {
             REQUIRE(length == expected.size());

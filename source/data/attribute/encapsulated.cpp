@@ -60,6 +60,12 @@ void encapsulated::mark_compressed_frame_start()
    compressed_frame_indices.push_back(fragments.size());
 }
 
+std::size_t byte_length(const boost::variant<std::vector<unsigned char>, encapsulated>& data)
+{
+   byte_size sz;
+   return boost::apply_visitor(sz, data);
+}
+
 }
 
 }
