@@ -173,7 +173,7 @@ transfer_processor::~transfer_processor()
 }
 
 
-std::size_t transfer_processor::find_enclosing(std::vector<unsigned char> data, std::size_t beg) const
+std::size_t transfer_processor::find_enclosing(const std::vector<unsigned char>& data, std::size_t beg) const
 {
    std::size_t pos = beg;
    int nested_sets = 0;
@@ -223,14 +223,17 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
    dataset_type dataset;
    std::vector<dataset_type> outerset {dataset};
 
-   std::stack<std::vector<unsigned char>> current_data;
+   // current_data defines the serialized nested set which is processed at
+   // a time as half-open interval [start,start+nested_set_size).
+   std::stack<std::pair<std::size_t, std::size_t>> current_data;
+
    std::stack<std::vector<dataset_type>> current_sequence;
    std::stack<std::size_t> positions;
    std::stack<std::pair<tag_type, std::size_t>> lasttag;
 
    positions.push(0);
    current_sequence.push(outerset);
-   current_data.push(data);
+   current_data.push({0, data.size()});
    while (current_data.size() > 0) {
 
       bool undefined_length_item = false;
@@ -249,15 +252,15 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          positions.pop();
       }
 
-      while (positions.top() < current_data.top().size()) {
+      while (positions.top() < current_data.top().second) {
          auto& pos = positions.top();
          assert(!current_sequence.top().empty());
 
-         tag_type tag = decode_tag(current_data.top(), pos, endianness);
+         tag_type tag = decode_tag(data, pos, endianness);
          pos += 4;
 
-         VR repr = deserialize_VR(current_data.top(), tag, pos);
-         std::size_t value_len = deserialize_length(current_data.top(), tag, repr, pos);
+         VR repr = deserialize_VR(data, tag, pos);
+         std::size_t value_len = deserialize_length(data, tag, repr, pos);
 
 
          // Items and DelimitationItems do not have a VR or length field and are
@@ -270,15 +273,15 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             if (repr == VR::SQ) {
                undefined_length_sequence = ((value_len & 0xffffffff) == 0xffffffff);
                value_len = ((value_len & 0xffffffff) == 0xffffffff)
-                     ? find_enclosing(current_data.top(), pos)
+                     ? find_enclosing(data, pos)
                      : value_len;
-               current_data.push({current_data.top().begin()+pos, current_data.top().begin()+pos+value_len});
+               current_data.push({pos, pos+value_len});
                current_sequence.push({dataset_type {}});
-               positions.push(0);
+               positions.push(current_data.top().first);
                lasttag.push({tag, undefined_length_sequence ? 0xffffffff : value_len});
             } else {
                //auto multiplicity = get_dictionary().lookup(tag).vm;
-               elementfield e = deserialize_attribute(current_data.top(), endianness, value_len, repr, "*", pos);
+               elementfield e = deserialize_attribute(data, endianness, value_len, repr, "*", pos);
                current_sequence.top().back()[tag] = e;
 
                if (repr == VR::OB && value_len == 0xffffffff) {
@@ -293,7 +296,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
             // set.
             if (tag == Item) {
                // detect if an ItemDelimitationItem was missed
-               if (positions.top() > 8) {
+               if (positions.top()-current_data.top().first > 8) {
                   current_sequence.top().back()[ItemDelimitationItem]
                         = make_elementfield<VR::NN>();
                   current_sequence.top().push_back(dataset_type {});
@@ -351,7 +354,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
 }
 
 
-VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, tag_type tag, std::size_t& pos) const
+VR transfer_processor::deserialize_VR(const std::vector<unsigned char>& dataset, tag_type tag, std::size_t& pos) const
 {
    if (!is_item_attribute(tag)) {
       if (vrtype != VR_TYPE::IMPLICIT) {
@@ -370,7 +373,7 @@ VR transfer_processor::deserialize_VR(std::vector<unsigned char> dataset, tag_ty
    return VR::NN;
 }
 
-std::size_t transfer_processor::deserialize_length(std::vector<unsigned char> dataset,
+std::size_t transfer_processor::deserialize_length(const std::vector<unsigned char>& dataset,
                                                    attribute::tag_type tag,
                                                    VR repr, std::size_t& pos) const
 {
@@ -859,6 +862,7 @@ std::vector<std::string> supported_transfer_syntaxes()
       "1.2.840.10008.1.2.1",
       "1.2.840.10008.1.2.2",
       "1.2.840.10008.1.2.4.70",
+      "1.2.840.10008.1.2.4.50",
       "1.2.840.10008.1.2.4.57"
    };
 }
@@ -878,6 +882,7 @@ std::unique_ptr<transfer_processor> make_transfer_processor(std::string transfer
          return std::unique_ptr<transfer_processor>(new big_endian_explicit {dict});
       }
       if (transfer_syntax_uid == "1.2.840.10008.1.2.4.70" ||
+          transfer_syntax_uid == "1.2.840.10008.1.2.4.50" ||
           transfer_syntax_uid == "1.2.840.10008.1.2.4.57") {
          return std::unique_ptr<transfer_processor>(new encapsulated {dict});
       }

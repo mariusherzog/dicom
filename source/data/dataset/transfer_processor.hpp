@@ -154,7 +154,7 @@ class transfer_processor
        * @param[in, out] pos
        * @return deserialized VR
        */
-      attribute::VR deserialize_VR(std::vector<unsigned char> dataset,
+      attribute::VR deserialize_VR(const std::vector<unsigned char>& dataset,
                                    attribute::tag_type tag,
                                    std::size_t& pos)  const;
 
@@ -166,7 +166,7 @@ class transfer_processor
        * @param[in, out] pos
        * @return length of the value field
        */
-      std::size_t deserialize_length(std::vector<unsigned char> dataset,
+      std::size_t deserialize_length(const std::vector<unsigned char>& dataset,
                                      attribute::tag_type tag,
                                      attribute::VR repr,
                                      std::size_t& pos) const;
@@ -182,7 +182,7 @@ class transfer_processor
        * @param dict dictionary for the tag lookup
        * @return size of the nested set
        */
-      std::size_t find_enclosing(std::vector<unsigned char> data, std::size_t beg) const;
+      std::size_t find_enclosing(const std::vector<unsigned char>& data, std::size_t beg) const;
 
       /**
        * @brief calculate_item_lengths calculates the correct sequence and item lengths

@@ -49,7 +49,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("Anonymous.MR._.14.1.2017.06.28.09.41.02.294.59320527.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("4D.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
@@ -59,6 +59,7 @@ int main()
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;
          outfile2.flush();
+         return 0;
 //      }
 //   }
 
@@ -183,7 +184,7 @@ int main()
 //         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
 //         out.flush();
      dicom::filesystem::dicomfile file(*data, dict);
-//     file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
+     //file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
      std::fstream outfile("storefile.dcm", std::ios::out | std::ios::binary);
      outfile << file;
      outfile.flush();
