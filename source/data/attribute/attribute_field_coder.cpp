@@ -888,11 +888,11 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          return make_elementfield<VR::TM>(len, tm);
       }
       case VR::UL: {
-         vmtype<unsigned long> ul;
+         vmtype<unsigned int> ul;
          if (endianness == ENDIANNESS::LITTLE) {
-            deserialize_vmtype(data, convhelper::little_endian_to_integral<unsigned long>, begin, len, 4, ul);
+            deserialize_vmtype(data, convhelper::little_endian_to_integral<unsigned int>, begin, len, 4, ul);
          } else {
-            deserialize_vmtype(data, convhelper::big_endian_to_integral<unsigned long>, begin, len, 4, ul);
+            deserialize_vmtype(data, convhelper::big_endian_to_integral<unsigned int>, begin, len, 4, ul);
          }
          return make_elementfield<VR::UL>(len, ul);
       }
