@@ -544,9 +544,9 @@ VR transfer_processor::get_vr(tag_type tag) const
    }
 }
 
-little_endian_implicit::little_endian_implicit(dictionary::dictionaries& dict):
+little_endian_implicit::little_endian_implicit(dictionary::dictionaries& dict, std::string transfer_syntax):
    transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
-                       "1.2.840.10008.1.2",
+                       transfer_syntax,
                        VR_TYPE::IMPLICIT,
                        ENDIANNESS::LITTLE,
                        {
@@ -596,9 +596,9 @@ transfer_processor::vr_of_tag::vr_of_tag(tag_type tag,
 {
 }
 
-little_endian_explicit::little_endian_explicit(dictionary::dictionaries& dict):
+little_endian_explicit::little_endian_explicit(dictionary::dictionaries& dict, std::string transfer_syntax):
    transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
-                       "1.2.840.10008.1.2.1",
+                       transfer_syntax,
                        VR_TYPE::EXPLICIT, ENDIANNESS::LITTLE,
                        {
                            {{0x7fe0, 0x0010}, VR::OW},
@@ -629,9 +629,9 @@ elementfield little_endian_explicit::deserialize_attribute(std::vector<unsigned 
    return decode_value_field(data, end, len, vr, vm, pos);
 }
 
-big_endian_explicit::big_endian_explicit(dictionary::dictionaries& dict):
+big_endian_explicit::big_endian_explicit(dictionary::dictionaries& dict, std::string transfer_syntax):
    transfer_processor {boost::optional<dictionary::dictionaries&> {dict},
-                       "1.2.840.10008.1.2.2",
+                       transfer_syntax,
                        VR_TYPE::EXPLICIT, ENDIANNESS::BIG,
                        {
                            {{0x7fe0, 0x0010}, VR::OW},
@@ -663,8 +663,8 @@ elementfield big_endian_explicit::deserialize_attribute(std::vector<unsigned cha
 }
 
 
-encapsulated::encapsulated(dictionary::dictionaries& dict):
-   little_endian_explicit {dict}
+encapsulated::encapsulated(dictionary::dictionaries& dict, std::string transfer_syntax):
+   little_endian_explicit {dict, transfer_syntax}
 {
 
 }
@@ -884,7 +884,7 @@ std::unique_ptr<transfer_processor> make_transfer_processor(std::string transfer
       if (transfer_syntax_uid == "1.2.840.10008.1.2.4.70" ||
           transfer_syntax_uid == "1.2.840.10008.1.2.4.50" ||
           transfer_syntax_uid == "1.2.840.10008.1.2.4.57") {
-         return std::unique_ptr<transfer_processor>(new encapsulated {dict});
+         return std::unique_ptr<transfer_processor>(new encapsulated {dict, transfer_syntax_uid});
       }
    } else {
       throw std::runtime_error("unsupported transfer syntax " + transfer_syntax_uid);

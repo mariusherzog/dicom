@@ -28,6 +28,7 @@ namespace filesystem
 {
 
 using namespace dicom::data::attribute;
+using namespace util::log;
 
 dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    dataset_ {dataset},
@@ -35,13 +36,16 @@ dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    prefix {'D', 'I', 'C', 'M'},
    dict {dict},
    metaheader_proc {new little_endian_explicit(dict)},
-   transfer_proc {new little_endian_explicit(dict)}
+   transfer_proc {new little_endian_explicit(dict)},
+   logger {"dicomfile"}
 {
    create_filemetaheader();
 }
 
 std::ostream& dicomfile::write_dataset(std::ostream &os)
 {
+   BOOST_LOG_SEV(logger, trace) << "Starting to write to stream";
+
    std::ostreambuf_iterator<char> out {os};
    std::copy(std::begin(preamble), std::end(preamble), out);
    std::copy(std::begin(prefix), std::end(prefix), out);
@@ -49,14 +53,23 @@ std::ostream& dicomfile::write_dataset(std::ostream &os)
    auto headerbytes = metaheader_proc->serialize(filemetaheader);
    std::copy(std::begin(headerbytes), std::end(headerbytes), out);
 
+   BOOST_LOG_SEV(logger, trace) << "Finished writing file meta header";
+
+   BOOST_LOG_SEV(logger, info) << "Starting to write dataset with transfer syntax: "
+                               << transfer_proc->get_transfer_syntax();
+
    auto bytes = transfer_proc->serialize(dataset_);
    std::copy(std::begin(bytes), std::end(bytes), out);
+
+   BOOST_LOG_SEV(logger, trace) << "Finished writing dataset";
 
    return os;
 }
 
 std::istream& dicomfile::read_dataset(std::istream &is)
-{
+{   
+   BOOST_LOG_SEV(logger, trace) << "Starting to read from stream";
+
    using namespace dicom::data::attribute;
    std::istreambuf_iterator<char> in(is);
    std::copy_n(in, 128, std::begin(preamble));
@@ -90,16 +103,34 @@ std::istream& dicomfile::read_dataset(std::istream &is)
 
    this->filemetaheader = metaheader_proc->deserialize(metaheader_bytes);
 
+
+   BOOST_LOG_SEV(logger, trace) << "Deserialized meta header\n"
+                                << filemetaheader;
+
+   std::string transfer_syntax = "";
    try {
-      std::string transfer_syntax;
       get_value_field<VR::UI>(filemetaheader[{0x0002, 0x0010}], transfer_syntax);
+      BOOST_LOG_SEV(logger, info) << "Transfer syntax of dataset is " << transfer_syntax;
       transfer_proc = make_transfer_processor(transfer_syntax, dict);
-   } catch (std::exception& error) {
+   } catch (std::exception& err) {
+      BOOST_LOG_SEV(logger, error) << "Error creating the transfer processor for transfer syntax: "
+                                   << transfer_syntax << "\n"
+                                   << err.what();
+      throw;
    }
 
    std::vector<unsigned char> bytes(in, std::istreambuf_iterator<char>());
    dataset_ = transfer_proc->deserialize(bytes);
+
+   BOOST_LOG_SEV(logger, trace) << "Finished reading dataset";
+
    return is;
+}
+
+void dicomfile::set_transfer_syntax(std::string transfer_syntax)
+{
+   transfer_proc = make_transfer_processor(transfer_syntax, dict);
+   filemetaheader[{0x0002, 0x0010}] = make_elementfield<VR::UI>(transfer_proc->get_transfer_syntax());
 }
 
 iod& dicomfile::dataset()

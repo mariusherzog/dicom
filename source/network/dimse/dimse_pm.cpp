@@ -516,9 +516,12 @@ transfer_processor& dimse_pm::find_transfer_processor(unsigned char presentation
          )->transfer_syntax;
 
    // and return a reference to our corresponding transfer processor instance
-   return *((std::find_if(transfer_processors.begin(), transfer_processors.end(),
-      [this, ts_of_presentation_context](kvpair& kv) { return ts_of_presentation_context == kv.first; }))->second);
+//   return *((std::find_if(transfer_processors.begin(), transfer_processors.end(),
+//      [this, ts_of_presentation_context](kvpair& kv) { return ts_of_presentation_context == kv.first; }))->second);
 
+   // we might as well throw if there is no such transfer processor for the
+   // syntax, association should not have been accepted in the first place
+   return *transfer_processors[ts_of_presentation_context];
 }
 
 

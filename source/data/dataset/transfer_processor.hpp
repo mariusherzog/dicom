@@ -196,7 +196,7 @@ class transfer_processor
       std::vector<vr_of_tag> tstags;
 
       boost::optional<dictionary::dictionaries&> dict;
-      std::string transfer_syntax;
+      const std::string transfer_syntax;
       VR_TYPE vrtype;
       attribute::ENDIANNESS endianness;
 
@@ -232,7 +232,8 @@ class commandset_processor: public transfer_processor
 class little_endian_implicit: public transfer_processor
 {
    public:
-      explicit little_endian_implicit(dictionary::dictionaries& dict);
+      explicit little_endian_implicit(dictionary::dictionaries& dict,
+                                      std::string transfer_syntax = "1.2.840.10008.1.2");
 
       little_endian_implicit(const little_endian_implicit& other);
 
@@ -249,7 +250,8 @@ class little_endian_implicit: public transfer_processor
 class little_endian_explicit: public transfer_processor
 {
    public:
-      explicit little_endian_explicit(dictionary::dictionaries& dict);
+      explicit little_endian_explicit(dictionary::dictionaries& dict,
+                                      std::string transfer_syntax = "1.2.840.10008.1.2.1");
 
    private:
       virtual std::vector<unsigned char>
@@ -265,7 +267,8 @@ class little_endian_explicit: public transfer_processor
 class big_endian_explicit: public transfer_processor
 {
    public:
-      explicit big_endian_explicit(dictionary::dictionaries& dict);
+      explicit big_endian_explicit(dictionary::dictionaries& dict,
+                                   std::string transfer_syntax = "1.2.840.10008.1.2.2");
 
    private:
       virtual std::vector<unsigned char>
@@ -282,7 +285,7 @@ class big_endian_explicit: public transfer_processor
 class encapsulated: public little_endian_explicit
 {
    public:
-      explicit encapsulated(dictionary::dictionaries& dict);
+      explicit encapsulated(dictionary::dictionaries& dict, std::string transfer_syntax);
 
    private:
       virtual std::vector<unsigned char>

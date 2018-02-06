@@ -49,9 +49,9 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("4D.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("XA-MONO2-8-12x-catheter.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
-         std::cout << file.dataset() << std::flush;
+//         std::cout << file.dataset() << std::flush;
 
          auto& set = file.dataset();
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
@@ -59,7 +59,6 @@ int main()
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;
          outfile2.flush();
-         return 0;
 //      }
 //   }
 
@@ -184,7 +183,7 @@ int main()
 //         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
 //         out.flush();
      dicom::filesystem::dicomfile file(*data, dict);
-     //file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
+     file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
      std::fstream outfile("storefile.dcm", std::ios::out | std::ios::binary);
      outfile << file;
      outfile.flush();
