@@ -3,6 +3,7 @@
 #include <iterator>
 
 #include "data/attribute/constants.hpp"
+#include "util/uid.hpp"
 
 using namespace dicom::data::dataset;
 
@@ -39,7 +40,6 @@ dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
    transfer_proc {new little_endian_explicit(dict)},
    logger {"dicomfile"}
 {
-   create_filemetaheader();
 }
 
 std::ostream& dicomfile::write_dataset(std::ostream &os)
@@ -49,6 +49,8 @@ std::ostream& dicomfile::write_dataset(std::ostream &os)
    std::ostreambuf_iterator<char> out {os};
    std::copy(std::begin(preamble), std::end(preamble), out);
    std::copy(std::begin(prefix), std::end(prefix), out);
+
+   create_filemetaheader();
 
    auto headerbytes = metaheader_proc->serialize(filemetaheader);
    std::copy(std::begin(headerbytes), std::end(headerbytes), out);
@@ -151,12 +153,18 @@ std::istream& operator>>(std::istream& is, dicomfile& dicom)
 
 void dicomfile::create_filemetaheader()
 {
+   dicom::util::uid uids;
    filemetaheader[{0x0002, 0x0001}] = make_elementfield<VR::OB>({0x00, 0x01});
-   filemetaheader[{0x0002, 0x0002}] = make_elementfield<VR::UI>("1.1.1.1");
-   filemetaheader[{0x0002, 0x0003}] = make_elementfield<VR::UI>("1.1.1.1");
+   filemetaheader[{0x0002, 0x0003}] = make_elementfield<VR::UI>(uids.generate_uid());
    filemetaheader[{0x0002, 0x0010}] = make_elementfield<VR::UI>(transfer_proc->get_transfer_syntax());
-   filemetaheader[{0x0002, 0x0012}] = make_elementfield<VR::UI>("1.1.1.1");
+   filemetaheader[{0x0002, 0x0012}] = make_elementfield<VR::UI>(uids.generate_uid());
+   filemetaheader[{0x0002, 0x0013}] = make_elementfield<VR::SH>("libdicompp");
 
+   std::string sop_class;
+   get_value_field<VR::UI>(dataset_[{0x0008, 0x0016}], sop_class);
+   filemetaheader[{0x0002, 0x0002}] = make_elementfield<VR::UI>(sop_class);
+
+   filemetaheader.erase(filemetaheader.find({0x0002, 0x0000}));
    //auto metaheader_size = dataset_size(filemetaheader, true);
    auto headerbytes = transfer_proc->serialize(filemetaheader);
    filemetaheader[{0x0002, 0x0000}] = make_elementfield<VR::UL>(headerbytes.size());
