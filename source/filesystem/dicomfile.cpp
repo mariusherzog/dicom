@@ -164,7 +164,9 @@ void dicomfile::create_filemetaheader()
    get_value_field<VR::UI>(dataset_[{0x0008, 0x0016}], sop_class);
    filemetaheader[{0x0002, 0x0002}] = make_elementfield<VR::UI>(sop_class);
 
-   filemetaheader.erase(filemetaheader.find({0x0002, 0x0000}));
+   if (filemetaheader.find({0x0002, 0x0000}) != std::end(filemetaheader)) {
+      filemetaheader.erase(filemetaheader.find({0x0002, 0x0000}));
+   }
    //auto metaheader_size = dataset_size(filemetaheader, true);
    auto headerbytes = transfer_proc->serialize(filemetaheader);
    filemetaheader[{0x0002, 0x0000}] = make_elementfield<VR::UL>(headerbytes.size());
