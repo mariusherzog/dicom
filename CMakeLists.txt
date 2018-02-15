@@ -55,7 +55,7 @@ find_package(Boost COMPONENTS system log REQUIRED)
 MESSAGE(${CMAKE_SOURCE_DIR}/source)
 add_subdirectory(${CMAKE_SOURCE_DIR}/source)
 add_subdirectory(${CMAKE_SOURCE_DIR}/samples)
-#add_subdirectory(${CMAKE_SOURCE_DIR}/tests)
+add_subdirectory(${CMAKE_SOURCE_DIR}/tests)
 
 #project(dicom_test)
 
