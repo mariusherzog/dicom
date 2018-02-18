@@ -11,7 +11,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g  -
 
 if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
-   include_directories(${CMAKE_SOURCE_DIR}/source)
+   #include_directories(${CMAKE_SOURCE_DIR}/source)
    aux_source_directory(. SRC_LIST)
    aux_source_directory(./data/attribute SRC_LIST)
    aux_source_directory(./data/dictionary SRC_LIST)
@@ -25,7 +25,9 @@ if(Boost_FOUND)
    aux_source_directory(./util SRC_LIST)
    add_library(libdicompp ${SRC_LIST})
    message(${SRC_LIST})
-   target_include_directories(libdicompp PUBLIC ${CMAKE_SOURCE_DIR}/source)
+   target_include_directories(libdicompp
+       PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+       PUBLIC ${CMAKE_SOURCE_DIR}/source)
    target_link_libraries(libdicompp ${Boost_LIBRARIES})
 endif()
 

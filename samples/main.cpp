@@ -2,23 +2,25 @@
 #include <chrono>
 #include <tuple>
 
-#include "network/dimse/dimse_pm.hpp"
-#include "network/upperlayer/upperlayer.hpp"
+//#include "network/dimse/dimse_pm.hpp"
+//#include "network/upperlayer/upperlayer.hpp"
 
-#include "data/attribute/attribute.hpp"
-#include "data/dataset/dataset_iterator.hpp"
-#include "data/dictionary/dictionary_dyn.hpp"
-#include "data/dictionary/datadictionary.hpp"
-#include "data/dictionary/dictionary.hpp"
-#include "data/attribute/constants.hpp"
+//#include "data/attribute/attribute.hpp"
+//#include "data/dataset/dataset_iterator.hpp"
+//#include "data/dictionary/dictionary_dyn.hpp"
+//#include "data/dictionary/datadictionary.hpp"
+//#include "data/dictionary/dictionary.hpp"
+//#include "data/attribute/constants.hpp"
 
-#include "filesystem/dicomfile.hpp"
+//#include "filesystem/dicomfile.hpp"
 
-#include "serviceclass/storage_scu.hpp"
-#include "serviceclass/storage_scp.hpp"
-#include "serviceclass/queryretrieve_scp.hpp"
+//#include "serviceclass/storage_scu.hpp"
+//#include "serviceclass/storage_scp.hpp"
+//#include "serviceclass/queryretrieve_scp.hpp"
 
-#include "util/channel_sev_logger.hpp"
+//#include "util/channel_sev_logger.hpp"
+
+#include "libdicompp/all.hpp"
 
 #include <boost/variant.hpp>
 

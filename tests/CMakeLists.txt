@@ -13,6 +13,6 @@ add_executable(dicom_tests ${TEST_SOURCES})
 target_link_libraries(dicom_tests  Catch libdicompp ${Boost_LIBRARIES})
 
 # Copy test data, like prepared serialized sets etc.
-file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data)
+file(COPY data/. DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(NAME tests COMMAND dicom_tests)

@@ -57,6 +57,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/source)
 add_subdirectory(${CMAKE_SOURCE_DIR}/samples)
 add_subdirectory(${CMAKE_SOURCE_DIR}/tests)
 
+
 #project(dicom_test)
 
 #set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
