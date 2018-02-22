@@ -3,8 +3,7 @@
 #include <string>
 #include <exception>
 
-#include "../source/data/attribute/attribute.hpp"
-#include "../source/data/attribute/encapsulated.hpp"
+#include "libdicompp/dicomdata.hpp"
 
 using namespace dicom::data;
 using namespace dicom::data::attribute;
