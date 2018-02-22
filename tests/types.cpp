@@ -3,7 +3,7 @@
 #include <string>
 #include <exception>
 
-#include "../source/data/attribute/vmtype.hpp"
+#include "libdicompp/dicomdata.hpp"
 
 using namespace dicom::data;
 using namespace dicom::data::attribute;

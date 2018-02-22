@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g  -
 
 
 if(Boost_FOUND)
-   include_directories(${Boost_INCLUDE_DIRS})
+   #include_directories(${Boost_INCLUDE_DIRS})
    #include_directories(${CMAKE_SOURCE_DIR}/source)
    aux_source_directory(. SRC_LIST)
    aux_source_directory(./data/attribute SRC_LIST)
@@ -24,16 +24,16 @@ if(Boost_FOUND)
    aux_source_directory(./infrastructure SRC_LIST)
    aux_source_directory(./util SRC_LIST)
    add_library(libdicompp ${SRC_LIST})
-   message(${SRC_LIST})
+   message(${CMAKE_CURRENT_SOURCE_DIR})
    target_include_directories(libdicompp
-       PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
-       PUBLIC ${CMAKE_SOURCE_DIR}/source)
+       PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+   target_include_directories(libdicompp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} PUBLIC ${Boost_INCLUDE_DIRS})
    target_link_libraries(libdicompp ${Boost_LIBRARIES})
 endif()
 
 # Copy files necessary at runtime
 configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv
-    ${CMAKE_CURRENT_BINARY_DIR}/datadictionary.csv COPYONLY)
+    ${CMAKE_BINARY_DIR}/datadictionary.csv COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/commanddictionary.csv
-    ${CMAKE_CURRENT_BINARY_DIR}/commanddictionary.csv COPYONLY)
+    ${CMAKE_BINARY_DIR}/commanddictionary.csv COPYONLY)
 

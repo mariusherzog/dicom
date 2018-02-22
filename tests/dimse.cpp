@@ -4,10 +4,7 @@
 
 #include <fstream>
 
-#include "../source/network/dimse/dimse_pm.hpp"
-#include "../source/network/dimse/association_definition.hpp"
-#include "../source/data/dictionary/dictionary.hpp"
-#include "../source/data/dataset/datasets.hpp"
+#include "libdicompp/network.hpp"
 
 #include "stubs/upperlayer_communication_stub.hpp"
 

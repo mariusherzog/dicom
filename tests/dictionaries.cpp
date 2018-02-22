@@ -4,8 +4,7 @@
 
 #include <boost/optional.hpp>
 
-#include "../source/data/dictionary/dictionary.hpp"
-#include "../source/data/dictionary/dictionary_entry.hpp"
+#include "libdicompp/dicomdata.hpp"
 
 using namespace dicom::data::dictionary;
 

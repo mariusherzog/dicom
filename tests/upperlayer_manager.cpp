@@ -5,10 +5,10 @@
 #include <memory>
 #include <deque>
 
+#include "libdicompp/network.hpp"
+
 #include "stubs/upperlayer_server_acceptor_stub.hpp"
 #include "stubs/upperlayer_client_acceptor_stub.hpp"
-#include "../source/data/dictionary/dictionary.hpp"
-#include "../source/network/upperlayer/upperlayer.hpp"
 
 using namespace dicom::network::upperlayer;
 using namespace dicom::network;
