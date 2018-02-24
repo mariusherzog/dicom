@@ -9,8 +9,10 @@
 #include <ostream>
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include "vmtype.hpp"
+#include "encapsulated.hpp"
 #include "tag.hpp"
 
 namespace dicom
@@ -83,6 +85,8 @@ struct empty_t
 //      empty_t& operator=(const empty_t&) = delete;
 };
 
+std::size_t byte_length(empty_t data);
+
 
 struct elementfield_base;
 
@@ -129,6 +133,8 @@ struct elementfield_base
       }
 
       virtual std::unique_ptr<elementfield_base> deep_copy() = 0;
+
+      virtual std::size_t byte_size() = 0;
 
       virtual std::ostream& print(std::ostream& os) = 0;
 
@@ -216,17 +222,21 @@ struct type_of<VR::LT>
       static const std::size_t max_len = 10240;
 };
 template<>
-struct type_of<VR::OB> { using type = std::vector<unsigned char>; };
+struct type_of<VR::OB>
+{
+      using type = boost::variant<std::vector<unsigned char>, encapsulated>;
+      using base_type = std::vector<unsigned char>;
+};
 template<>
 struct type_of<VR::OD>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::vector<double>;
       static const std::size_t max_len = 4294967288; //2^32-8
 };
 template<>
 struct type_of<VR::OF>
 {
-      using type = attribute::vmtype<std::string>;
+      using type = std::vector<float>;
       static const std::size_t max_len = 4294967292; //2^32-4
 };
 template<>
@@ -320,6 +330,10 @@ struct type_of<VR::NI>
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::OW>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OF>::type const data);
+
+std::ostream& operator<<(std::ostream& os, typename type_of<VR::OD>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 
@@ -497,6 +511,11 @@ struct element_field: elementfield_base
          return std::unique_ptr<elementfield_base> {ef};
       }
 
+      std::size_t byte_size() override
+      {
+         return byte_length(value_field);
+      }
+
       std::ostream& print(std::ostream& os) override
       {
             return os << value_field;
@@ -539,6 +558,18 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type& out_data
 {
    get_visitor<vr> getter(out_data);
    e.value_field->accept<vr>(getter);
+}
+
+// for VR OB
+template <VR vr>
+void get_value_field(const elementfield& e, typename type_of<vr>::base_type& out_data)
+{
+   typename type_of<VR::OB>::type wrapped_data;
+
+   get_visitor<vr> getter(wrapped_data);
+   e.value_field->accept<vr>(getter);
+
+   out_data = boost::get<std::vector<unsigned char>>(wrapped_data);
 }
 
 template <VR vr>
@@ -665,14 +696,46 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    return el;
 }
 
+
+
+// for VR = OB
 template <VR vr>
-elementfield make_elementfield(const typename type_of<vr>::type::base_type &data)
+elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>::base_type& data)
+{
+   static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
+   elementfield el;
+   el.value_rep = vr;
+   el.value_len = data_len;
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   typename type_of<vr>::type wrapper(data);
+   set_visitor<vr> setter(wrapper);
+   el.value_field->accept<vr>(setter);
+   return el;
+}
+
+
+template <VR vr>
+elementfield make_elementfield(const typename type_of<vr>::type::base_type& data)
 {
    typename type_of<vr>::type wrapper(data);
    std::size_t len = validate<vr>(wrapper);
    return make_elementfield<vr>(len, wrapper);
 }
 
+template <VR vr>
+elementfield make_elementfield(const typename type_of<vr>::base_type data)
+{
+   elementfield el;
+   el.value_rep = VR::OB;
+   el.value_len = byte_length(data);
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<VR::OB>};
+
+   typename type_of<VR::OB>::type wrapper(data);
+   set_visitor<VR::OB> setter(wrapper);
+   el.value_field->accept<VR::OB>(setter);
+   return el;
+}
 
 /**
  * @brief make_elementfield overload for attributes that do not have a value

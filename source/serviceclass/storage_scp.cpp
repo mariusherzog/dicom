@@ -30,14 +30,15 @@ storage_scp::storage_scp(connection endpoint,
       {"1.2.840.10008.5.1.4.1.1.7", cstore_sop},
       {"1.2.840.10008.5.1.4.1.1.1.2", cstore_sop},
       {"1.2.840.10008.5.1.4.1.1.2", cstore_sop},
-      {"1.2.840.10008.5.1.4.1.1.4", cstore_sop}
+      {"1.2.840.10008.5.1.4.1.1.4", cstore_sop},
+      {"1.2.840.10008.5.1.4.1.1.12.1", cstore_sop}
    },
    assoc_def
    {
       endpoint.calling_ae, endpoint.called_ae,
       dimse::make_presentation_contexts(
                sop_classes,
-               {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2"},
+               {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2", "1.2.840.10008.1.2.4.70"},
                dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
    },
    infrstr_scp {endpoint.port, nullptr, nullptr},

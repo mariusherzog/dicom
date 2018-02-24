@@ -52,7 +52,6 @@ int main()
    val2 = dat[{0x0010, 0x0010}];
    v = *(val2.get().begin());
    std::string c = dat[{0x007f, 0x0010}].value<VR::ST>();
-   std::cout << c << std::flush;
 
 //   {
 //      {
@@ -68,9 +67,14 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("20170926174145xwanl11x.j01_10.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("GENECG", std::ios::in | std::ios::binary);
          outfile >> file;
-         std::cout << file.dataset() << std::flush;
+//         std::cout << file.dataset() << std::flush;
+
+         auto& set = file.dataset();
+         set[{0x0014, 0x0010}] = value<VR::FD> {1.0, 0.0, -1.0};
+
+//         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
 
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;
@@ -174,36 +178,37 @@ int main()
    try
    {
 
-      int n = 0;
-      queryretrieve_scp qr({"QRSCP", "QRSCU", "", 1113}, dict,
-                           [&n](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::shared_ptr<dicom::data::dataset::iod> data) {
-         dataset::iod seq;
-         seq[{0x0010,0x0010}] = dicom::data::attribute::make_elementfield<VR::PN>("test");
-         ++n;
-         if (n < 15)
-            st->send_image(*data);
-         else
-            st->send_image(boost::none);
+//      int n = 0;
+//      queryretrieve_scp qr({"QRSCP", "QRSCU", "", 1113}, dict,
+//                           [&n](queryretrieve_scp* st, dicom::data::dataset::commandset_data cmd, std::shared_ptr<dicom::data::dataset::iod> data) {
+//         dataset::iod seq;
+//         seq[{0x0010,0x0010}] = dicom::data::attribute::make_elementfield<VR::PN>("test");
+//         ++n;
+//         if (n < 15)
+//            st->send_image(*data);
+//         else
+//            st->send_image(boost::none);
 
-      });
-      qr.set_move_destination("MOVESCU", {"QRSCP", "QRSCU", "localhost", 1114});
-      qr.run();
-
-//      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
-//      {
-//         std::ofstream out("out", std::ios::binary);
-//    std::cout << *data;
-////         std::vector<unsigned short> imdata;
-////         auto value_field = (*data)[{0x7fe0,0x0010}];
-////         get_value_field<VR::OW>(value_field, imdata);
-////         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
-////         out.flush();
-//     dicom::filesystem::dicomfile file(*data, dict);
-//     std::fstream outfile("outfile.dcm", std::ios::out | std::ios::binary);
-//     outfile << file;
-//     outfile.flush();
 //      });
-//      store.run();
+//      qr.set_move_destination("MOVESCU", {"QRSCP", "QRSCU", "localhost", 1114});
+//      qr.run();
+
+      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      {
+         std::ofstream out("out", std::ios::binary);
+    std::cout << *data;
+//         std::vector<unsigned short> imdata;
+//         auto value_field = (*data)[{0x7fe0,0x0010}];
+//         get_value_field<VR::OW>(value_field, imdata);
+//         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
+//         out.flush();
+     dicom::filesystem::dicomfile file(*data, dict);
+     file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
+     std::fstream outfile("storefile.dcm", std::ios::out | std::ios::binary);
+     outfile << file;
+     outfile.flush();
+      });
+      store.run();
 
 //      int n = 0;
 //      storage_scu store({"STORAGESCP", "STORAGESCU", "localhost", 1113}, dict,

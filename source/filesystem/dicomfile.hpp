@@ -8,6 +8,7 @@
 
 #include "data/dataset/datasets.hpp"
 #include "data/dataset/transfer_processor.hpp"
+#include "util/channel_sev_logger.hpp"
 
 namespace dicom
 {
@@ -24,12 +25,22 @@ class dicomfile
 {
    private:
       dicom::data::dataset::iod dataset_;
+      dicom::data::dataset::iod filemetaheader;
 
       std::array<unsigned char, 128> preamble;
       std::array<unsigned char, 4> prefix;
 
       dicom::data::dictionary::dictionaries& dict;
+      std::unique_ptr<dicom::data::dataset::transfer_processor> metaheader_proc;
       std::unique_ptr<dicom::data::dataset::transfer_processor> transfer_proc;
+
+      util::log::channel_sev_logger logger;
+
+      /**
+       * @brief create_filemetaheader creates the meta file header (0002 group)
+       *        using information from the dicom dataset to be written.
+       */
+      void create_filemetaheader();
 
    public:
       /**
@@ -53,6 +64,13 @@ class dicomfile
        * @return stream read from
        */
       std::istream& read_dataset(std::istream& is);
+
+      /**
+       * @brief set_transfer_syntax explicitly sets the transfer syntax used to
+       *        read or write the dataset (excluding the file meta header)
+       * @param transfer_syntax UID of the requested transfer syntax
+       */
+      void set_transfer_syntax(std::string transfer_syntax);
 
       /**
        * @brief dataset is used to access the dataset, for example to access

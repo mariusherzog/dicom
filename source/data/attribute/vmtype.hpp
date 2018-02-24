@@ -99,6 +99,12 @@ std::size_t byte_length(const vmtype<T>& value_field)
 
 std::size_t byte_length(std::vector<unsigned char> value_field);
 
+std::size_t byte_length(std::vector<unsigned short> value_field);
+
+std::size_t byte_length(std::vector<float> value_field);
+
+std::size_t byte_length(std::vector<double> value_field);
+
 std::size_t byte_length(const std::string& value_field);
 
 std::size_t byte_length(const unsigned char);
@@ -393,9 +399,11 @@ class vmtype
       std::size_t byte_size() const
       {
          std::size_t bytesize = 0;
+         constexpr std::size_t delimiter_size = std::is_arithmetic<T>::value ? 0 : 1;
          if (size() > 0) {
             bytesize = std::accumulate(value_sequence.cbegin(), value_sequence.cend(), 0,
-                                   [](std::size_t accu, const T& val) { return accu + byte_length(val) + 1; }) - 1;
+                                   [](std::size_t accu, const T& val)
+               { return accu + byte_length(val) + delimiter_size; }) - delimiter_size;
          }
          return bytesize;
       }
@@ -509,8 +517,36 @@ vmtype<T>::~vmtype()
 {
 }
 
+/**
+ * @brief operator == compares two vmtypes for equality of each element
+ * @param a vmtype<T>
+ * @param b vmtype<T>
+ * @return true if a and b have the same elements, false otherwise
+ */
+template <typename T>
+bool operator==(const vmtype<T>& a, const vmtype<T>& b)
+{
+   if (a.size() != b.size()) {
+      return false;
+   }
+   bool is_same = true;
+   for (auto it = a.cbegin(), itb = b.cbegin(); it != a.cend(); ++it, ++itb) {
+      is_same &= (*it == *itb);
+   }
+   return is_same;
+}
 
-
+/**
+ * @brief operator == compares two vmtypes for inequality
+ * @param a vmtype<T>
+ * @param b vmtype<T>
+ * @return true if a and b differ, false otherwise
+ */
+template <typename T>
+bool operator!=(const vmtype<T>& a, const vmtype<T>& b)
+{
+   return !(a==b);
+}
 
 std::ostream& operator<<(std::ostream& os, vmtype<std::string> data);
 

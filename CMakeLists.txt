@@ -2,7 +2,7 @@ project(libdicom)
 cmake_minimum_required(VERSION 3.0)
 
 #set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g -D BOOST_ASIO_HAS_STD_CHRONO -lboost_thread-mt")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g  -D BOOST_ASIO_HAS_STD_CHRONO -lboost_thread-mt")
 
 
 add_definitions(-DBOOST_LOG_DYN_LINK)
@@ -56,7 +56,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 
 set(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/testsmain.cpp)
-file(GLOB_RECURSE TEST_SOURCES tests/dataset.cpp tests/types.cpp tests/testsmain.cpp tests/attribute.cpp tests/dimse.cpp tests/upperlayer_connection.cpp tests/stubs/upperlayer_communication_stub.hpp tests/stubs/infrastructure_connection_stub.hpp tests/upperlayer_manager.cpp tests/stubs/upperlayer_server_acceptor_stub.hpp tests/stubs/upperlayer_client_acceptor_stub.hpp tests/dictionaries.cpp tests/transfer_processor_attributes.cpp)
+file(GLOB_RECURSE TEST_SOURCES tests/dataset.cpp tests/types.cpp tests/testsmain.cpp tests/attribute.cpp tests/dimse.cpp tests/upperlayer_connection.cpp tests/stubs/upperlayer_communication_stub.hpp tests/stubs/infrastructure_connection_stub.hpp tests/upperlayer_manager.cpp tests/stubs/upperlayer_server_acceptor_stub.hpp tests/stubs/upperlayer_client_acceptor_stub.hpp tests/dictionaries.cpp tests/transfer_processor_attributes.cpp tests/transfer_processor_dataset.cpp tests/encapsulated_data.cpp)
 add_executable(dicom_tests ${TEST_SOURCES})
 target_link_libraries(dicom_tests  Catch libdicom ${Boost_LIBRARIES})
 

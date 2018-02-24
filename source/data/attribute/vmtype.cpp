@@ -14,6 +14,21 @@ std::size_t byte_length(std::vector<unsigned char> value_field)
    return value_field.size();
 }
 
+std::size_t byte_length(std::vector<unsigned short> value_field)
+{
+   return 2 * value_field.size();
+}
+
+std::size_t byte_length(std::vector<float> value_field)
+{
+   return 4 * value_field.size();
+}
+
+std::size_t byte_length(std::vector<double> value_field)
+{
+   return 8 * value_field.size();
+}
+
 std::size_t byte_length(const std::string& value_field)
 {
    auto size = value_field.length();
@@ -52,7 +67,7 @@ std::size_t byte_length(const float)
 
 std::size_t byte_length(const double)
 {
-   return 4;
+   return 8;
 }
 
 std::size_t byte_length(tag_type)

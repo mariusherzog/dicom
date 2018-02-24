@@ -55,9 +55,9 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
          {
             REQUIRE(size_previous + 1 == type.size());
          }
-         AND_THEN("the byte size increases by sizeof(T) plus the one-byte delimiter")
+         AND_THEN("the byte size increases by sizeof(T) plus the zero-byte delimiter")
          {
-            int bytesize_diff = sizeof(int) + 1;
+            int bytesize_diff = sizeof(int) + 0;
             REQUIRE(bytesize_previous + bytesize_diff == type.byte_size());
          }
          AND_THEN("the element's value can be retrieved from the back")
@@ -67,6 +67,7 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
             REQUIRE(1 == value);
          }
       }
+
    }
 
    GIVEN("An instance of vmtype which does not contain any elements")
@@ -212,6 +213,39 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
          THEN("An exception is thrown")
          {
             REQUIRE_THROWS(vmtype<long>({"2-2n"}));
+         }
+      }
+   }
+
+   GIVEN("Multiple instances of vmtypes with the same base type")
+   {
+      dicom::data::attribute::vmtype<unsigned int> type1 {{"*"}, {8,7,6}};
+      dicom::data::attribute::vmtype<unsigned int> type2 {{"*"}, {8,7,6}};
+      dicom::data::attribute::vmtype<unsigned int> type3 {{"*"}, {51,7,6}};
+      dicom::data::attribute::vmtype<unsigned int> type4 {{"*"}, {51,7,6,22}};
+
+      WHEN("Two have the same contents and lengths")
+      {
+         THEN("They compare equal")
+         {
+            REQUIRE(type1 == type2);
+         }
+      }
+
+      AND_WHEN("Two are the same length, but unequal")
+      {
+         THEN("They compare unequal")
+         {
+            REQUIRE(type1 != type3);
+         }
+      }
+
+      AND_WHEN("Two have differing lengths")
+      {
+         REQUIRE(type3.size() != type4.size());
+         THEN("They compare unequal")
+         {
+            REQUIRE(type3 != type4);
          }
       }
    }
@@ -363,3 +397,6 @@ SCENARIO("Usage of vmtype<T> iterators", "[types]")
       }
    }
 }
+
+
+

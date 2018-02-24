@@ -41,16 +41,32 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
-
+std::size_t byte_length(empty_t data)
+{
+   return 0;
+}
 
 std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
+{
+   printer pr{os};
+   return boost::apply_visitor(pr, data);
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OW>::type data)
 {
    std::size_t printsize = std::min(data.size(), 128ul);
    std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
    return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OW>::type data)
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OF>::type data)
+{
+   std::size_t printsize = std::min(data.size(), 128ul);
+   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
+   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OD>::type data)
 {
    std::size_t printsize = std::min(data.size(), 128ul);
    std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
@@ -236,7 +252,7 @@ std::size_t validate<VR::IS>(typename type_of<VR::IS>::type& value_field)
 template <>
 std::size_t validate<VR::LO>(typename type_of<VR::LO>::type& value_field)
 {
-   return validate_internal_multitext<VR::LO>(value_field, {});
+   return validate_internal_multitext<VR::LO>(value_field, {0x0a, 0x0c, 0x0d});
 }
 
 template <>
