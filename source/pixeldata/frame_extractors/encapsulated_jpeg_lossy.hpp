@@ -1,5 +1,5 @@
-#ifndef UNCOMPRESSED_OW_HPP
-#define UNCOMPRESSED_OW_HPP
+#ifndef ENCAPSULATED_JPEG_LOSSY_HPP
+#define ENCAPSULATED_JPEG_LOSSY_HPP
 
 #include <vector>
 
@@ -15,14 +15,12 @@ namespace pixeldata
 namespace frames
 {
 
-
-
-class uncompressed_ow
+class encapsulated_jpeg_lossy
 {
    public:
-      uncompressed_ow(const dicom::data::dataset::dataset_type& dataset);
+      encapsulated_jpeg_lossy(const dicom::data::dataset::dataset_type& dataset);
 
-      std::vector<unsigned short> operator[](std::size_t index);
+      std::vector<unsigned char> operator[](std::size_t index);
 
    private:
       const dicom::data::dataset::dataset_type& set;
@@ -36,7 +34,4 @@ class uncompressed_ow
 }
 
 }
-
-
-
-#endif // UNCOMPRESSED_OW_HPP
+#endif // ENCAPSULATED_JPEG_LOSSY_HPP

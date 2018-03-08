@@ -33,6 +33,8 @@ if(Boost_FOUND)
    target_link_libraries(libdicompp ${Boost_LIBRARIES})
 endif()
 
+target_link_libraries(libdicompp ${JPEG_LIBRARIES})
+
 # Copy files necessary at runtime
 configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv
     ${CMAKE_BINARY_DIR}/datadictionary.csv COPYONLY)

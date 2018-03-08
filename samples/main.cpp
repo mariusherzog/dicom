@@ -6,6 +6,7 @@
 
 // todo remove
 #include "../source/pixeldata/frame_extractors/uncompressed_ow.hpp"
+#include "../source/pixeldata/frame_extractors/encapsulated_jpeg_lossy.hpp"
 
 #include <boost/variant.hpp>
 
@@ -37,18 +38,19 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("../Anonymous.MR._.14.1.2017.06.28.09.41.02.294.59320527.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("../XA-MONO2-8-12x-catheter_lossy.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
 //         std::cout << file.dataset() << std::flush;
 
-         dicom::pixeldata::frames::uncompressed_ow frames(file.dataset());
-         auto data = frames[3];
+         dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
+         auto data = frames[8];
 
          auto& set = file.dataset();
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
          std::fstream os("framedata.gray",  std::ios::out | std::ios::binary);
          std::ostreambuf_iterator<char> out {os};
-         std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size()*2, out);
+         //std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size()*2, out);
+         std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size(), out);
 
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;
