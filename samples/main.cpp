@@ -38,12 +38,12 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("../XA-MONO2-8-12x-catheter_lossy.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("../XA-MONO2-8-12x-catheter_lossy3kb.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
 //         std::cout << file.dataset() << std::flush;
 
          dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
-         auto data = frames[8];
+         auto data = frames[0];
 
          auto& set = file.dataset();
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
