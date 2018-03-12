@@ -51,7 +51,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("GENECG", std::ios::in | std::ios::binary);
+         std::fstream outfile("../XA-MONO2-8-12x-catheter10kb.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
 //         std::cout << file.dataset() << std::flush;
 
