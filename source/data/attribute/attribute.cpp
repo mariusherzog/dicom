@@ -41,42 +41,6 @@ void swap(elementfield& lhs, elementfield& rhs) noexcept
    swap(lhs.value_field, rhs.value_field);
 }
 
-std::size_t byte_length(empty_t data)
-{
-   return 0;
-}
-
-std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OB>::type data)
-{
-   printer pr{os};
-   return boost::apply_visitor(pr, data);
-}
-
-std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OW>::type data)
-{
-   std::size_t printsize = std::min(data.size(), 128ul);
-   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
-   return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OF>::type data)
-{
-   std::size_t printsize = std::min(data.size(), 128ul);
-   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
-   return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::OD>::type data)
-{
-   std::size_t printsize = std::min(data.size(), 128ul);
-   std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
-   return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const dicom::data::attribute::type_of<VR::NN>::type)
-{
-   return os;
-}
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const)
 {

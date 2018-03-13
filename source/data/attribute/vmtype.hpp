@@ -13,30 +13,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "../attribute/tag.hpp"
-
-
-
-namespace dicom
-{
-
-namespace data
-{
-
-namespace dataset
-{
-   /**
-    * forward declaration of the dataset defined in the dataset namespace. This
-    * circular dependency is intrinsic to the DICOM dataset, as an attribute
-    * may be defined as another - nested - set.
-    */
-   struct dataset_type;
-}
-
-}
-
-}
-
+#include "base_types.hpp"
+#include "tag.hpp"
 
 
 namespace dicom
@@ -95,34 +73,6 @@ std::size_t byte_length(const vmtype<T>& value_field)
 {
    return value_field.byte_size();
 }
-
-std::size_t byte_length(std::vector<unsigned char> value_field);
-
-std::size_t byte_length(std::vector<unsigned short> value_field);
-
-std::size_t byte_length(std::vector<float> value_field);
-
-std::size_t byte_length(std::vector<double> value_field);
-
-std::size_t byte_length(const std::string& value_field);
-
-std::size_t byte_length(const unsigned char);
-
-std::size_t byte_length(const unsigned short);
-
-std::size_t byte_length(const short);
-
-std::size_t byte_length(const unsigned int);
-
-std::size_t byte_length(const long);
-
-std::size_t byte_length(const float);
-
-std::size_t byte_length(const double);
-
-std::size_t byte_length(tag_type);
-
-std::size_t byte_length(std::vector<dataset::dataset_type>);
 
 
 /**
@@ -382,8 +332,8 @@ class vmtype
          constexpr std::size_t delimiter_size = std::is_arithmetic<T>::value ? 0 : 1;
          if (size() > 0) {
             bytesize = std::accumulate(value_sequence.cbegin(), value_sequence.cend(), 0,
-                                   [](std::size_t accu, const T& val)
-               { return accu + byte_length(val) + delimiter_size; }) - delimiter_size;
+                                       [](std::size_t accu, const T& val)
+            { return accu + byte_length(val) + delimiter_size; }) - delimiter_size;
          }
          return bytesize;
       }
@@ -454,10 +404,10 @@ class vmtype
    public:
       virtual ~vmtype();
 
-        operator T()
-        {
-            return value_sequence[0];
-        }
+      operator T()
+      {
+         return value_sequence[0];
+      }
 
       /**
        * @brief add adds all specified values to the attribute, if doing so

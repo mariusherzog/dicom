@@ -27,10 +27,10 @@ namespace dictionary
 static std::string trim(std::string s)
 {
    if (s.size() > 0) {
-      int f = s.find_first_not_of(" ");
-      if (f < 0) return s;
+      auto f = s.find_first_not_of(" ");
+      if (f == std::string::npos) return s;
       std::string n = s.substr(f, s.size());
-      int l = n.find_last_not_of(" ");
+      auto l = n.find_last_not_of(" ");
       return s.substr(f, l+1);
    } else {
       return s;
@@ -47,7 +47,7 @@ static std::array<attribute::VR, dictionary_entry::max_vr_options> get_vrs(std::
 {
    constexpr int max_vr = dictionary_entry::max_vr_options;
    std::array<attribute::VR, max_vr> vrs;
-   int j = 0;
+   std::size_t j = 0;
    bool end = false;
    do {
       std::size_t pos = vrstring.find_first_of(" \t");
@@ -101,8 +101,8 @@ bool dictionary_dyn::comparetag(std::string strtag, attribute::tag_type tag) con
 {
    std::string gidstr {&strtag[1], &strtag[7]};
    std::string eidstr {&strtag[8], &strtag[14]};
-   unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
-   unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
+   unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, nullptr, 16));
+   unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, nullptr, 16));
    return taggid == tag.group_id && tageid == tag.element_id;
 }
 
@@ -155,8 +155,8 @@ boost::optional<dictionary_entry> dictionary_dyn::greedylookup(attribute::tag_ty
          std::getline(entry, tag, ';');
          std::string gidstr {&tag[1], &tag[7]};
          std::string eidstr {&tag[8], &tag[14]};
-         unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, 0, 16));
-         unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, 0, 16));
+         unsigned short taggid = static_cast<unsigned short>(std::stoul(gidstr, nullptr, 16));
+         unsigned short tageid = static_cast<unsigned short>(std::stoul(eidstr, nullptr, 16));
 
          std::array<attribute::VR, dictionary_entry::max_vr_options> vrs;
          std::string fields[num_fields-1];
