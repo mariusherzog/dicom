@@ -144,26 +144,6 @@ struct elementfield_base
 
 
 /**
- * @brief The elementfield_base struct defines all information contained in an
- *        attribute of an iod
- * @see DICOM standard 3.5, chapter 7
- */
-struct elementfield
-{
-      boost::optional<VR> value_rep;
-      std::size_t value_len;
-      std::unique_ptr<elementfield_base> value_field;
-
-      elementfield() = default;
-      elementfield(const elementfield& other);
-      elementfield& operator=(const elementfield other);
-
-      friend void swap(elementfield& lhs, elementfield& rhs) noexcept;
-};
-
-void swap(elementfield& lhs, elementfield& rhs) noexcept;
-
-/**
  * construct a type mapping VR -> T using specialized templates
  */
 template<VR>
@@ -400,6 +380,120 @@ template <>
 std::size_t validate<VR::AE>(typename type_of<VR::AE>::type& value_field);
 
 
+template <VR vr>
+struct value
+{
+   private:
+      typename type_of<vr>::type value_;
+
+   public:
+      constexpr value(typename type_of<vr>::type val): value_(val) {}
+
+
+      template <typename BT = decltype(value_),
+                typename = typename std::enable_if<
+                   is_vmtype<BT>::value
+                   >::type>
+      constexpr value(std::initializer_list<typename BT::base_type> values): value_(values) {}
+
+
+      constexpr operator decltype(value_)() const
+      {
+         return value_;
+      }
+
+      constexpr decltype(value_) get() const
+      {
+         return value_;
+      }
+
+      decltype(value_)& get()
+      {
+         return value_;
+      }
+};
+
+//template <VR vr>
+//struct value_ref
+//{
+//   private:
+//      typename type_of<vr>::type& value_;
+
+//   public:
+//      value_ref(typename type_of<vr>::type& val): value_(val) {}
+
+//      typename type_of<vr>::type& value()
+//      {
+//         return value_;
+//      }
+
+//      operator decltype(value_)() const
+//      {
+//         return value_;
+//      }
+//};
+
+
+struct elementfield;
+
+template <VR vr>
+static elementfield make_elementfield(value<vr> val);
+
+template <VR vr>
+void get_value_field(const elementfield& e, typename type_of<vr>::type& data);
+
+template <VR vr>
+static typename type_of<vr>::type* get_value_field_pointer(const elementfield& e);
+
+/**
+ * @brief The elementfield_base struct defines all information contained in an
+ *        attribute of an iod
+ * @see DICOM standard 3.5, chapter 7
+ */
+struct elementfield
+{
+      boost::optional<VR> value_rep;
+      std::size_t value_len;
+      std::unique_ptr<elementfield_base> value_field;
+
+      elementfield() = default;
+      elementfield(const elementfield& other);
+      elementfield& operator=(const elementfield other);
+
+      template <VR vr>
+      elementfield& operator=(value<vr> val)
+      {
+         *this = make_elementfield<vr>(val);
+         return *this;
+      }
+
+      template <VR vr>
+      operator value<vr>() const
+      {
+         typename type_of<vr>::type data;
+         get_value_field<vr>(*this, data);
+         return data;
+      }
+
+      template <VR vr>
+      typename type_of<vr>::type value() const
+      {
+         typename type_of<vr>::type data;
+         get_value_field<vr>(*this, data);
+         return data;
+      }
+
+//      template <VR vr>
+//      operator value_ref<vr>()
+//      {
+//         return value_ref<vr> {*(get_value_field_pointer<vr>(*this))};
+//      }
+
+      friend void swap(elementfield& lhs, elementfield& rhs) noexcept;
+};
+
+void swap(elementfield& lhs, elementfield& rhs) noexcept;
+
 /**
  * @brief The element_field struct contains the type-specific data and methods
  *        for setting / receiving those
@@ -442,13 +536,16 @@ class get_visitor : public attribute_visitor<vr>
       typename type_of<vr>::type& getdata;
 
    public:
-      get_visitor(typename type_of<vr>::type& data): getdata(data) {
+      get_visitor(typename type_of<vr>::type& data): getdata(data)
+      {
       }
 
-      virtual void apply(element_field<vr>* ef) override {
+      virtual void apply(element_field<vr>* ef) override
+      {
          getdata = ef->value_field;
       }
 };
+
 
 /**
  * @brief >_field is used to retrieve the value of the value field
@@ -484,6 +581,36 @@ void get_value_field(const elementfield& e, typename type_of<vr>::type::base_typ
    e.value_field->accept<vr>(getter);
    out_data = *wrapper.begin();
 }
+
+template <VR vr>
+class get_ptr_visitor : public attribute_visitor<vr>
+{
+   private:
+      typename type_of<vr>::type* dataptr;
+
+   public:
+      get_ptr_visitor() = default;
+
+      virtual void apply(element_field<vr>* ef) override
+      {
+         dataptr = &ef->value_field;
+      }
+
+      decltype(dataptr) pointer() const
+      {
+         return dataptr;
+      }
+};
+
+
+template <VR vr>
+static typename type_of<vr>::type* get_value_field_pointer(const elementfield& e)
+{
+   get_ptr_visitor<vr> getpointer;
+   e.value_field->accept<vr>(getpointer);
+   return getpointer.pointer();
+}
+
 
 /**
  * @brief The set_visitor class is used to set a specified value into the
@@ -536,15 +663,17 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
 }
 
 template <VR vr>
-elementfield make_elementfield(const typename type_of<vr>::type& data)
+static elementfield make_elementfield(const typename type_of<vr>::type &data)
 {
    std::size_t len = byte_length(data);
-   // if len is uneven, validate
-   // validate<VR::UI>(data);
    return make_elementfield<vr>(len, data);
 }
 
-
+template <VR vr>
+static elementfield make_elementfield(value<vr> val)
+{
+   return make_elementfield<vr>(val.get());
+}
 
 /**
  * @brief make_elementfield is a factory function to return a prepared attribute
@@ -628,6 +757,8 @@ elementfield make_elementfield()
  * @brief make_elementfield overload for attributes that do not have a value,
  *        but a length field
  * @return prepared instance of elementfield
+ * The second dummy parameter of type VR is used to prevent ambigious overloads
+ * with make_elementfield that take a single value of an integral type.
  */
 template <VR vr>
 elementfield make_elementfield(std::size_t len, VR)

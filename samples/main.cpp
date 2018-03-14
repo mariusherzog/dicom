@@ -44,9 +44,10 @@ int main()
 
          dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
          auto data = frames[6];
-
          auto& set = file.dataset();
+         std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
+
          std::fstream os("framedata.gray",  std::ios::out | std::ios::binary);
          std::ostreambuf_iterator<char> out {os};
          //std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size()*2, out);
