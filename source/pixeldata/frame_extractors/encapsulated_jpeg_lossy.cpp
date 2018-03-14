@@ -17,6 +17,49 @@ namespace frames
 using namespace dicom::data::attribute;
 using namespace dicom::data::dataset;
 
+/**
+ * @brief The jpeg_fragment_source class is used as a source manager for the
+ *        jpeg library. It fetches one fragment at a time as needed.
+ */
+class jpeg_fragment_source
+{
+   private:
+      std::size_t frame_index;
+      std::size_t current_fragment;
+      encapsulated& pixel_data;
+
+   public:
+      jpeg_fragment_source(encapsulated& pixel_data, std::size_t frame_index):
+         frame_index {frame_index},
+         current_fragment {frame_index},
+         pixel_data {pixel_data}
+      {
+      }
+
+      void init_source(j_decompress_ptr) {}
+
+      int fill_input_buffer(j_decompress_ptr cptr)
+      {
+         ++current_fragment;
+         auto compressed_pixel_data = pixel_data.get_fragment(current_fragment);
+         cptr->src->next_input_byte = static_cast<JOCTET*>(compressed_pixel_data.data());
+         cptr->src->bytes_in_buffer = compressed_pixel_data.size();
+         return true;
+      }
+
+      void skip_input_data(j_decompress_ptr cptr, long bytes)
+      {
+         if (bytes < 1) return;
+         cptr->src->next_input_byte += bytes;
+         cptr->src->bytes_in_buffer -= bytes;
+      }
+
+      void term_source(j_decompress_ptr)
+      {
+         current_fragment = frame_index; // reset to beginning of compressed frame
+      }
+};
+
 encapsulated_jpeg_lossy::encapsulated_jpeg_lossy(const dataset_type& dataset):
     set {dataset}
 {
@@ -43,34 +86,36 @@ std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index
 
    cinfo.err = jpeg_std_error(&jerr);
 
+   jpeg_fragment_source fragment_src_manager(encapsulated_data, index);
    jpeg_source_mgr fragment_src;
-   fragment_src.init_source = [](j_decompress_ptr) -> void { };
-   fragment_src.fill_input_buffer = [](j_decompress_ptr cptr) -> int
-   {
-      //current_fragment++;
-      int frag = 0; // increment after each
-      encapsulated* encaps_data = static_cast<encapsulated*>(cptr->client_data);
-      auto compressed_pixel_data = encaps_data->get_fragment(frag);
-      cptr->src->next_input_byte = static_cast<JOCTET*>(compressed_pixel_data.data());
-      cptr->src->bytes_in_buffer = compressed_pixel_data.size();
-      return true;
-   };
-   fragment_src.skip_input_data = [](j_decompress_ptr cptr, long bytes)
-   {
-      if (bytes < 1) return;
-      cptr->src->next_input_byte += bytes;
-      cptr->src->bytes_in_buffer -= bytes;
-   };
+
    fragment_src.resync_to_restart = jpeg_resync_to_restart;
-   fragment_src.term_source = [](j_decompress_ptr) {};
+
+   fragment_src.init_source = [](j_decompress_ptr ptr) -> void
+   {
+      static_cast<jpeg_fragment_source*>(ptr->client_data)->init_source(ptr);
+   };
+   fragment_src.fill_input_buffer = [](j_decompress_ptr ptr) -> int
+   {
+      return static_cast<jpeg_fragment_source*>(ptr->client_data)->fill_input_buffer(ptr);
+   };
+   fragment_src.skip_input_data = [](j_decompress_ptr ptr, long bytes)
+   {
+      static_cast<jpeg_fragment_source*>(ptr->client_data)->skip_input_data(ptr, bytes);
+   };
+   fragment_src.term_source = [](j_decompress_ptr ptr) -> void
+   {
+      static_cast<jpeg_fragment_source*>(ptr->client_data)->term_source(ptr);
+   };
+
+
 
    fragment_src.next_input_byte = static_cast<JOCTET*>(compressed_pixel_data.data());
    fragment_src.bytes_in_buffer = compressed_pixel_data.size();
 
    jpeg_create_decompress(&cinfo);
-   //jpeg_mem_src(&cinfo, compressed_pixel_data.data(), compressed_pixel_data.size());
    cinfo.src = &fragment_src;
-   cinfo.client_data = (void*)&encapsulated_data;
+   cinfo.client_data = static_cast<void*>(&fragment_src_manager);
 
    if (jpeg_read_header(&cinfo, true) != 1) {
       throw std::runtime_error("error reading jpeg header");

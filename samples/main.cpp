@@ -43,7 +43,7 @@ int main()
 //         std::cout << file.dataset() << std::flush;
 
          dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
-         auto data = frames[0];
+         auto data = frames[6];
 
          auto& set = file.dataset();
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
