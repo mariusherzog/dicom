@@ -26,9 +26,9 @@ class uncompressed_ow
 
    private:
       const dicom::data::dataset::dataset_type& set;
-      /*const */unsigned short samples_per_pixel;
-      unsigned short rows;
-      unsigned short cols;
+      const unsigned short samples_per_pixel;
+      const unsigned short rows;
+      const unsigned short cols;
 };
 
 }

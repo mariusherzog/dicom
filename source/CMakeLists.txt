@@ -34,6 +34,7 @@ if(Boost_FOUND)
 endif()
 
 target_link_libraries(libdicompp ${JPEG_LIBRARIES})
+target_link_libraries(libdicompp openjp2)
 
 # Copy files necessary at runtime
 configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv

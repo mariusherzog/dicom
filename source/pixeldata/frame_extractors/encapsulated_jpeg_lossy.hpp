@@ -20,13 +20,13 @@ class encapsulated_jpeg_lossy
    public:
       encapsulated_jpeg_lossy(const dicom::data::dataset::dataset_type& dataset);
 
-      std::vector<unsigned char> operator[](std::size_t index);
+      std::vector<unsigned char> operator[](std::size_t index) const;
 
    private:
       const dicom::data::dataset::dataset_type& set;
-      /*const */unsigned short samples_per_pixel;
-      unsigned short rows;
-      unsigned short cols;
+      const unsigned short samples_per_pixel;
+      const unsigned short rows;
+      const unsigned short cols;
 };
 
 }

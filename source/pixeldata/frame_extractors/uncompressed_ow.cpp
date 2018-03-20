@@ -13,12 +13,11 @@ using namespace dicom::data::attribute;
 using namespace dicom::data::dataset;
 
 uncompressed_ow::uncompressed_ow(const dataset_type& dataset):
-   set {dataset}
+   set {dataset},
+   samples_per_pixel {dataset.at({0x0028, 0x0002}).value<VR::US>()},
+   rows {dataset.at({0x0028, 0x0010}).value<VR::US>()},
+   cols {dataset.at({0x0028, 0x0011}).value<VR::US>()}
 {
-   samples_per_pixel = 1;
-   //get_value_field<VR::US>(dataset.at({0x0028, 0x0002}), samples_per_pixel);
-   get_value_field<VR::US>(dataset.at({0x0028, 0x0010}), rows);
-   get_value_field<VR::US>(dataset.at({0x0028, 0x0011}), cols);
 }
 
 std::vector<unsigned short> uncompressed_ow::operator[](std::size_t index)

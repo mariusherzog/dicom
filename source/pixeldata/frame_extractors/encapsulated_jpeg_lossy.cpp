@@ -28,6 +28,8 @@ class jpeg_fragment_source
       std::size_t current_fragment;
       encapsulated& pixel_data;
 
+      std::vector<unsigned char> compressed_pixel_data;
+
    public:
       jpeg_fragment_source(encapsulated& pixel_data, std::size_t frame_index):
          frame_index {frame_index},
@@ -36,12 +38,17 @@ class jpeg_fragment_source
       {
       }
 
-      void init_source(j_decompress_ptr) {}
+      void init_source(j_decompress_ptr cptr)
+      {
+         compressed_pixel_data = pixel_data.get_fragment(current_fragment);
+         cptr->src->next_input_byte = static_cast<JOCTET*>(compressed_pixel_data.data());
+         cptr->src->bytes_in_buffer = compressed_pixel_data.size();
+      }
 
       int fill_input_buffer(j_decompress_ptr cptr)
       {
          ++current_fragment;
-         auto compressed_pixel_data = pixel_data.get_fragment(current_fragment);
+         compressed_pixel_data = pixel_data.get_fragment(current_fragment);
          cptr->src->next_input_byte = static_cast<JOCTET*>(compressed_pixel_data.data());
          cptr->src->bytes_in_buffer = compressed_pixel_data.size();
          return true;
@@ -61,16 +68,15 @@ class jpeg_fragment_source
 };
 
 encapsulated_jpeg_lossy::encapsulated_jpeg_lossy(const dataset_type& dataset):
-    set {dataset}
+    set {dataset},
+    samples_per_pixel {dataset.at({0x0028, 0x0002}).value<VR::US>()},
+    rows {dataset.at({0x0028, 0x0010}).value<VR::US>()},
+    cols {dataset.at({0x0028, 0x0011}).value<VR::US>()}
 {
-    samples_per_pixel = 1;
-    //get_value_field<VR::US>(dataset.at({0x0028, 0x0002}), samples_per_pixel);
-    get_value_field<VR::US>(dataset.at({0x0028, 0x0010}), rows);
-    get_value_field<VR::US>(dataset.at({0x0028, 0x0011}), cols);
 }
 
 
-std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index)
+std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index) const
 {
    type_of<VR::OB>::type ob_pixel_data;
    get_value_field<VR::OB>(set.at({0x7fe0, 0x0010}), ob_pixel_data);
@@ -107,11 +113,6 @@ std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index
    {
       static_cast<jpeg_fragment_source*>(ptr->client_data)->term_source(ptr);
    };
-
-
-
-   fragment_src.next_input_byte = static_cast<JOCTET*>(compressed_pixel_data.data());
-   fragment_src.bytes_in_buffer = compressed_pixel_data.size();
 
    jpeg_create_decompress(&cinfo);
    cinfo.src = &fragment_src;
