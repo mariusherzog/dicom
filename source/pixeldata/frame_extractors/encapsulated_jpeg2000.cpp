@@ -18,6 +18,8 @@ encapsulated_jpeg2000::encapsulated_jpeg2000(const dataset_type& dataset):
 
 }
 
+static OPJ_SIZE_T offset = 0;
+
 std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index) const
 {
    type_of<VR::OB>::type ob_pixel_data;
@@ -33,9 +35,15 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
       auto compressed_pixel_data = encap_data->get_fragment(0);
 
       //std::copy_n(compressed_pixel_data.begin(), bytes, buffer);
-      ::memcpy(buffer, compressed_pixel_data.data(), compressed_pixel_data.size());
 
-      return bytes;
+      OPJ_SIZE_T read_size = bytes;
+      if (read_size > compressed_pixel_data.size()-offset) {
+         read_size = compressed_pixel_data.size()-offset;
+      }
+
+      ::memcpy(buffer, offset + compressed_pixel_data.data(), read_size);
+
+      return read_size;
    };
 
    auto fragment_skip = [](OPJ_OFF_T bytes, void * user_data) -> OPJ_OFF_T
@@ -45,6 +53,7 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
 
    auto fragment_seek = [](OPJ_OFF_T bytes, void * user_data) -> OPJ_BOOL
    {
+      offset = bytes;
       return OPJ_TRUE;
    };
 
@@ -85,7 +94,7 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
 
 
    for (auto& v : data) {
-      double norm = (v - (700-(3200.0/2.0)))/3200.0;
+      double norm = (v - (700-(3200.0/2.0)))/3250.0;
       if (norm < 0.0) norm = 0.0;
       if (norm > 1.0) norm = 1.0;
       v = 65535.0*norm;
