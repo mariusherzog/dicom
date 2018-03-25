@@ -5,9 +5,9 @@
 #include <memory>
 #include <deque>
 
+#include "libdicompp/network.hpp"
+
 #include "stubs/infrastructure_connection_stub.hpp"
-#include "../source/data/dictionary/dictionary.hpp"
-#include "../source/network/upperlayer/upperlayer_connection.hpp"
 
 using namespace dicom::network::upperlayer;
 

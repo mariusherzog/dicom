@@ -11,6 +11,7 @@
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include "base_types.hpp"
 #include "vmtype.hpp"
 #include "encapsulated.hpp"
 #include "tag.hpp"
@@ -77,15 +78,6 @@ enum class VR
    NI
 };
 
-/**
- * @brief empty_t dummy type for attributes without a data field
- */
-struct empty_t
-{
-//      empty_t& operator=(const empty_t&) = delete;
-};
-
-std::size_t byte_length(empty_t data);
 
 
 struct elementfield_base;
@@ -224,7 +216,7 @@ struct type_of<VR::LT>
 template<>
 struct type_of<VR::OB>
 {
-      using type = boost::variant<std::vector<unsigned char>, encapsulated>;
+      using type = ob_type;
       using base_type = std::vector<unsigned char>;
 };
 template<>
@@ -326,16 +318,6 @@ struct type_of<VR::NI>
 {
       using type = empty_t;
 };
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OW>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OF>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OD>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
 
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const data);
 

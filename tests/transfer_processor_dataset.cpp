@@ -4,12 +4,7 @@
 #include <exception>
 #include <vector>
 
-#include "../source/data/dataset/datasets.hpp"
-#include "../source/data/attribute/tag.hpp"
-#include "../source/data/attribute/attribute.hpp"
-#include "../source/data/dataset/transfer_processor.hpp"
-#include "../source/data/dictionary/dictionary.hpp"
-
+#include "libdicompp/dicomdata.hpp"
 
 using namespace dicom::data::attribute;
 using namespace dicom::data;

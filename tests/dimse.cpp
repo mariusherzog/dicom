@@ -4,10 +4,7 @@
 
 #include <fstream>
 
-#include "../source/network/dimse/dimse_pm.hpp"
-#include "../source/network/dimse/association_definition.hpp"
-#include "../source/data/dictionary/dictionary.hpp"
-#include "../source/data/dataset/datasets.hpp"
+#include "libdicompp/network.hpp"
 
 #include "stubs/upperlayer_communication_stub.hpp"
 
@@ -180,7 +177,7 @@ SCENARIO("Data transmission on an established association", "[network][dimse]")
    });
 
    std::vector<unsigned char> cecho_bin;
-   std::fstream cecho_file {"data/cechorq.bin", std::ios::in | std::ios::binary};
+   std::fstream cecho_file {"cechorq.bin", std::ios::in | std::ios::binary};
    std::copy(std::istreambuf_iterator<char>{cecho_file},
              std::istreambuf_iterator<char>{},
              std::back_inserter(cecho_bin));
@@ -212,9 +209,9 @@ SCENARIO("Data transmission on an established association", "[network][dimse]")
 
       WHEN("Data is sent on an accepted resentation context")
       {
-         auto data = new p_data_tf;
-         data->command_set = cecho_bin;
-         ul_stub.invoke_received_message(TYPE::P_DATA_TF, std::unique_ptr<property>(data));
+         p_data_tf* p_data = new p_data_tf;
+         p_data->command_set = cecho_bin;
+         ul_stub.invoke_received_message(TYPE::P_DATA_TF, std::unique_ptr<property>(p_data));
 
          THEN("The handler for this sop class with the respective service group is called")
          {

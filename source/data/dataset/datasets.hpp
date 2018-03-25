@@ -106,6 +106,8 @@ struct STATUS
       int code;
 };
 
+std::size_t byte_length(std::vector<dataset::dataset_type>);
+
 }
 
 }

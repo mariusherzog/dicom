@@ -57,6 +57,11 @@ bool operator!=(const tag_type& lhs, const tag_type& rhs)
    return !(lhs == rhs);
 }
 
+std::size_t byte_length(tag_type)
+{
+   return 4;
+}
+
 }
 
 }

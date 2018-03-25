@@ -4,8 +4,7 @@
 #include <stack>
 #include <vector>
 
-#include "../source/data/dataset/datasets.hpp"
-#include "../source/data/attribute/attribute.hpp"
+#include "libdicompp/dicomdata.hpp"
 
 using namespace dicom::data::dataset;
 using namespace dicom::data::attribute;
