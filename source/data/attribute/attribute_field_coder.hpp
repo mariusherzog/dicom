@@ -39,7 +39,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
  * as a parameter, parses the respective value field, and returns an instance of
  * elementfield which contains all the data.
  */
-elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t len, VR vr, std::string vm, int begin);
+elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t len, VR vr, std::string vm, std::size_t begin);
 
 
 /**
@@ -69,7 +69,7 @@ std::vector<unsigned char> encode_len(std::size_t lenbytes, std::size_t len, END
  * @param endianness of the encoded data
  * @return instance of tag_type with the tag elements
  */
-tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNESS endianness);
+tag_type decode_tag(const std::vector<unsigned char>& data, std::size_t begin, ENDIANNESS endianness);
 
 /**
  * @brief decode_len transforms the serialized length data into a structured
@@ -81,7 +81,7 @@ tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNES
  *        of the value field
  * @return length specified in the serialized stream data
  */
-std::size_t decode_len(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t lenbytes, int begin);
+std::size_t decode_len(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t lenbytes, std::size_t begin);
 
 
 

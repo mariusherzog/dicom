@@ -17,12 +17,12 @@ namespace convhelper
 {
 
 template <typename T>
-static std::vector<unsigned char> integral_to_little_endian(T data, int size)
+static std::vector<unsigned char> integral_to_little_endian(T data, std::size_t size)
 {
    static_assert(std::is_integral<T>::value, "Integral type expected");
    std::vector<unsigned char> buf(size);
 
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       buf[i] = ((data >> 8*i) & 0xff);
    }
 
@@ -30,11 +30,11 @@ static std::vector<unsigned char> integral_to_little_endian(T data, int size)
 }
 
 template <typename T>
-static std::vector<unsigned char> integral_to_big_endian(T data, int size)
+static std::vector<unsigned char> integral_to_big_endian(T data, std::size_t size)
 {
    static_assert(std::is_integral<T>::value, "Integral type expected");
    std::vector<unsigned char> buf(size);
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       buf[i] = (data >> (8*(size-1-i)) & 0xff);
    }
    return buf;
@@ -42,28 +42,28 @@ static std::vector<unsigned char> integral_to_big_endian(T data, int size)
 
 template <typename T>
 static void little_endian_to_integral(const std::vector<unsigned char>& data
-                                      , int begin, int size, T& out)
+                                      , std::size_t begin, std::size_t size, T& out)
 {
    static_assert(std::is_integral<T>::value, "Integral type expected");
    out = 0;
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       out |= ((data[begin+i] & static_cast<T>(0xff)) << 8*i);
    }
 }
 
 template <typename T>
 static void big_endian_to_integral(const std::vector<unsigned char>& data
-                                      , int begin, int size, T& out)
+                                      , std::size_t begin, std::size_t size, T& out)
 {
    static_assert(std::is_integral<T>::value, "Integral type expected");
    out = 0;
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       out |= ((data[begin+i] & static_cast<T>(0xff)) << 8*(size-1-i));
    }
 }
 
 template <typename T>
-static std::vector<unsigned char> float_to_little_endian(T data, int size)
+static std::vector<unsigned char> float_to_little_endian(T data, std::size_t size)
 {
    static_assert(std::is_floating_point<T>::value, "Floating type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
@@ -71,14 +71,14 @@ static std::vector<unsigned char> float_to_little_endian(T data, int size)
    unsigned char floatbuf[sizeof(T)];
    unsigned char* floatbufin = floatbuf;
    floatbufin = reinterpret_cast<unsigned char*>(&data);
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       buf[i] = floatbufin[i];
    }
    return buf;
 }
 
 template <typename T>
-static std::vector<unsigned char> float_to_big_endian(T data, int size)
+static std::vector<unsigned char> float_to_big_endian(T data, std::size_t size)
 {
    static_assert(std::is_floating_point<T>::value, "Floating type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
@@ -86,7 +86,7 @@ static std::vector<unsigned char> float_to_big_endian(T data, int size)
    unsigned char floatbuf[sizeof(T)];
    unsigned char* floatbufin = floatbuf;
    floatbufin = reinterpret_cast<unsigned char*>(&data);
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       buf[size-i-1] = floatbufin[i];
    }
    return buf;
@@ -94,13 +94,13 @@ static std::vector<unsigned char> float_to_big_endian(T data, int size)
 
 template <typename T>
 static void little_endian_to_float(const std::vector<unsigned char>& data
-                                      , int begin, int size, T& out)
+                                      , std::size_t begin, std::size_t size, T& out)
 {
    static_assert(std::is_floating_point<T>::value, "Floating type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
    out = 0;
    unsigned char floatbufout[sizeof(T)] = {0};
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       floatbufout[i] |= ((data[begin+i] & 0xff));
    }
    out = *reinterpret_cast<T*>(floatbufout);
@@ -108,13 +108,13 @@ static void little_endian_to_float(const std::vector<unsigned char>& data
 
 template <typename T>
 static void big_endian_to_float(const std::vector<unsigned char>& data
-                                      , int begin, int size, T& out)
+                                      , std::size_t begin, std::size_t size, T& out)
 {
    static_assert(std::is_floating_point<T>::value, "Floating type expected");
    static_assert(sizeof(T) == 4 || sizeof(T) == 8, "Unexpected floating point size");
    out = 0;
    unsigned char floatbufout[sizeof(T)] = {0};
-   for (int i=0; i<size; ++i) {
+   for (std::size_t i=0; i<size; ++i) {
       floatbufout[i] |= ((data[begin+size-1-i] & 0xff));
    }
    out = *reinterpret_cast<T*>(floatbufout);
@@ -123,7 +123,7 @@ static void big_endian_to_float(const std::vector<unsigned char>& data
 static std::vector<unsigned char> encode_byte_string(attribute::vmtype<std::string> str)
 {
    std::vector<unsigned char> buf;
-   int offset = 0;
+   std::size_t offset = 0;
    for (auto it = str.begin(); it != str.end(); ++it) {
       std::string value = *it;
       if (it != str.begin()) { //beginning from the 2nd element, start preceding
@@ -148,25 +148,6 @@ static std::vector<unsigned char> encode_byte_array(const std::vector<unsigned c
    return std::vector<unsigned char> {strdata};
 }
 
-class encoder: public boost::static_visitor<std::vector<unsigned char>>
-{
-   public:
-    std::vector<unsigned char> operator()(const encapsulated& encapsulated_data) const
-    {
-       return std::vector<unsigned char>();
-    }
-
-    std::vector<unsigned char> operator()(const std::vector<unsigned char>& data) const
-    {
-       return data;
-    }
-};
-
-
-static std::vector<unsigned char> encode_byte_array(attribute::type_of<VR::OB>::type& data)
-{
-   return boost::apply_visitor(encoder{}, data);
-}
 
 static std::vector<unsigned char> encode_word_array_le(const std::vector<unsigned short>& strdata)
 {
@@ -241,30 +222,26 @@ static std::vector<unsigned char> encode_tags(const vmtype<tag_type>& tags, ENDI
 }
 
 
-static attribute::vmtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, int begin, int len)
+static attribute::vmtype<std::string> decode_byte_string(const std::vector<unsigned char>& strdata, std::string vm, std::size_t begin, std::size_t len)
 {
    std::vector<std::string> strings;
 
    //std::vector<unsigned char> buf(len);
    std::vector<unsigned char> buf;
-   int size_segments = 0;
-   for (int i=begin; i<begin+len; ++i) {
+   for (std::size_t i=begin; i<begin+len; ++i) {
       if (strdata[i] == 0x5c) {
          strings.emplace_back(buf.begin(), buf.end());
          buf.clear();
          ++i; //skip delimiter
-         //buf.resize(i-begin-size_segments);
-         size_segments = i-begin;
       }
 
-      //buf[i-begin-size_segments] = static_cast<unsigned char>(strdata[i]);
       buf.push_back(static_cast<unsigned char>(strdata[i]));
    }
    strings.emplace_back(buf.begin(), buf.end());
    return attribute::vmtype<std::string>(vm, strings.begin(), strings.end()); ///todo: change to correct VM
 }
 
-static std::vector<unsigned char> decode_byte_array(const std::vector<unsigned char>& strdata, int begin, int len)
+static std::vector<unsigned char> decode_byte_array(const std::vector<unsigned char>& strdata, std::size_t begin, std::size_t len)
 {
    std::vector<unsigned char> str {strdata.begin()+begin, strdata.begin()+begin+len};
    if (len % 2 != 0) {
@@ -274,12 +251,12 @@ static std::vector<unsigned char> decode_byte_array(const std::vector<unsigned c
    return str;
 }
 
-static std::vector<unsigned short> decode_word_array_le(const std::vector<unsigned char>& strdata, int begin, int len)
+static std::vector<unsigned short> decode_word_array_le(const std::vector<unsigned char>& strdata, std::size_t begin, std::size_t len)
 {
    std::vector<unsigned short> str;
    str.reserve(len/2);
 
-   for (int i=begin; i<begin+len; i+=2) {
+   for (std::size_t i=begin; i<begin+len; i+=2) {
       unsigned short value = 0;
       value |= (strdata[i]);
       value |= (strdata[i + 1] << 8);
@@ -293,12 +270,12 @@ static std::vector<unsigned short> decode_word_array_le(const std::vector<unsign
    return str;
 }
 
-static std::vector<unsigned short> decode_word_array_be(const std::vector<unsigned char>& strdata, int begin, int len)
+static std::vector<unsigned short> decode_word_array_be(const std::vector<unsigned char>& strdata, std::size_t begin, std::size_t len)
 {
    std::vector<unsigned short> str;
    str.reserve(len/2);
 
-   for (int i=begin; i<begin+len; i+=2) {
+   for (std::size_t i=begin; i<begin+len; i+=2) {
       unsigned short value = 0;
       value |= (strdata[i] << 8);
       value |= (strdata[i + 1]);
@@ -313,14 +290,14 @@ static std::vector<unsigned short> decode_word_array_be(const std::vector<unsign
 }
 
 template <typename FT>
-static std::vector<FT> decode_float_array_le(const std::vector<unsigned char>& strdata, int begin, int len)
+static std::vector<FT> decode_float_array_le(const std::vector<unsigned char>& strdata, std::size_t begin, std::size_t len)
 {
    static_assert(std::is_floating_point<FT>::value, "no floating point type");
    static_assert(sizeof(FT) == 4 || sizeof(FT) == 8, "unexpected size of type");
 
    auto size = sizeof(FT);
    std::vector<FT> values;
-   for (int i=begin; i<begin+len; i += size) {
+   for (std::size_t i=begin; i<begin+len; i += size) {
       FT value = 0.0;
       std::array<unsigned char, sizeof(FT)> float_repr;
       for (std::size_t b=0; b<size; ++b) {
@@ -333,14 +310,14 @@ static std::vector<FT> decode_float_array_le(const std::vector<unsigned char>& s
 }
 
 template <typename FT>
-static std::vector<FT> decode_float_array_be(const std::vector<unsigned char>& strdata, int begin, int len)
+static std::vector<FT> decode_float_array_be(const std::vector<unsigned char>& strdata, std::size_t begin, std::size_t len)
 {
    static_assert(std::is_floating_point<FT>::value, "no floating point type");
    static_assert(sizeof(FT) == 4 || sizeof(FT) == 8, "unexpected size of type");
 
    auto size = sizeof(FT);
    std::vector<FT> values;
-   for (int i=begin; i<begin+len; i += size) {
+   for (std::size_t i=begin; i<begin+len; i += size) {
       FT value = 0.0;
       std::array<unsigned char, sizeof(FT)> float_repr;
       for (std::size_t b=0; b<size; ++b) {
@@ -352,12 +329,12 @@ static std::vector<FT> decode_float_array_be(const std::vector<unsigned char>& s
    return values;
 }
 
-static attribute::vmtype<tag_type> decode_tags(const std::vector<unsigned char>& strdata, std::string vm, ENDIANNESS endianness, int begin, int len)
+static attribute::vmtype<tag_type> decode_tags(const std::vector<unsigned char>& strdata, std::string vm, ENDIANNESS endianness, std::size_t begin, std::size_t len)
 {
    const std::size_t tag_length = 4;
    std::vector<tag_type> tags;
    tags.reserve(len / tag_length);
-   for (int i=0; i<len; i+=tag_length) {
+   for (std::size_t i=0; i<len; i+=tag_length) {
       tags.emplace_back(decode_tag(strdata, begin+i, endianness));
    }
    return attribute::vmtype<tag_type>(vm, tags.begin(), tags.end());
@@ -430,7 +407,7 @@ std::vector<unsigned char> encode_len_big_endian(std::size_t lenbytes, std::size
  *        of the value field
  * @return instance of tag_type with the tag elements
  */
-tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int begin)
+tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, std::size_t begin)
 {
    unsigned short gid, eid;
    convhelper::little_endian_to_integral(data, begin, 2, gid);
@@ -448,7 +425,7 @@ tag_type decode_tag_little_endian(const std::vector<unsigned char>& data, int be
  *        of the value field
  * @return instance of tag_type with the tag elements
  */
-tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin)
+tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, std::size_t begin)
 {
    unsigned short gid, eid;
    convhelper::big_endian_to_integral(data, begin, 2, gid);
@@ -467,7 +444,7 @@ tag_type decode_tag_big_endian(const std::vector<unsigned char>& data, int begin
  *        of the value field
  * @return length specified in the serialized stream data
  */
-std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
+std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, std::size_t begin)
 {
    std::size_t len;
    convhelper::little_endian_to_integral(data, begin, lenbytes, len);
@@ -482,7 +459,7 @@ std::size_t decode_len_little_endian(const std::vector<unsigned char>& data, std
  *        of the value field
  * @return length specified in the serialized stream data
  */
-std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, int begin)
+std::size_t decode_len_big_endian(const std::vector<unsigned char>& data, std::size_t lenbytes, std::size_t begin)
 {
    std::size_t len;
       convhelper::big_endian_to_integral(data, begin, lenbytes, len);
@@ -747,7 +724,7 @@ std::vector<unsigned char> encode_value_field(elementfield attr, ENDIANNESS endi
 
 
 elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNESS endianness,
-                                  std::size_t len, VR vr, std::string vm, int begin)
+                                  std::size_t len, VR vr, std::string vm, std::size_t begin)
 {
    switch (vr) {
       case VR::AE: {
@@ -765,22 +742,18 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
       case VR::CS: {
          auto cs = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::CS>(len, cs);
-         break;
       }
       case VR::DA: {
          auto da = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::DA>(len, da);
-         break;
       }
       case VR::DS: {
          auto ds = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::DS>(len, ds);
-         break;
       }
       case VR::DT: {
          auto dt = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::DT>(len, dt);
-         break;
       }
       case VR::FL: {
          vmtype<float> fl;
@@ -790,7 +763,6 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
             deserialize_vmtype(data, convhelper::big_endian_to_float<float>, begin, len, 4, fl);
          }
          return make_elementfield<VR::FL>(len, fl);
-         break;
       }
       case VR::FD: {
          vmtype<double> fd;
@@ -800,17 +772,14 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
             deserialize_vmtype(data, convhelper::big_endian_to_float<double>, begin, len, 8, fd);
          }
          return make_elementfield<VR::FD>(len, fd);
-         break;
       }
       case VR::IS: {
          auto is = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::IS>(len, is);
-         break;
       }
       case VR::LO: {
          auto lo = convhelper::decode_byte_string(data, vm, begin, len);
          return make_elementfield<VR::LO>(len, lo);
-         break;
       }
       case VR::LT: {
          auto lt = convhelper::decode_byte_string(data, vm, begin, len);
@@ -820,7 +789,6 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          std::vector<unsigned char> ob;
          ob = convhelper::decode_byte_array(data, begin, len);
          return make_elementfield<VR::OB>(len, ob);
-         break;
       }
       case VR::OD: {
          std::vector<double> od;
@@ -848,7 +816,6 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
              ow = convhelper::decode_word_array_be(data, begin, len);
          }
          return make_elementfield<VR::OW>(len, ow);
-         break;
       }
       case VR::PN: {
          auto pn = convhelper::decode_byte_string(data, vm, begin, len);
@@ -868,7 +835,7 @@ elementfield decode_value_field(const std::vector<unsigned char>& data, ENDIANNE
          return make_elementfield<VR::SL>(len, sl);
       }
       case VR::SQ: {
-
+         break;
       }
       case VR::SS: {
          vmtype<short> ss;
@@ -947,7 +914,7 @@ std::vector<unsigned char> encode_len(std::size_t lenbytes, std::size_t len, END
    }
 }
 
-tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNESS endianness)
+tag_type decode_tag(const std::vector<unsigned char>& data, std::size_t begin, ENDIANNESS endianness)
 {
    if (endianness == ENDIANNESS::LITTLE) {
       return decode_tag_little_endian(data, begin);
@@ -956,7 +923,7 @@ tag_type decode_tag(const std::vector<unsigned char>& data, int begin, ENDIANNES
    }
 }
 
-std::size_t decode_len(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t lenbytes, int begin)
+std::size_t decode_len(const std::vector<unsigned char>& data, ENDIANNESS endianness, std::size_t lenbytes, std::size_t begin)
 {
    if (endianness == ENDIANNESS::LITTLE) {
       return decode_len_little_endian(data, lenbytes, begin);

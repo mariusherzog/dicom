@@ -188,7 +188,7 @@ int main()
          get_value_field<VR::UI>(cmd[{0x0000, 0x1000}], sop_uid);
 
      dicom::filesystem::dicomfile file(*data, dict);
-     file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
+     //file.set_transfer_syntax("1.2.840.10008.1.2.4.70");
      std::fstream outfile(sop_uid + ".dcm", std::ios::out | std::ios::binary);
      outfile << file;
      outfile.flush();
