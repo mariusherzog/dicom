@@ -37,6 +37,24 @@ int main()
 
    dicom::data::dictionary::dictionaries& dict = get_default_dictionaries();
 
+   dataset::iod dat;
+   std::string a = "Hello";
+   value<VR::FD> coord {0.3, 0.3, 0.3};
+   dat[{0x0010, 0x0010}] = value<VR::PN> {"Marius^Herzog"};
+   dat[{0x0010, 0x0010}] = value<VR::FD> {1.0, 0.0, -1.0};
+   dat[{0x007f, 0x0010}] = value<VR::ST> {a};
+
+//   value_ref<VR::FD> val = dat[{0x0010, 0x0010}];
+//   *(val.value().begin()) = 2.3;
+
+   value<VR::FD> val2 = dat[{0x0010, 0x0010}];
+   value<VR::ST> val3 = dat[{0x007f, 0x0010}];
+   auto v = *(val2.get().begin());
+   dat[{0x0010, 0x0010}] = coord;
+   val2 = dat[{0x0010, 0x0010}];
+   v = *(val2.get().begin());
+   std::string c = dat[{0x007f, 0x0010}].value<VR::ST>();
+
 //   {
 //      {
 //         dataset::iod dicm;
@@ -51,11 +69,15 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
+
          std::fstream outfile("../XA-MONO2-8-12x-catheter10kb.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
 //         std::cout << file.dataset() << std::flush;
 
          auto& set = file.dataset();
+         set[{0x0014, 0x0010}] = value<VR::FD> {1.0, 0.0, -1.0};
+         std::cout << set[{0x0010, 0x0010}].value<VR::PN>() << std::endl;
+
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
 
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);

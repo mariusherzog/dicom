@@ -13,9 +13,9 @@
 
 #include <boost/algorithm/string.hpp>
 
+
 #include "base_types.hpp"
 #include "tag.hpp"
-
 
 namespace dicom
 {
@@ -75,6 +75,13 @@ std::size_t byte_length(const vmtype<T>& value_field)
 }
 
 
+template<typename>
+struct is_vmtype : std::false_type {};
+
+template<typename T>
+struct is_vmtype<vmtype<T>> : std::true_type {};
+
+
 /**
  * The vmtype class represents the value field of an attribute. It holds the
  * value(s) of type T and asserts the consistency of the appropriate value
@@ -85,13 +92,14 @@ template <typename T>
 class vmtype
 {
    private:
+      enum OVERLOAD {DUMMY};
       /**
        * @brief the private vmtype constructor initializes the rules as specified
        *        by the parameter
        * @param mult multiplicity
        * @param int dummy parameter to prevent ambiguous overloads for T = string
        */
-      vmtype(std::string mult, int):
+      vmtype(std::string mult, OVERLOAD):
          multiplicity {mult}
       {
          populate_mult_rules();
@@ -117,25 +125,36 @@ class vmtype
        * @param value value to be added
        */
       vmtype(T value):
-         vmtype {"*", 0}
+         vmtype {"*", OVERLOAD::DUMMY}
       {
          const T* value_addr = &value;
          insert(value_addr, value_addr+1);
       }
 
       vmtype():
-         vmtype {"*", 0}
+         vmtype {"*", OVERLOAD::DUMMY}
       {
          insert({});
       }
+
+//      /**
+//       * @brief vmtype constructs a multivalued field with multiple entries
+//       * @param values values to be added as an initializer list.
+//       * The multiplicity will be initialized as "*"
+//       */
+//      vmtype(std::initializer_list<T> values):
+//         vmtype {"*", OVERLOAD::DUMMY}
+//      {
+//         insert(values);
+//      }
 
       /**
        * @brief vmtype stores a set of values in the field
        * @param multiplicity multiplicity of the field
        * @param values values to be stored
        */
-      vmtype(multiplicity_data multiplicity, std::initializer_list<T> values):
-         vmtype {multiplicity.multiplicity, 0}
+      vmtype(std::initializer_list<T> values, multiplicity_data multiplicity):
+         vmtype {multiplicity.multiplicity, OVERLOAD::DUMMY}
       {
          insert(values);
       }
@@ -149,7 +168,7 @@ class vmtype
        */
       template <typename Iter>
       vmtype(std::string multiplicity, Iter begin, Iter end):
-         vmtype {multiplicity, 0}
+         vmtype {multiplicity, OVERLOAD::DUMMY}
       {
          insert(begin, end);
       }
