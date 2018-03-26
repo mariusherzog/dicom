@@ -376,7 +376,7 @@ struct value
                 typename = typename std::enable_if<
                    is_vmtype<BT>::value
                    >::type>
-      constexpr value(std::initializer_list<typename BT::base_type> values): value_(values) {}
+      constexpr value(std::initializer_list<typename BT::base_type> values): value_(values, multiplicity_data {"*"}) {}
 
 
       constexpr operator decltype(value_)() const
@@ -395,25 +395,6 @@ struct value
       }
 };
 
-//template <VR vr>
-//struct value_ref
-//{
-//   private:
-//      typename type_of<vr>::type& value_;
-
-//   public:
-//      value_ref(typename type_of<vr>::type& val): value_(val) {}
-
-//      typename type_of<vr>::type& value()
-//      {
-//         return value_;
-//      }
-
-//      operator decltype(value_)() const
-//      {
-//         return value_;
-//      }
-//};
 
 
 struct elementfield;
@@ -465,11 +446,6 @@ struct elementfield
          return data;
       }
 
-//      template <VR vr>
-//      operator value_ref<vr>()
-//      {
-//         return value_ref<vr> {*(get_value_field_pointer<vr>(*this))};
-//      }
 
       friend void swap(elementfield& lhs, elementfield& rhs) noexcept;
 };

@@ -137,23 +137,23 @@ class vmtype
          insert({});
       }
 
-      /**
-       * @brief vmtype constructs a multivalued field with multiple entries
-       * @param values values to be added as an initializer list.
-       * The multiplicity will be initialized as "*"
-       */
-      vmtype(std::initializer_list<T> values):
-         vmtype {"*", OVERLOAD::DUMMY}
-      {
-         insert(values);
-      }
+//      /**
+//       * @brief vmtype constructs a multivalued field with multiple entries
+//       * @param values values to be added as an initializer list.
+//       * The multiplicity will be initialized as "*"
+//       */
+//      vmtype(std::initializer_list<T> values):
+//         vmtype {"*", OVERLOAD::DUMMY}
+//      {
+//         insert(values);
+//      }
 
       /**
        * @brief vmtype stores a set of values in the field
        * @param multiplicity multiplicity of the field
        * @param values values to be stored
        */
-      vmtype(multiplicity_data multiplicity, std::initializer_list<T> values):
+      vmtype(std::initializer_list<T> values, multiplicity_data multiplicity):
          vmtype {multiplicity.multiplicity, OVERLOAD::DUMMY}
       {
          insert(values);

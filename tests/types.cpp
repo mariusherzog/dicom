@@ -12,7 +12,7 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
 {
    GIVEN("An instance of vmtype with arbitrary (*) multiplicity")
    {
-      dicom::data::attribute::vmtype<unsigned int> type {{"*"}, {8,7,6,5,4}};
+      dicom::data::attribute::vmtype<unsigned int> type {{8,7,6,5,4}, {"*"}};
 
       REQUIRE(type.size() == 5);
 
@@ -96,7 +96,7 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
 
    GIVEN("An instance of vmtype with explicit count (n) as multiplicity")
    {
-      vmtype<std::string> type({"1"}, {"Hello World"});
+      vmtype<std::string> type({"Hello World"}, {"1"});
 
       WHEN("A new element is added")
       {
@@ -118,14 +118,14 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
       {
          THEN("An exception is thrown")
          {
-            REQUIRE_THROWS(vmtype<unsigned int>({"3"}, {4,5,6,7}));
+            REQUIRE_THROWS(vmtype<unsigned int>({4,5,6,7}, {"3"}));
          }
       }
    }
 
    GIVEN("An instance of vmtype with a specified range (n-m) as multiplicity")
    {
-      vmtype<unsigned char> type({"3-6"}, {'A', 'B', 'C', 'D'});
+      vmtype<unsigned char> type({'A', 'B', 'C', 'D'}, {"3-6"});
 
       WHEN("A new element is added and the element count is in range")
       {
@@ -147,14 +147,14 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
       {
          THEN("An exception is thrown")
          {
-            REQUIRE_THROWS(vmtype<unsigned int>({"0-1"}, {1,2,3}));
+            REQUIRE_THROWS(vmtype<unsigned int>({1,2,3}, {"0-1"}));
          }
       }
    }
 
    GIVEN("An instance of vmtype with a multiplier (kn) as multiplicity")
    {
-      vmtype<unsigned int> type({"2n"}, {11, 47});
+      vmtype<unsigned int> type({11, 47}, {"2n"});
 
       WHEN("A new element is added and the resulting size is a multiple of k")
       {
@@ -176,14 +176,14 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
       {
          THEN("An exception is thrown")
          {
-            REQUIRE_THROWS(vmtype<std::string>({"3n"}, {"Hello", "World"}));
+            REQUIRE_THROWS(vmtype<std::string>({"Hello", "World"}, {"3n"}));
          }
       }
    }
 
    GIVEN("An instance of vmtype with a multiplier as multiplicity and a range (k-kn)")
    {
-      vmtype<unsigned int> type({"3-3n"}, {1,2,3});
+      vmtype<unsigned int> type({1,2,3}, {"3-3n"});
 
       WHEN("A new element is added and the resulting size is a multiple of k")
       {
@@ -205,7 +205,7 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
       {
          THEN("An exception is thrown")
          {
-            REQUIRE_THROWS(vmtype<std::string>({"3-3n"}, {"Hello", "World"}));
+            REQUIRE_THROWS(vmtype<std::string>({"Hello", "World"}, {"3-3n"}));
          }
       }
       AND_WHEN("An instance is initialized which does not satisfy the range")
@@ -219,10 +219,10 @@ SCENARIO("Usage of a type with possible multiple values", "[types]")
 
    GIVEN("Multiple instances of vmtypes with the same base type")
    {
-      dicom::data::attribute::vmtype<unsigned int> type1 {{"*"}, {8,7,6}};
-      dicom::data::attribute::vmtype<unsigned int> type2 {{"*"}, {8,7,6}};
-      dicom::data::attribute::vmtype<unsigned int> type3 {{"*"}, {51,7,6}};
-      dicom::data::attribute::vmtype<unsigned int> type4 {{"*"}, {51,7,6,22}};
+      dicom::data::attribute::vmtype<unsigned int> type1 {{8,7,6}, {"*"}};
+      dicom::data::attribute::vmtype<unsigned int> type2 {{8,7,6}, {"*"}};
+      dicom::data::attribute::vmtype<unsigned int> type3 {{51,7,6}, {"*"}};
+      dicom::data::attribute::vmtype<unsigned int> type4 {{51,7,6,22}, {"*"}};
 
       WHEN("Two have the same contents and lengths")
       {
@@ -255,7 +255,7 @@ SCENARIO("Usage of vmtype<T> iterators", "[types]")
 {
    GIVEN("A vmtype with some elements and the iterator starting at begin()")
    {
-      vmtype<std::string> type {{"*"}, {"test1", "test2", "test3", "test4"}};
+      vmtype<std::string> type {{"test1", "test2", "test3", "test4"}, {"*"}};
       auto it = type.begin();
 
       WHEN("The iterator is dereferenced")
@@ -301,7 +301,7 @@ SCENARIO("Usage of vmtype<T> iterators", "[types]")
 
    GIVEN("A vmtype with some elements and two iterators")
    {
-      vmtype<unsigned int> type({"*"}, {4, 7, 72, 33});
+      vmtype<unsigned int> type({4, 7, 72, 33}, {"*"});
       vmtype<unsigned int>::iterator a = type.begin();
       vmtype<unsigned int>::iterator b = type.begin();
       vmtype<unsigned int>::const_iterator ca = type.cbegin();
