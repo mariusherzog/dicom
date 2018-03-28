@@ -39,7 +39,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("MR2_J2KI", std::ios::in | std::ios::binary);
+         std::fstream outfile("XA1_J2KR", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 

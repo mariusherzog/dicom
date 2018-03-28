@@ -51,7 +51,13 @@ bool encapsulated::marks_frame_start(std::size_t index) const
 {
    throw_if_no_compressed_frame_info();
    return std::find(compressed_frame_indices.begin(), compressed_frame_indices.end(), index)
-            != compressed_frame_indices.end();
+         != compressed_frame_indices.end();
+}
+
+std::size_t encapsulated::fragment_index_of_first_frame(std::size_t index) const
+{
+   throw_if_no_compressed_frame_info();
+   return compressed_frame_indices[index];
 }
 
 void encapsulated::mark_compressed_frame_start()

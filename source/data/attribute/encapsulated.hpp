@@ -80,6 +80,15 @@ class encapsulated
        */
       bool marks_frame_start(std::size_t index) const;
 
+      /**
+       * @brief fragment_index_of_first_frame returns the index to the first
+       *        fragment of the compressed frame, in case we have a basic
+       *        offset table. Throws otherwise.
+       * @return first fragment of compressed frame number passed in the
+       *         parameter
+       */
+      std::size_t fragment_index_of_first_frame(std::size_t index) const;
+
 
       /**
        * @brief mark_compressed_frame_start marks the beginning of a compressed
