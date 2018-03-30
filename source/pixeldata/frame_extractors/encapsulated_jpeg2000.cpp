@@ -51,14 +51,39 @@ class jpeg2000_fragment_source
 
          //std::copy_n(compressed_pixel_data.begin(), bytes, buffer);
 
-         OPJ_SIZE_T read_size = bytes;
-         if (read_size > compressed_pixel_data.size() - position_in_fragment) {
-            read_size = compressed_pixel_data.size() - position_in_fragment;
+         std::size_t written = 0;
+
+         std::size_t initial_position = position_in_fragment;
+         OPJ_SIZE_T remaining_bytes = bytes;
+         while (written < bytes) {
+            OPJ_SIZE_T read_size = remaining_bytes;
+            if (read_size > compressed_pixel_data.size() - position_in_fragment) {
+               read_size = compressed_pixel_data.size() - position_in_fragment;
+            }
+
+            ::memcpy((char*)buffer + written, position_in_fragment + compressed_pixel_data.data(), read_size);
+            written += read_size;
+            remaining_bytes -= read_size;
+
+            if (current_fragment >= pixel_data.fragment_count()-1) {
+               break;
+            }
+
+            //load_at_position(position_in_fragment+cumulated_fragment_size+compressed_pixel_data.size());
+            //load_at_position(written);
+            seek(written, user_data);
          }
+//         seek(initial_position, user_data);
+         // reset
+         position_in_fragment = initial_position;
+         cumulated_fragment_size = 0;
+         current_fragment = frame_index;
+         absolute_position = 0; // todo remove
+         compressed_pixel_data = pixel_data.get_fragment(current_fragment);
+//         position_in_fragment = initial_position;
+//         load_at_position(initial_position);
 
-         ::memcpy(buffer, position_in_fragment + compressed_pixel_data.data(), read_size);
-
-         return read_size;
+         return written;
       }
 
       OPJ_OFF_T skip(OPJ_OFF_T bytes, void* user_data)
@@ -83,18 +108,23 @@ class jpeg2000_fragment_source
       {
          if (compressed_pixel_data.empty()) {
             compressed_pixel_data = pixel_data.get_fragment(current_fragment);
-            cumulated_fragment_size += compressed_pixel_data.size();
          }
       }
 
       void load_at_position(std::size_t pos)
       {
-         while (pos > cumulated_fragment_size) {
-            ++current_fragment;
-            compressed_pixel_data = pixel_data.get_fragment(current_fragment);
-            cumulated_fragment_size += compressed_pixel_data.size();
+         if (pos - cumulated_fragment_size >= compressed_pixel_data.size())
+         {
+            while (pos > cumulated_fragment_size /* + compressed size */
+                   && current_fragment+1 < pixel_data.fragment_count()) {
+               ++current_fragment;
+               cumulated_fragment_size += compressed_pixel_data.size();
+               compressed_pixel_data = pixel_data.get_fragment(current_fragment);
+            }
          }
-         position_in_fragment = pos - (cumulated_fragment_size-compressed_pixel_data.size());
+
+         position_in_fragment = pos - (cumulated_fragment_size);
+
       }
 
 };
