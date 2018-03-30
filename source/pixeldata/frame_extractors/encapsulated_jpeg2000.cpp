@@ -51,6 +51,7 @@ class jpeg2000_fragment_source
 
          //std::copy_n(compressed_pixel_data.begin(), bytes, buffer);
 
+         static std::size_t total_written = 0;
          std::size_t written = 0;
 
          std::size_t initial_position = position_in_fragment;
@@ -63,6 +64,7 @@ class jpeg2000_fragment_source
 
             ::memcpy((char*)buffer + written, position_in_fragment + compressed_pixel_data.data(), read_size);
             written += read_size;
+            total_written += read_size;
             remaining_bytes -= read_size;
 
             if (current_fragment >= pixel_data.fragment_count()-1) {
@@ -71,18 +73,19 @@ class jpeg2000_fragment_source
 
             //load_at_position(position_in_fragment+cumulated_fragment_size+compressed_pixel_data.size());
             //load_at_position(written);
-            seek(written, user_data);
+            seek(total_written, user_data);
          }
 //         seek(initial_position, user_data);
          // reset
-         position_in_fragment = initial_position;
-         cumulated_fragment_size = 0;
-         current_fragment = frame_index;
-         absolute_position = 0; // todo remove
-         compressed_pixel_data = pixel_data.get_fragment(current_fragment);
+//         position_in_fragment = initial_position;
+//         cumulated_fragment_size = 0;
+//         current_fragment = frame_index;
+//         absolute_position = 0; // todo remove
+//         compressed_pixel_data = pixel_data.get_fragment(current_fragment);
 //         position_in_fragment = initial_position;
 //         load_at_position(initial_position);
 
+         total_written = written;
          return written;
       }
 
@@ -269,7 +272,7 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
 
 
    for (auto& v : data) {
-      double norm = (v - (512.0-(1024.0/2.0)))/1024.0;
+      double norm = (v - (511.0-(1024.0/2.0)))/1024.0;
       if (norm < 0.0) norm = 0.0;
       if (norm > 1.0) norm = 1.0;
       v = 65535.0*norm;
