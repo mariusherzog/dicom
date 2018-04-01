@@ -33,8 +33,10 @@ if(Boost_FOUND)
    target_link_libraries(libdicompp ${Boost_LIBRARIES})
 endif()
 
+target_include_directories(libdicompp PUBLIC ${OPENJPEG_INCLUDE_DIRS})
+
 target_link_libraries(libdicompp ${JPEG_LIBRARIES})
-target_link_libraries(libdicompp openjp2)
+target_link_libraries(libdicompp ${OPENJPEG_LIBRARIES})
 
 # Copy files necessary at runtime
 configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv

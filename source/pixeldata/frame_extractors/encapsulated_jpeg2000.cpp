@@ -4,8 +4,9 @@
 
 #include <algorithm>
 
-#include <openjpeg-2.3/openjpeg.h>
-#include <openjpeg-2.3/opj_config.h>
+//#include <openjpeg-2.3/openjpeg.h>
+//#include <openjpeg-2.3/opj_config.h>
+#include <openjpeg.h>
 
 using namespace dicom::data::attribute;
 using namespace dicom::data::dataset;
@@ -23,7 +24,8 @@ encapsulated_jpeg2000::encapsulated_jpeg2000(const dataset_type& dataset):
 class jpeg2000_fragment_source
 {
    private:
-      std::size_t frame_index;
+      const std::size_t frame_index;
+      const std::size_t fragments_of_frame;
       std::size_t current_fragment;
       encapsulated& pixel_data;
 
@@ -34,8 +36,9 @@ class jpeg2000_fragment_source
       std::vector<unsigned char> compressed_pixel_data;
 
    public:
-      jpeg2000_fragment_source(encapsulated& pixel_data, std::size_t frame_index):
+      jpeg2000_fragment_source(encapsulated& pixel_data, std::size_t frame_index, std::size_t fragments_of_frame):
          frame_index {frame_index},
+         fragments_of_frame {fragments_of_frame},
          current_fragment {frame_index},
          pixel_data {pixel_data},
          absolute_position {0},
@@ -47,43 +50,24 @@ class jpeg2000_fragment_source
       OPJ_SIZE_T read(void* buffer, OPJ_SIZE_T bytes, void* user_data)
       {
          fill_compressed_pixel_data_if_necessary();
-         //auto compressed_pixel_data = pixel_data.get_fragment(current_fragment);
-
-         //std::copy_n(compressed_pixel_data.begin(), bytes, buffer);
 
          static std::size_t total_written = 0;
          std::size_t written = 0;
 
-         std::size_t initial_position = position_in_fragment;
          OPJ_SIZE_T remaining_bytes = bytes;
-         while (written < bytes) {
+         do {
             OPJ_SIZE_T read_size = remaining_bytes;
             if (read_size > compressed_pixel_data.size() - position_in_fragment) {
                read_size = compressed_pixel_data.size() - position_in_fragment;
             }
 
-            ::memcpy((char*)buffer + written, position_in_fragment + compressed_pixel_data.data(), read_size);
+            std::copy_n(position_in_fragment + compressed_pixel_data.data(), read_size, (char*)buffer + written);
             written += read_size;
             total_written += read_size;
             remaining_bytes -= read_size;
 
-            if (current_fragment >= pixel_data.fragment_count()-1) {
-               break;
-            }
-
-            //load_at_position(position_in_fragment+cumulated_fragment_size+compressed_pixel_data.size());
-            //load_at_position(written);
             seek(total_written, user_data);
-         }
-//         seek(initial_position, user_data);
-         // reset
-//         position_in_fragment = initial_position;
-//         cumulated_fragment_size = 0;
-//         current_fragment = frame_index;
-//         absolute_position = 0; // todo remove
-//         compressed_pixel_data = pixel_data.get_fragment(current_fragment);
-//         position_in_fragment = initial_position;
-//         load_at_position(initial_position);
+         } while (written < bytes && current_fragment < fragments_of_frame-1);
 
          total_written = written;
          return written;
@@ -119,7 +103,7 @@ class jpeg2000_fragment_source
          if (pos - cumulated_fragment_size >= compressed_pixel_data.size())
          {
             while (pos > cumulated_fragment_size /* + compressed size */
-                   && current_fragment+1 < pixel_data.fragment_count()) {
+                   && current_fragment+1 < fragments_of_frame) {
                ++current_fragment;
                cumulated_fragment_size += compressed_pixel_data.size();
                compressed_pixel_data = pixel_data.get_fragment(current_fragment);
@@ -143,7 +127,7 @@ class jpeg2000_fragment_source
 //   return (ch << 8u) | cl;
 //}
 
-std::size_t determine_frame_length(const encapsulated& data, std::size_t frame_index)
+std::size_t determine_frame_length(const encapsulated& data, std::size_t frame_index, std::size_t& fragment_count)
 {
    if (data.have_compressed_frame_info()) {
       // this belongs in encapsulated
@@ -198,6 +182,7 @@ std::size_t determine_frame_length(const encapsulated& data, std::size_t frame_i
 
       auto start_fragment = frame_beginnings[frame_index];
       auto end_fragment = frame_beginnings[frame_index+1];
+      fragment_count = end_fragment - start_fragment;
       std::size_t size = 0;
       for (auto i=start_fragment; i<end_fragment; ++i) {
          size += data.get_fragment(i).size();
@@ -217,8 +202,10 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
 
    opj_stream_t* stream = opj_stream_default_create(true);
 
+   std::size_t fragments;
+   auto frame_length = determine_frame_length(encapsulated_data, index, /* out */ fragments);
 
-   jpeg2000_fragment_source fragment_src(encapsulated_data, index);
+   jpeg2000_fragment_source fragment_src(encapsulated_data, index, fragments);
    auto fragment_read = [](void* buffer, OPJ_SIZE_T bytes, void* user_data) -> OPJ_SIZE_T
    {
       return static_cast<jpeg2000_fragment_source*>(user_data)->read(buffer, bytes, user_data);
@@ -240,7 +227,6 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
    opj_stream_set_seek_function(stream, fragment_seek);
    opj_stream_set_skip_function(stream, fragment_skip);
    opj_stream_set_user_data(stream, static_cast<void*>(&fragment_src), cleanup);
-   auto frame_length = determine_frame_length(encapsulated_data, index);
    opj_stream_set_user_data_length(stream, frame_length);
 
 
@@ -272,7 +258,7 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
 
 
    for (auto& v : data) {
-      double norm = (v - (511.0-(1024.0/2.0)))/1024.0;
+      double norm = (v - (511-(1024.0/2.0)))/1024.0;
       if (norm < 0.0) norm = 0.0;
       if (norm > 1.0) norm = 1.0;
       v = 65535.0*norm;
