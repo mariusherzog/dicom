@@ -29,3 +29,4 @@ class jpeg_frames
 };
 
 #endif // JPEG_FRAMES_HPP
+
