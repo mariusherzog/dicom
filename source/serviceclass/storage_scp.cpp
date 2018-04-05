@@ -5,6 +5,7 @@
 #include "data/dictionary/datadictionary.hpp"
 #include "data/dictionary/dictionary.hpp"
 #include "data/attribute/constants.hpp"
+#include "data/dataset/transfer_processor.hpp"
 
 #include "infrastructure/asio_tcp_connection_manager.hpp"
 
@@ -21,7 +22,7 @@ namespace serviceclass
 
 storage_scp::storage_scp(connection endpoint,
                          dicom::data::dictionary::dictionaries& dict,
-                         std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler):
+                         std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>, std::string)> handler):
    cstore_sop {{dataset::DIMSE_SERVICE_GROUP::C_STORE_RQ, [this](dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data) { this->handle_cstore(pm, command, std::move(data)); }}},
    dict {dict},
    sop_classes
@@ -38,7 +39,12 @@ storage_scp::storage_scp(connection endpoint,
       endpoint.calling_ae, endpoint.called_ae,
       dimse::make_presentation_contexts(
                sop_classes,
-               {"1.2.840.10008.1.2", "1.2.840.10008.1.2.1", "1.2.840.10008.1.2.2", "1.2.840.10008.1.2.4.70"},
+               {  "1.2.840.10008.1.2",
+                  "1.2.840.10008.1.2.1",
+                  "1.2.840.10008.1.2.2",
+                  "1.2.840.10008.1.2.4.70",
+                  "1.2.840.10008.1.2.4.50",
+                  "1.2.840.10008.1.2.4.57"},
                dimse::association_definition::DIMSE_MSG_TYPE::RESPONSE),
    },
    infrstr_scp {endpoint.port, nullptr, nullptr},
@@ -60,7 +66,8 @@ void storage_scp::run()
 
 void storage_scp::handle_cstore(dimse::dimse_pm* pm, dataset::commandset_data command, std::unique_ptr<dataset::iod> data)
 {
-   handler(this, command, std::move(data));
+   std::string transfer_syntax = pm->get_current_transfer_syntax();
+   handler(this, command, std::move(data), transfer_syntax);
 
    pm->send_response({dataset::DIMSE_SERVICE_GROUP::C_STORE_RSP, command, boost::none, 0x0000});
 }

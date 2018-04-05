@@ -95,7 +95,7 @@ void dimse_pm_manager::connection_error(upperlayer::Iupperlayer_comm_ops* scx, s
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
                    dictionaries& dict):
-   upperlayer_impl(sc),
+   upperlayer_impl {sc},
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
@@ -124,8 +124,9 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                        {DIMSE_SERVICE_GROUP::N_DELETE_RQ,    &dimse_pm::assemble_ndelete_rq},
                        {DIMSE_SERVICE_GROUP::N_DELETE_RSP,   &dimse_pm::assemble_ndelete_rsp}
                      },
-   dict(dict),
+   dict {dict},
    transfer_processors {  },
+   current_transfer_syntax {},
    logger {"dimse pm"}
 {
    using namespace std::placeholders;
@@ -386,6 +387,7 @@ void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_pt
       auto& tfproc = find_transfer_processor(d->pres_context_id);
 
       dataset = tfproc.deserialize(d->data_set);
+      current_transfer_syntax = tfproc.get_transfer_syntax();
    }
 
    // TODO handle data on rejected presentation context? -> respond with failure
@@ -502,6 +504,11 @@ void dimse_pm::sent_abort(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::prop
 int dimse_pm::next_message_id()
 {
    return msg_id++;
+}
+
+std::string dimse_pm::get_current_transfer_syntax()
+{
+   return current_transfer_syntax;
 }
 
 transfer_processor& dimse_pm::find_transfer_processor(unsigned char presentation_context_id)
