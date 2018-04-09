@@ -8,6 +8,7 @@
 #include "../source/pixeldata/frame_extractors/uncompressed_ow.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg_lossy.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg2000.hpp"
+#include "../source/pixeldata/tobyte.hpp"
 
 #include <boost/variant.hpp>
 
@@ -39,12 +40,15 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("XA1_J2KR", std::ios::in | std::ios::binary);
+         std::fstream outfile("CT1_J2KI", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
+         tobyte tob;
+
          encapsulated_jpeg2000 frames(file.dataset());
-         auto data = frames[0];
+         auto imdata = frames[0];
+         auto data = boost::apply_visitor(tob, imdata);
          auto& set = file.dataset();
          std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});

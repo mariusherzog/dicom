@@ -117,7 +117,7 @@ class jpeg2000_fragment_source
 
 };
 
-std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index) const
+pixeltype encapsulated_jpeg2000::operator[](std::size_t index) const
 {
    type_of<VR::OB>::type ob_pixel_data;
    get_value_field<VR::OB>(set.at({0x7fe0, 0x0010}), ob_pixel_data);
@@ -178,21 +178,41 @@ std::vector<unsigned short> encapsulated_jpeg2000::operator[](std::size_t index)
 
    auto datasize = (image->numcomps) * (image->comps[0].w) * (image->comps[0].h);
 
-   std::vector<unsigned short> data;
-   data.resize(datasize);
-   for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
-      unsigned short g = image->comps[0].data[i];
-      g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
-      data[i] = g;
+   if (image->comps[0].sgnd) {
+      std::vector<short> data;
+      data.resize(datasize);
+      for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
+         short g = image->comps[0].data[i];
+//         g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
+         data[i] = g;
+      }
+      return data;
+   } else {
+      std::vector<unsigned short> data;
+      data.resize(datasize);
+      for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
+         unsigned short g = image->comps[0].data[i];
+//         g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
+         data[i] = g;
+      }
+      return data;
    }
 
+//   std::vector<unsigned short> data;
+//   data.resize(datasize);
+//   for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
+//      unsigned short g = image->comps[0].data[i];
+//      g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
+//      data[i] = g;
+//   }
 
-   for (auto& v : data) {
-      double norm = (v - (511-(1024.0/2.0)))/1024.0;
-      if (norm < 0.0) norm = 0.0;
-      if (norm > 1.0) norm = 1.0;
-      v = 65535.0*norm;
-   }
 
-   return data;
+//   for (auto& v : data) {
+//      double norm = (v - (511-(1024.0/2.0)))/1024.0;
+//      if (norm < 0.0) norm = 0.0;
+//      if (norm > 1.0) norm = 1.0;
+//      v = 65535.0*norm;
+//   }
+
+   return std::vector<unsigned char>();
 }

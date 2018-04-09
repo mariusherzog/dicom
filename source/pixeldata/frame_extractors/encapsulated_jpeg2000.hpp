@@ -4,13 +4,14 @@
 
 #include "data/attribute/attribute.hpp"
 #include "data/dataset/datasets.hpp"
+#include "pixeldata/pixeltype.hpp"
 
 class encapsulated_jpeg2000
 {
    public:
       encapsulated_jpeg2000(const dicom::data::dataset::dataset_type& dataset);
 
-      std::vector<unsigned short> operator[](std::size_t index) const;
+      pixeltype operator[](std::size_t index) const;
 
    private:
       const dicom::data::dataset::dataset_type& set;
