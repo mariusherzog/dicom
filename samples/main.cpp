@@ -9,6 +9,7 @@
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg_lossy.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg2000.hpp"
 #include "../source/pixeldata/tobyte.hpp"
+#include "../source/pixeldata/windowlevel.hpp"
 
 #include <boost/variant.hpp>
 
@@ -40,23 +41,25 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("CT1_J2KI", std::ios::in | std::ios::binary);
+         std::fstream outfile("CT2_J2KR", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
          tobyte tob;
+         windowlevel wl(file.dataset());
 
          encapsulated_jpeg2000 frames(file.dataset());
          auto imdata = frames[0];
-         auto data = boost::apply_visitor(tob, imdata);
+         auto wldata = boost::apply_visitor(wl, imdata);
+         auto data = boost::apply_visitor(tob, wldata);
          auto& set = file.dataset();
          std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
 
          std::fstream os("framedata.gray",  std::ios::out | std::ios::binary);
          std::ostreambuf_iterator<char> out {os};
-         std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size()*2, out);
-         //std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size(), out);
+         //std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size()*2, out);
+         std::copy((char*)(&data[0]), ((char*)(&data[0]))+data.size(), out);
 
          std::fstream outfile2("outfile.dcm", std::ios::out | std::ios::binary);
          outfile2 << file;

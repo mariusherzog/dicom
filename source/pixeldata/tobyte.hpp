@@ -17,7 +17,14 @@ class tobyte : public boost::static_visitor<std::vector<unsigned char>>
 //         typename std::enable_if<std::is_same<V, char>::value, std::vector<unsigned char>>::type operator()(const T& data) const
         {
             std::cout << "is_signed" << std::flush;
-            return std::vector<unsigned char>();
+//            const char* bytedata = reinterpret_cast<const char*>(data.data());
+//            return std::vector<unsigned char>(bytedata, bytedata+data.size()*sizeof(V));
+            std::vector<unsigned char> resized_data;
+            resized_data.resize(data.size());
+            for (int i=0; i<data.size(); ++i) {
+               resized_data[i] = 127 + 255.0*(data[i]/255.0);
+            }
+            return resized_data;
         }
 
         template <typename T, typename V = typename T::value_type>
@@ -25,7 +32,12 @@ class tobyte : public boost::static_visitor<std::vector<unsigned char>>
 //         typename std::enable_if<std::is_same<V, unsigned char>::value, std::vector<unsigned char>>::type operator()(const T& data) const
         {
             std::cout << "is_unsigned" << std::flush;
-            return std::vector<unsigned char>();
+            std::vector<unsigned char> resized_data;
+            resized_data.resize(data.size());
+            for (int i=0; i<data.size(); ++i) {
+               resized_data[i] = 255.0*(data[i]/255.0);
+            }
+            return resized_data;
         }
 };
 
