@@ -2,11 +2,10 @@
 
 #include "data/attribute/encapsulated.hpp"
 #include "pixeldata/jpeg_frames.hpp"
+#include "pixeldata/rgb.hpp"
 
 #include <algorithm>
 
-//#include <openjpeg-2.3/openjpeg.h>
-//#include <openjpeg-2.3/opj_config.h>
 #include <openjpeg.h>
 
 using namespace dicom::data::attribute;
@@ -176,7 +175,20 @@ pixeltype encapsulated_jpeg2000::operator[](std::size_t index) const
    opj_end_decompress(codec, stream);
    opj_destroy_codec(codec);
 
-   auto datasize = (image->numcomps) * (image->comps[0].w) * (image->comps[0].h);
+   auto datasize = /*(image->numcomps) **/ (image->comps[0].w) * (image->comps[0].h);
+
+   if (image->numcomps == 3)
+   {
+      std::vector<rgb<unsigned short>> data;
+      data.resize(datasize);
+      for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
+         unsigned short r = image->comps[0].data[i];
+         unsigned short g = image->comps[1].data[i];
+         unsigned short b = image->comps[2].data[i];
+         data[i] = rgb<unsigned short> {r, g, b};
+      }
+      return data;
+   }
 
    if (image->comps[0].sgnd) {
       std::vector<short> data;
