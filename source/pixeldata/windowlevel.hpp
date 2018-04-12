@@ -51,10 +51,24 @@ class windowlevel : public boost::static_visitor<pixeltype>
            constexpr std::size_t offset = std::is_signed<V>::value ? 127 : 0;
 
            for (auto& v : data) {
-              double norm = (v - (level-(window/2.0)))/window;
-              //double norm = ((v-(level-0.5))/(window-1)+0.5);
-              if (norm < 0.0) norm = 0.0;
-              if (norm > 1.0) norm = 1.0;
+//              double norm = (v - (level-(window/2.0)))/window;
+//              //double norm = ((v-(level-0.5))/(window-1)+0.5);
+//              if (norm < 0.0) norm = 0.0;
+//              if (norm > 1.0) norm = 1.0;
+
+              // rescale
+              int q = -19595 + 9.57 * v;
+
+              double norm;
+              if (q <= level-0.5-window/2.0) {
+                 //norm = offset;
+                 norm = 0.0;
+              } else if (q > level-0.5+window/2.0) {
+                 //norm = offset+255;
+                 norm = 1.0;
+              } else {
+                 norm = ((q-level-0.5) / window-1) + 0.5;
+              }
               v = 255.0*norm - offset;
            }
 

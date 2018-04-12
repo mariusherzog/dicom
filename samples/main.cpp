@@ -41,7 +41,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("US1_J2KI", std::ios::in | std::ios::binary);
+         std::fstream outfile("MR4_J2KI", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
