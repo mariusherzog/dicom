@@ -10,6 +10,7 @@
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg2000.hpp"
 #include "../source/pixeldata/tobyte.hpp"
 #include "../source/pixeldata/windowlevel.hpp"
+#include "../source/pixeldata/pixelpipeline.hpp"
 
 #include <boost/variant.hpp>
 
@@ -50,8 +51,9 @@ int main()
 
          encapsulated_jpeg2000 frames(file.dataset());
          auto imdata = frames[0];
-         auto wldata = boost::apply_visitor(wl, imdata);
-         auto data = boost::apply_visitor(tob, wldata);
+         auto data = pipeline(imdata, wl, tob);
+//         auto wldata = boost::apply_visitor(wl, imdata);
+//         auto data = boost::apply_visitor(tob, wldata);
          auto& set = file.dataset();
          std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
