@@ -4,6 +4,7 @@
 #include <vector>
 #include <type_traits>
 #include <iostream>
+#include <limits>
 
 #include <boost/variant.hpp>
 
@@ -22,7 +23,7 @@ class tobyte : public boost::static_visitor<std::vector<unsigned char>>
             std::vector<unsigned char> resized_data;
             resized_data.resize(data.size());
             for (int i=0; i<data.size(); ++i) {
-               resized_data[i] = 127 + 255.0*(data[i]/255.0);
+               resized_data[i] = /*127 +*/ 255.0*(data[i]/255.0);
             }
             return resized_data;
         }

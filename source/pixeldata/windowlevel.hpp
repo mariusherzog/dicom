@@ -4,6 +4,7 @@
 #include <vector>
 #include <type_traits>
 #include <iostream>
+#include <limits>
 
 #include <boost/variant.hpp>
 
@@ -44,32 +45,28 @@ class windowlevel : public boost::static_visitor<pixeltype>
            if (have_window_level()) {
               window_level_from_set(window, level);
            } else {
+              // todo estimate
               window = 1000;
               level = 300;
            }
 
-           constexpr std::size_t offset = std::is_signed<V>::value ? 127 : 0;
+           //constexpr std::size_t offset = std::is_signed<V>::value ? std::numeric_limits<V>::max() : 0;
+
+           auto offset = 0;
 
            for (auto& v : data) {
-//              double norm = (v - (level-(window/2.0)))/window;
-//              //double norm = ((v-(level-0.5))/(window-1)+0.5);
-//              if (norm < 0.0) norm = 0.0;
-//              if (norm > 1.0) norm = 1.0;
-
-              // rescale
-              int q = -19595 + 9.57 * v;
-
               double norm;
-              if (q <= level-0.5-window/2.0) {
+              if (v <= level-0.5-window/2.0) {
                  //norm = offset;
                  norm = 0.0;
-              } else if (q > level-0.5+window/2.0) {
+              } else if (v > level-0.5+window/2.0) {
                  //norm = offset+255;
                  norm = 1.0;
               } else {
-                 norm = ((q-level-0.5) / window-1) + 0.5;
+                 norm = ((v-level-0.5) / (window-1.0)) + 0.5;
               }
-              v = 255.0*norm - offset;
+              //v = 255.0*norm - offset;
+              v = 255 * norm - offset;
            }
 
            return data;

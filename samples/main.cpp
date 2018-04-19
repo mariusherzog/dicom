@@ -10,6 +10,7 @@
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg2000.hpp"
 #include "../source/pixeldata/tobyte.hpp"
 #include "../source/pixeldata/windowlevel.hpp"
+#include "../source/pixeldata/modality.hpp"
 #include "../source/pixeldata/pixelpipeline.hpp"
 
 #include <boost/variant.hpp>
@@ -42,16 +43,18 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("MR4_J2KI", std::ios::in | std::ios::binary);
+         std::fstream outfile("US1_J2KI", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
          tobyte tob;
+         modality mod(file.dataset());
          windowlevel wl(file.dataset());
+
 
          encapsulated_jpeg2000 frames(file.dataset());
          auto imdata = frames[0];
-         auto data = pipeline(imdata, wl, tob);
+         auto data = pipeline(imdata, mod, wl, tob);
 //         auto wldata = boost::apply_visitor(wl, imdata);
 //         auto data = boost::apply_visitor(tob, wldata);
          auto& set = file.dataset();
