@@ -5,7 +5,7 @@
 #include "libdicompp/all.hpp"
 
 // todo remove
-#include "../source/pixeldata/frame_extractors/uncompressed_ow.hpp"
+#include "../source/pixeldata/frame_extractors/uncompressed.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg_lossy.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg2000.hpp"
 #include "../source/pixeldata/tobyte.hpp"
@@ -43,7 +43,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("US1_J2KI", std::ios::in | std::ios::binary);
+         std::fstream outfile("../20161205161312.e0t0oubi.s30.17.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
@@ -52,13 +52,14 @@ int main()
          windowlevel wl(file.dataset());
 
 
-         encapsulated_jpeg2000 frames(file.dataset());
+         //encapsulated_jpeg2000 frames(file.dataset());
+         dicom::pixeldata::frames::uncompressed frames(file.dataset());
          auto imdata = frames[0];
          auto data = pipeline(imdata, mod, wl, tob);
 //         auto wldata = boost::apply_visitor(wl, imdata);
 //         auto data = boost::apply_visitor(tob, wldata);
          auto& set = file.dataset();
-         std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
+         //std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
 
          std::fstream os("framedata.gray",  std::ios::out | std::ios::binary);

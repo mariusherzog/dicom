@@ -1,10 +1,12 @@
-#ifndef UNCOMPRESSED_OW_HPP
-#define UNCOMPRESSED_OW_HPP
+#ifndef UNCOMPRESSED_HPP
+#define UNCOMPRESSED_HPP
 
 #include <vector>
 
 #include "data/attribute/attribute.hpp"
 #include "data/dataset/datasets.hpp"
+#include "pixeldata/pixeltype.hpp"
+#include "pixeldata/rgb.hpp"
 
 namespace dicom
 {
@@ -15,20 +17,20 @@ namespace pixeldata
 namespace frames
 {
 
-
-
-class uncompressed_ow
+class uncompressed
 {
    public:
-      uncompressed_ow(const dicom::data::dataset::dataset_type& dataset);
+      uncompressed(const dicom::data::dataset::dataset_type& dataset);
 
-      std::vector<unsigned short> operator[](std::size_t index);
+      pixeltype operator[](std::size_t index);
 
    private:
       const dicom::data::dataset::dataset_type& set;
       const unsigned short samples_per_pixel;
       const unsigned short rows;
       const unsigned short cols;
+      const unsigned short bits_allocated;
+      const bool is_signed;
 };
 
 }
