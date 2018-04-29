@@ -434,7 +434,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
       }
 
       VR repr;
-      if (vrtype == VR_TYPE::EXPLICIT) {
+      if (vrtype == VR_TYPE::EXPLICIT || attr.second.value_rep.is_initialized()) {
          repr = attr.second.value_rep.get();
       } else {
          repr = get_vr(attr.first);
