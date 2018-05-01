@@ -4,6 +4,7 @@
 #include <jpeglib.h>
 
 #include "data/attribute/encapsulated.hpp"
+#include "pixeldata/jpeg_frames.hpp"
 
 namespace dicom
 {
@@ -83,8 +84,9 @@ std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index
    auto encapsulated_data = boost::get<encapsulated>(ob_pixel_data);
 
    auto compressed_pixel_data = encapsulated_data.get_fragment(index);
-   auto current_fragment = index;
-   auto skip = -1;
+
+   jpeg_frames jpeg2000_frames(encapsulated_data);
+   auto fragments_of_frame = jpeg2000_frames.fragments_of_frame(index);
 
    // Variables for the decompressor itself
    struct jpeg_decompress_struct cinfo;
@@ -92,7 +94,7 @@ std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index
 
    cinfo.err = jpeg_std_error(&jerr);
 
-   jpeg_fragment_source fragment_src_manager(encapsulated_data, index);
+   jpeg_fragment_source fragment_src_manager(encapsulated_data, fragments_of_frame.first);
    jpeg_source_mgr fragment_src;
 
    fragment_src.resync_to_restart = jpeg_resync_to_restart;

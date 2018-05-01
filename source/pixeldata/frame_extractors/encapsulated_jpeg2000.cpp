@@ -2,6 +2,7 @@
 
 #include "data/attribute/encapsulated.hpp"
 #include "pixeldata/jpeg_frames.hpp"
+#include "pixeldata/image_pixel.hpp"
 #include "pixeldata/rgb.hpp"
 
 #include <algorithm>
@@ -11,12 +12,22 @@
 using namespace dicom::data::attribute;
 using namespace dicom::data::dataset;
 
+namespace dicom
+{
+
+namespace pixeldata
+{
+
+namespace frames
+{
+
 
 encapsulated_jpeg2000::encapsulated_jpeg2000(const dataset_type& dataset):
     set {dataset},
     samples_per_pixel {dataset.at({0x0028, 0x0002}).value<VR::US>()},
     rows {dataset.at({0x0028, 0x0010}).value<VR::US>()},
-    cols {dataset.at({0x0028, 0x0011}).value<VR::US>()}
+    cols {dataset.at({0x0028, 0x0011}).value<VR::US>()},
+    bits_allocated {dataset.at({0x0028, 0x0100}).value<VR::US>()}
 {
 
 }
@@ -111,10 +122,59 @@ class jpeg2000_fragment_source
          }
 
          position_in_fragment = pos - (cumulated_fragment_size);
+      }
+};
 
+class extract_jpeg2000
+{
+   private:
+      opj_image* image;
+      std::size_t image_length;
+
+      template <typename T>
+      typename std::enable_if<std::is_integral<T>::value, std::vector<T>>::type
+      extract_image_impl(T)
+      {
+         std::vector<T> data;
+         data.resize(image_length);
+         for (unsigned i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
+            T g = static_cast<T>(image->comps[0].data[i]);
+            data[i] = g;
+         }
+         return data;
       }
 
+      template <typename T, typename Q = typename T::base_type>
+      typename std::enable_if<std::is_same<rgb<Q>, T>::value, std::vector<T>>::type
+      extract_image_impl(T)
+      {
+         using base_type = typename T::base_type;
+         std::vector<T> data;
+         data.resize(image_length);
+         for (unsigned i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
+            base_type r = static_cast<base_type>(image->comps[0].data[i]);
+            base_type g = static_cast<base_type>(image->comps[1].data[i]);
+            base_type b = static_cast<base_type>(image->comps[2].data[i]);
+            data[i] = T {r, g, b};
+         }
+         return data;
+      }
+
+   public:
+      extract_jpeg2000(opj_image* image, std::size_t image_length):
+         image {image},
+         image_length {image_length}
+      {
+      }
+
+      template <typename T>
+      std::vector<T> operator()(std::size_t components, T)
+      {
+         return extract_image_impl(T{});
+      }
 };
+
+
 
 pixeltype encapsulated_jpeg2000::operator[](std::size_t index) const
 {
@@ -130,7 +190,7 @@ pixeltype encapsulated_jpeg2000::operator[](std::size_t index) const
    auto fragments_of_frame = jpeg2000_frames.fragments_of_frame(index);
    std::size_t frame_length = 0;
 
-   for (int i=fragments_of_frame.first; i<fragments_of_frame.second; ++i) {
+   for (std::size_t i=fragments_of_frame.first; i<fragments_of_frame.second; ++i) {
       frame_length += encapsulated_data.get_fragment(i).size();
    }
 
@@ -175,56 +235,17 @@ pixeltype encapsulated_jpeg2000::operator[](std::size_t index) const
    opj_end_decompress(codec, stream);
    opj_destroy_codec(codec);
 
-   auto datasize = /*(image->numcomps) **/ (image->comps[0].w) * (image->comps[0].h);
+   auto datasize = (image->comps[0].w) * (image->comps[0].h);
 
-   if (image->numcomps == 3)
-   {
-      std::vector<rgb<unsigned short>> data;
-      data.resize(datasize);
-      for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
-         unsigned short r = image->comps[0].data[i];
-         unsigned short g = image->comps[1].data[i];
-         unsigned short b = image->comps[2].data[i];
-         data[i] = rgb<unsigned short> {r, g, b};
-      }
-      return data;
-   }
+   extract_jpeg2000 extractor(image, datasize);
+   return extract_image(extractor, bits_allocated, samples_per_pixel, image->comps[0].sgnd);
 
-   if (image->comps[0].sgnd) {
-      std::vector<short> data;
-      data.resize(datasize);
-      for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
-         short g = image->comps[0].data[i];
-//         g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
-         data[i] = g;
-      }
-      return data;
-   } else {
-      std::vector<unsigned short> data;
-      data.resize(datasize);
-      for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
-         unsigned short g = image->comps[0].data[i];
-//         g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
-         data[i] = g;
-      }
-      return data;
-   }
-
-//   std::vector<unsigned short> data;
-//   data.resize(datasize);
-//   for (int i=0; i<image->comps[0].w * image->comps[0].h; ++i) {
-//      unsigned short g = image->comps[0].data[i];
-//      g += (image->comps[0].sgnd ? 1 << (image->comps[0].prec - 1) : 0);
-//      data[i] = g;
-//   }
-
-
-//   for (auto& v : data) {
-//      double norm = (v - (511-(1024.0/2.0)))/1024.0;
-//      if (norm < 0.0) norm = 0.0;
-//      if (norm > 1.0) norm = 1.0;
-//      v = 65535.0*norm;
-//   }
-
+   assert(false);
    return std::vector<unsigned char>();
+}
+
+}
+
+}
+
 }

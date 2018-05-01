@@ -6,6 +6,16 @@
 #include "data/dataset/datasets.hpp"
 #include "pixeldata/pixeltype.hpp"
 
+namespace dicom
+{
+
+namespace pixeldata
+{
+
+namespace frames
+{
+
+
 class encapsulated_jpeg2000
 {
    public:
@@ -18,6 +28,13 @@ class encapsulated_jpeg2000
       const unsigned short samples_per_pixel;
       const unsigned short rows;
       const unsigned short cols;
+      const unsigned short bits_allocated;
 };
+
+}
+
+}
+
+}
 
 #endif // ENCAPSULATED_JPEG2000_HPP

@@ -9,6 +9,7 @@
 
 using pixeltype = boost::variant<
     std::vector<unsigned char>,
+    std::vector<signed char>,
     std::vector<char>,
     std::vector<unsigned short>,
     std::vector<short>,
@@ -16,7 +17,8 @@ using pixeltype = boost::variant<
     std::vector<int>,
 
     std::vector<rgb<unsigned char>>,
-    std::vector<rgb<unsigned short>>
+    std::vector<rgb<unsigned short>>,
+    std::vector<rgb<unsigned>>
 >;
 
 #endif // PIXELTYPE_HPP
