@@ -29,6 +29,9 @@ std::ostream& operator<<(std::ostream& os, const tag_type tag);
 bool operator<(const tag_type& lhs, const tag_type& rhs);
 bool operator==(const tag_type& lhs, const tag_type& rhs);
 bool operator!=(const tag_type& lhs, const tag_type& rhs);
+
+std::size_t byte_length(tag_type);
+
 }
 
 }

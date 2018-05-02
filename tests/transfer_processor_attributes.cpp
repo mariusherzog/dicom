@@ -63,7 +63,7 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
 
    GIVEN("A dicom value field of VR AT")
    {
-      vmtype<tag_type> tags {{"2"}, {tag_type {0x7fe0, 0x0010}, tag_type {0x0008, 0x0018}}};
+      vmtype<tag_type> tags {{tag_type {0x7fe0, 0x0010}, tag_type {0x0008, 0x0018}}, {"2"}};
       auto value = make_elementfield<VR::AT>(tags);
 
       std::vector<unsigned char> expected_le {0xe0, 0x7f, 0x10, 0x00, 0x08, 0x00, 0x18, 0x00};
@@ -124,7 +124,7 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
 
    GIVEN("A dicom value field of VR IS")
    {
-      vmtype<std::string> intvalues {{"*"}, {"2", "4711"}};
+      vmtype<std::string> intvalues {{"2", "4711"}, {"*"}};
       auto value = make_elementfield<VR::IS>(intvalues);
       std::vector<unsigned char> expected {'2', '\\', '4', '7', '1', '1'};
 
@@ -148,7 +148,7 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
 
    GIVEN("A dicom value field of VR FL")
    {
-      vmtype<float> floatvalues {{"*"}, {1.0, 0.125}};
+      vmtype<float> floatvalues {{1.0, 0.125}, {"*"}};
       auto value = make_elementfield<VR::FL>(floatvalues);
 
       WHEN("The value is serialized in little-endian")
@@ -261,7 +261,7 @@ SCENARIO("Serialization of an individual attribute", "[attributes][transfer_proc
 
    GIVEN("A dicom value field of VR SS")
    {
-      vmtype<short> shortvalues {{"1"}, {-3}};
+      vmtype<short> shortvalues {{-3}, {"1"}};
       auto value = make_elementfield<VR::SS>(shortvalues);
 
       WHEN("The value is serialized in little-endian")
@@ -381,7 +381,7 @@ SCENARIO("Deserialization of an individual attribute", "[attributes][transfer_pr
          {
             vmtype<tag_type> tags;
             get_value_field<VR::AT>(value, tags);
-            vmtype<tag_type> expected {{"*"}, {tag_type {0x7fe0, 0x0010}, tag_type {0x0008, 0x0018}}};
+            vmtype<tag_type> expected {{tag_type {0x7fe0, 0x0010}, tag_type {0x0008, 0x0018}}, {"*"}};
             REQUIRE(tags == expected );
          }
       }
@@ -392,7 +392,7 @@ SCENARIO("Deserialization of an individual attribute", "[attributes][transfer_pr
          {
             vmtype<tag_type> tags;
             get_value_field<VR::AT>(value, tags);
-            vmtype<tag_type> expected {{"*"}, {tag_type {0xe07f, 0x1000}, tag_type {0x0800, 0x1800}}};
+            vmtype<tag_type> expected {{tag_type {0xe07f, 0x1000}, tag_type {0x0800, 0x1800}}, {"*"}};
             REQUIRE(tags == expected );
          }
       }

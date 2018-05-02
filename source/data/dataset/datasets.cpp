@@ -218,6 +218,11 @@ std::ostream& operator<<(std::ostream& os, STATUS s)
 }
 
 
+std::size_t byte_length(std::vector<dataset::dataset_type>)
+{
+   return 0xffffffff;
+}
+
 }
 
 }

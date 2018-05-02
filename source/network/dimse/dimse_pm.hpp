@@ -118,6 +118,15 @@ class dimse_pm
        */
       void release_association();
 
+
+      /**
+       * @brief get_current_transfer_syntax returns the transfer syntax of
+       *        the current presentation context
+       * @return transfer syntax
+       * @todo error handling -> throw on empty string
+       */
+      std::string get_current_transfer_syntax();
+
    private:
       /**
        * @brief association_rq_handler is called upon reception of an a-associate-rq property. It negotiates the supported
@@ -274,6 +283,7 @@ class dimse_pm
       data::dictionary::dictionaries& dict;
 
       std::map<std::string, std::unique_ptr<data::dataset::transfer_processor>> transfer_processors;
+      std::string current_transfer_syntax;
 
       util::log::channel_sev_logger logger;
 };

@@ -1,13 +1,8 @@
 #set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g  -D BOOST_ASIO_HAS_STD_CHRONO -lboost_thread-mt")
+#set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g  -lboost_thread-mt")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-missing-braces -Wextra")
 
-
-#add_definitions(-DBOOST_LOG_DYN_LINK)
-#set(Boost_USE_STATIC_LIBS OFF)
-#set(Boost_USE_MULTITHREADED ON)
-#set(Boost_USE_STATIC_RUNTIME OFF)
-#find_package(Boost COMPONENTS system log REQUIRED)
-
+find_package(Threads REQUIRED)
 
 if(Boost_FOUND)
    #include_directories(${Boost_INCLUDE_DIRS})
@@ -26,12 +21,14 @@ if(Boost_FOUND)
    aux_source_directory(./infrastructure SRC_LIST)
    aux_source_directory(./util SRC_LIST)
    add_library(libdicompp ${SRC_LIST})
-   message(${CMAKE_CURRENT_SOURCE_DIR})
    target_include_directories(libdicompp
        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
    target_include_directories(libdicompp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} PUBLIC ${Boost_INCLUDE_DIRS})
-   target_link_libraries(libdicompp ${Boost_LIBRARIES})
+   target_compile_definitions(libdicompp PUBLIC BOOST_ASIO_HAS_STD_CHRONO)
+   target_compile_features(libdicompp PUBLIC cxx_std_11)
+   target_link_libraries(libdicompp ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 endif()
+
 
 target_include_directories(libdicompp PUBLIC ${OPENJPEG_INCLUDE_DIRS})
 
@@ -43,4 +40,5 @@ configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv
     ${CMAKE_BINARY_DIR}/datadictionary.csv COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/commanddictionary.csv
     ${CMAKE_BINARY_DIR}/commanddictionary.csv COPYONLY)
+
 

@@ -26,7 +26,7 @@ class storage_scp : public Iserviceclass
    public:
       storage_scp(dicom::network::connection endpoint,
                   dicom::data::dictionary::dictionaries& dict,
-                  std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler);
+                  std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>, std::string)> handler);
 
       ~storage_scp() override;
 
@@ -46,7 +46,7 @@ class storage_scp : public Iserviceclass
       dicom::network::upperlayer::scp scp;
       dicom::network::dimse::dimse_pm_manager dimse_pm;
 
-      std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>)> handler;
+      std::function<void(storage_scp*, dicom::data::dataset::commandset_data, std::unique_ptr<dicom::data::dataset::iod>, std::string)> handler;
 };
 
 }

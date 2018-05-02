@@ -95,7 +95,7 @@ void dimse_pm_manager::connection_error(upperlayer::Iupperlayer_comm_ops* scx, s
 dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                    association_definition operations,
                    dictionaries& dict):
-   upperlayer_impl(sc),
+   upperlayer_impl {sc},
    state {CONN_STATE::IDLE},
    connection_request {boost::none},
    connection_properties {boost::none},
@@ -124,8 +124,9 @@ dimse_pm::dimse_pm(upperlayer::Iupperlayer_comm_ops& sc,
                        {DIMSE_SERVICE_GROUP::N_DELETE_RQ,    &dimse_pm::assemble_ndelete_rq},
                        {DIMSE_SERVICE_GROUP::N_DELETE_RSP,   &dimse_pm::assemble_ndelete_rsp}
                      },
-   dict(dict),
+   dict {dict},
    transfer_processors {  },
+   current_transfer_syntax {},
    logger {"dimse pm"}
 {
    using namespace std::placeholders;
@@ -275,7 +276,7 @@ void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std:
 
    // check the support of each presentation context and populate own a_associate_ac
    // accordingly
-   for (const auto pc : arq->pres_contexts) {
+   for (const auto& pc : arq->pres_contexts) {
 
       if (!operations.get_SOP_class(pc.abstract_syntax).empty()) {
 
@@ -289,7 +290,7 @@ void dimse_pm::association_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std:
          {
             auto pres_cont = *have_pres_cont;
             auto transfer_syntaxes = pres_cont.transfer_syntaxes;
-            for (const auto ts : transfer_syntaxes) {
+            for (const auto& ts : transfer_syntaxes) {
                if (std::find(pc.transfer_syntaxes.begin(), pc.transfer_syntaxes.end(), ts)
                    != pc.transfer_syntaxes.end() && transfer_processors.count(ts) > 0) {
                   ac.pres_contexts.push_back({pc.id, RESULT::ACCEPTANCE, ts});
@@ -369,7 +370,7 @@ void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_pt
    using namespace dicom::util::log;
    using namespace dicom::data::dataset;
 
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received p_data_tf pdu from upperlayer implementation";
 
    p_data_tf* d = dynamic_cast<p_data_tf*>(da.get());
@@ -386,6 +387,7 @@ void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_pt
       auto& tfproc = find_transfer_processor(d->pres_context_id);
 
       dataset = tfproc.deserialize(d->data_set);
+      current_transfer_syntax = tfproc.get_transfer_syntax();
    }
 
    // TODO handle data on rejected presentation context? -> respond with failure
@@ -426,7 +428,7 @@ void dimse_pm::data_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_pt
 void dimse_pm::release_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, trace) << "Received release_rq pdu from upperlayer implementation";
 
    sc->queue_for_write(std::unique_ptr<upperlayer::property>(new upperlayer::a_release_rp));
@@ -437,21 +439,21 @@ void dimse_pm::release_rq_handler(upperlayer::Iupperlayer_comm_ops* sc, std::uni
 void dimse_pm::release_rp_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received release_rp pdu from upperlayer implementation";
 }
 
 void dimse_pm::abort_handler(upperlayer::Iupperlayer_comm_ops* sc, std::unique_ptr<upperlayer::property>)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received a_abort pdu from upperlayer implementation";
 }
 
 void dimse_pm::sent_association_ac(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of a_associate_ac pdu "
                                    "from upperlayer implementation";
 }
@@ -459,7 +461,7 @@ void dimse_pm::sent_association_ac(upperlayer::Iupperlayer_comm_ops* sc, upperla
 void dimse_pm::sent_association_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property* r)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of a_associate_rq pdu "
                                    "from upperlayer implementation";
    upperlayer::a_associate_rq* rq = dynamic_cast<upperlayer::a_associate_rq*>(r);
@@ -470,7 +472,7 @@ void dimse_pm::sent_association_rq(upperlayer::Iupperlayer_comm_ops* sc, upperla
 void dimse_pm::sent_data_tf(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of p_data_tf pdu "
                                    "from upperlayer implementation";
 }
@@ -478,7 +480,7 @@ void dimse_pm::sent_data_tf(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::pr
 void dimse_pm::sent_release_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of release_rq pdu "
                                    "from upperlayer implementation";
 }
@@ -486,7 +488,7 @@ void dimse_pm::sent_release_rq(upperlayer::Iupperlayer_comm_ops* sc, upperlayer:
 void dimse_pm::sent_release_rp(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of release_rp pdu "
                                    "from upperlayer implementation";
 }
@@ -494,7 +496,7 @@ void dimse_pm::sent_release_rp(upperlayer::Iupperlayer_comm_ops* sc, upperlayer:
 void dimse_pm::sent_abort(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::property*)
 {
    using namespace dicom::util::log;
-   //assert(sc == &upperlayer_impl);
+   assert(sc == &upperlayer_impl);
    BOOST_LOG_SEV(logger, debug) << "Received send confirmation of a_abort pdu "
                                    "from upperlayer implementation";
 }
@@ -502,6 +504,11 @@ void dimse_pm::sent_abort(upperlayer::Iupperlayer_comm_ops* sc, upperlayer::prop
 int dimse_pm::next_message_id()
 {
    return msg_id++;
+}
+
+std::string dimse_pm::get_current_transfer_syntax()
+{
+   return current_transfer_syntax;
 }
 
 transfer_processor& dimse_pm::find_transfer_processor(unsigned char presentation_context_id)

@@ -6,6 +6,9 @@
 
 #include "boost/variant.hpp"
 
+#include "base_types.hpp"
+
+
 namespace dicom
 {
 
@@ -99,23 +102,17 @@ class encapsulated
 };
 
 
+using ob_type = boost::variant<std::vector<unsigned char>, encapsulated>;
+
 
 class byte_size : public boost::static_visitor<std::size_t>
 {
    public:
-
-       std::size_t operator()(const encapsulated& encapsulated_data) const
-       {
-           return 0xffffffff;
-       }
-
-       std::size_t operator()(const std::vector<unsigned char>& str) const
-       {
-           return str.size();
-       }
+       std::size_t operator()(const encapsulated& encapsulated_data) const;
+       std::size_t operator()(const std::vector<unsigned char>& str) const;
 };
 
-std::size_t byte_length(const boost::variant<std::vector<unsigned char>, encapsulated>& data);
+std::size_t byte_length(const ob_type& data);
 
 class printer : public boost::static_visitor<std::ostream&>
 {
@@ -123,40 +120,13 @@ class printer : public boost::static_visitor<std::ostream&>
         std::ostream& os;
 
    public:
-        printer(std::ostream& os): os{os}
-        {
+        printer(std::ostream& os);
 
-        }
-
-       std::ostream& operator()(const encapsulated& encapsulated_data) const
-       {
-          if (encapsulated_data.have_compressed_frame_info()) {
-             os << "encapsulated data (with compressed frame info)\n";
-          } else {
-             os << "encapsulated data (no compressed frame info)\n";
-          }
-          os << encapsulated_data.fragment_count() << " fragments\n";
-
-          for (std::size_t i = 0; i < encapsulated_data.fragment_count(); ++i) {
-             const auto& fragment = encapsulated_data.get_fragment(i);
-             os << "fragment " << i << ": " << fragment.size() << " bytes";
-             if (encapsulated_data.have_compressed_frame_info() &&
-                 encapsulated_data.marks_frame_start(i)) {
-                os << ", marks start of a compressed frame\n";
-             } else {
-                os << "\n";
-             }
-          }
-          return os;
-       }
-
-       std::ostream& operator()(const std::vector<unsigned char>& data) const
-       {
-           std::size_t printsize = std::min(data.size(), 128ul);
-           std::copy(data.begin(), data.begin()+printsize, std::ostream_iterator<char>(os, " "));
-           return os;
-       }
+        std::ostream& operator()(const encapsulated& encapsulated_data) const;
+        std::ostream& operator()(const std::vector<unsigned char>& data) const;
 };
+
+std::ostream& operator<<(std::ostream& os, const ob_type& data);
 
 }
 

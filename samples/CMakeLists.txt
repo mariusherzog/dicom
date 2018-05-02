@@ -1,16 +1,16 @@
-#include_directories(${CMAKE_SOURCE_DIR}/source)
-#aux_source_directory(./source SRC_EXEC_LIST)
-
-#add_definitions(-DBOOST_LOG_DYN_LINK)
-#set(Boost_USE_STATIC_LIBS OFF)
-#set(Boost_USE_MULTITHREADED ON)
-#set(Boost_USE_STATIC_RUNTIME OFF)
-#find_package(Boost COMPONENTS system log REQUIRED)
-
-
 if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 add_executable(dicom main.cpp)
+target_compile_definitions(dicom PUBLIC BOOST_ASIO_HAS_STD_CHRONO)
+target_compile_features(dicom PUBLIC cxx_std_11)
 target_link_libraries(dicom libdicompp ${Boost_LIBRARIES})
+
+
+# Copy files necessary at runtime
+configure_file(${CMAKE_SOURCE_DIR}/datadictionary.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/datadictionary.csv COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/commanddictionary.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/commanddictionary.csv COPYONLY)
+

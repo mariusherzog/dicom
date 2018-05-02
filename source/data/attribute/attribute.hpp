@@ -11,6 +11,7 @@
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include "base_types.hpp"
 #include "vmtype.hpp"
 #include "encapsulated.hpp"
 #include "tag.hpp"
@@ -77,15 +78,6 @@ enum class VR
    NI
 };
 
-/**
- * @brief empty_t dummy type for attributes without a data field
- */
-struct empty_t
-{
-//      empty_t& operator=(const empty_t&) = delete;
-};
-
-std::size_t byte_length(empty_t data);
 
 
 struct elementfield_base;
@@ -224,7 +216,7 @@ struct type_of<VR::LT>
 template<>
 struct type_of<VR::OB>
 {
-      using type = boost::variant<std::vector<unsigned char>, encapsulated>;
+      using type = ob_type;
       using base_type = std::vector<unsigned char>;
 };
 template<>
@@ -327,16 +319,6 @@ struct type_of<VR::NI>
       using type = empty_t;
 };
 
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OB>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OW>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OF>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::OD>::type const data);
-
-std::ostream& operator<<(std::ostream& os, typename type_of<VR::NN>::type const data);
-
 std::ostream& operator<<(std::ostream& os, typename type_of<VR::SQ>::type const data);
 
 template <VR vr>
@@ -394,7 +376,7 @@ struct value
                 typename = typename std::enable_if<
                    is_vmtype<BT>::value
                    >::type>
-      constexpr value(std::initializer_list<typename BT::base_type> values): value_(values) {}
+      constexpr value(std::initializer_list<typename BT::base_type> values): value_(values, multiplicity_data {"*"}) {}
 
 
       constexpr operator decltype(value_)() const
@@ -413,25 +395,6 @@ struct value
       }
 };
 
-//template <VR vr>
-//struct value_ref
-//{
-//   private:
-//      typename type_of<vr>::type& value_;
-
-//   public:
-//      value_ref(typename type_of<vr>::type& val): value_(val) {}
-
-//      typename type_of<vr>::type& value()
-//      {
-//         return value_;
-//      }
-
-//      operator decltype(value_)() const
-//      {
-//         return value_;
-//      }
-//};
 
 
 struct elementfield;
@@ -483,11 +446,6 @@ struct elementfield
          return data;
       }
 
-//      template <VR vr>
-//      operator value_ref<vr>()
-//      {
-//         return value_ref<vr> {*(get_value_field_pointer<vr>(*this))};
-//      }
 
       friend void swap(elementfield& lhs, elementfield& rhs) noexcept;
 };

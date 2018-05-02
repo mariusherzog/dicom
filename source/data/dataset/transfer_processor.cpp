@@ -434,7 +434,7 @@ std::vector<unsigned char> transfer_processor::serialize(iod dataset) const
       }
 
       VR repr;
-      if (vrtype == VR_TYPE::EXPLICIT) {
+      if (vrtype == VR_TYPE::EXPLICIT || attr.second.value_rep.is_initialized()) {
          repr = attr.second.value_rep.get();
       } else {
          repr = get_vr(attr.first);
@@ -767,9 +767,9 @@ attribute::encapsulated encapsulated::deserialize_fragments(std::vector<unsigned
          tag = decode_tag(data, pos, endianness);
          pos += 4;
          if (tag != SequenceDelimitationItem) {
-
+            // print warning or error
          }
-         auto item_length = deserialize_length(data, tag, VR::NI, pos);
+         deserialize_length(data, tag, VR::NI, pos);
 
          //pos += 4;
          outsize = pos - beg;
@@ -790,7 +790,7 @@ std::vector<unsigned char> encapsulated::serialize_fragments(attribute::encapsul
       // write basic offset table
       std::vector<unsigned char> offset_table;
       std::size_t accu = 0;
-      for (int i=0; i<data.fragment_count(); ++i) {
+      for (std::size_t i=0; i<data.fragment_count(); ++i) {
          if (data.marks_frame_start(i)) {
             auto frag_len = encode_len(4, accu, endianness);
             offset_table.insert(offset_table.end(), std::begin(frag_len), std::end(frag_len));
@@ -809,7 +809,7 @@ std::vector<unsigned char> encapsulated::serialize_fragments(attribute::encapsul
       std::copy(std::begin(offset_table), std::end(offset_table), std::back_inserter(encapsulated_data));
 
       // now the actual values
-      for (int i=0; i<data.fragment_count(); ++i) {
+      for (std::size_t i=0; i<data.fragment_count(); ++i) {
          const auto& fragment = data.get_fragment(i);
 
          auto item_tag = encode_tag(Item, endianness);

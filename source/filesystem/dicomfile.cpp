@@ -168,7 +168,7 @@ void dicomfile::create_filemetaheader()
       filemetaheader.erase(filemetaheader.find({0x0002, 0x0000}));
    }
    //auto metaheader_size = dataset_size(filemetaheader, true);
-   auto headerbytes = transfer_proc->serialize(filemetaheader);
+   auto headerbytes = metaheader_proc->serialize(filemetaheader);
    filemetaheader[{0x0002, 0x0000}] = make_elementfield<VR::UL>(headerbytes.size());
 }
 
