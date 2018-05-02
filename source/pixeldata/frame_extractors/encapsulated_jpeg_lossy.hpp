@@ -6,6 +6,8 @@
 #include "data/attribute/attribute.hpp"
 #include "data/dataset/datasets.hpp"
 
+#include "pixeldata/pixeltype.hpp"
+
 namespace dicom
 {
 
@@ -20,7 +22,7 @@ class encapsulated_jpeg_lossy
    public:
       encapsulated_jpeg_lossy(const dicom::data::dataset::dataset_type& dataset);
 
-      std::vector<unsigned char> operator[](std::size_t index) const;
+      pixeltype operator[](std::size_t index) const;
 
    private:
       const dicom::data::dataset::dataset_type& set;

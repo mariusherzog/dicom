@@ -1,8 +1,11 @@
 #include "uncompressed.hpp"
 
+#include <type_traits>
+
 #include <boost/variant.hpp>
 
-#include <type_traits>
+#include "pixeldata/image_pixel.hpp"
+#include "pixeldata/rgb.hpp"
 
 namespace dicom
 {
@@ -27,34 +30,82 @@ uncompressed::uncompressed(const dataset_type& dataset):
 {
 }
 
-template <typename T>
-pixeltype extract_frame(const dataset_type& set, std::size_t frame_offset, std::size_t frame_length, VR pixeldata_vr)
+
+class extract_uncompressed
 {
-   if (pixeldata_vr == VR::OB) {
-      std::vector<unsigned char> pixel_data;
-      get_value_field<VR::OB>(set.at({0x7fe0, 0x0010}), pixel_data);
-      if (!std::is_same<T, unsigned short>::value) {
-         std::vector<T> frame(reinterpret_cast<T*>(&pixel_data[0])+frame_offset,
-                              reinterpret_cast<T*>(&pixel_data[0])+frame_offset+frame_length);
-         return frame;
-      } else {
-         std::vector<T> frame(pixel_data.begin()+frame_offset,
-                              pixel_data.begin()+frame_offset+frame_length);
-         return frame;
+   private:
+      const dataset_type& set;
+      const std::size_t frame_offset;
+      const std::size_t frame_length;
+      const std::size_t samples_per_pixel;
+      const VR pixeldata_vr;
+
+      template <typename T>
+      typename std::enable_if<std::is_integral<T>::value, std::vector<T>>::type
+      extract_frame_impl(T)
+      {
+         if (pixeldata_vr == VR::OB) {
+            std::vector<unsigned char> pixel_data;
+            get_value_field<VR::OB>(set.at({0x7fe0, 0x0010}), pixel_data);
+            if (!std::is_same<T, unsigned short>::value) {
+               std::vector<T> frame(reinterpret_cast<T*>(&pixel_data[0])+frame_offset,
+                                    reinterpret_cast<T*>(&pixel_data[0])+frame_offset+frame_length);
+               return frame;
+            } else {
+               std::vector<T> frame(pixel_data.begin()+frame_offset,
+                                    pixel_data.begin()+frame_offset+frame_length);
+               return frame;
+            }
+         } else {
+            std::vector<unsigned short> pixel_data;
+            get_value_field<VR::OW>(set.at({0x7fe0, 0x0010}), pixel_data);
+            if (!std::is_same<T, unsigned short>::value) {
+               std::vector<T> frame(reinterpret_cast<T*>(&pixel_data[0])+frame_offset,
+                                    reinterpret_cast<T*>(&pixel_data[0])+frame_offset+frame_length);
+               return frame;
+            } else {
+               std::vector<T> frame(pixel_data.begin()+frame_offset, pixel_data.begin()+frame_offset+frame_length);
+               return frame;
+            }
+         }
       }
-   } else {
-      std::vector<unsigned short> pixel_data;
-      get_value_field<VR::OW>(set.at({0x7fe0, 0x0010}), pixel_data);
-      if (!std::is_same<T, unsigned short>::value) {
-         std::vector<T> frame(reinterpret_cast<T*>(&pixel_data[0])+frame_offset,
-                              reinterpret_cast<T*>(&pixel_data[0])+frame_offset+frame_length);
-         return frame;
-      } else {
-         std::vector<T> frame(pixel_data.begin()+frame_offset, pixel_data.begin()+frame_offset+frame_length);
-         return frame;
+
+      template <typename T, typename Q = typename T::base_type>
+      typename std::enable_if<std::is_same<rgb<Q>, T>::value, std::vector<T>>::type
+      extract_frame_impl(T)
+      {
+         auto data = extract_frame_impl(Q{});
+         auto pixeldata = boost::get<std::vector<Q>>(data);
+         std::vector<T> rgb_data;
+         rgb_data.reserve(pixeldata.size()/samples_per_pixel);
+         for (std::size_t i=0; i<pixeldata.size(); i += samples_per_pixel) {
+            unsigned char r = pixeldata[i];
+            unsigned char g = pixeldata[i+1];
+            unsigned char b = pixeldata[i+2];
+            rgb_data.emplace_back(r, g, b);
+         }
+         return rgb_data;
       }
-   }
-}
+
+   public:
+      extract_uncompressed(const dataset_type& set, std::size_t frame_offset,
+                           std::size_t frame_length, std::size_t samples_per_pixel,
+                           VR pixeldata_vr):
+         set {set},
+         frame_offset {frame_offset},
+         frame_length {frame_length},
+         samples_per_pixel {samples_per_pixel},
+         pixeldata_vr {pixeldata_vr}
+      {
+      }
+
+      template <typename T>
+      std::vector<T> operator()(std::size_t components, T)
+      {
+         return extract_frame_impl(T{});
+      }
+};
+
 
 pixeltype uncompressed::operator[](std::size_t index)
 {
@@ -63,31 +114,8 @@ pixeltype uncompressed::operator[](std::size_t index)
 
    const auto vr = *set.at({0x7fe0, 0x0010}).value_rep;
 
-   if (samples_per_pixel == 3) {
-      auto data = extract_frame<unsigned char>(set, frame_offset, frame_length, vr);
-      auto pixeldata = boost::get<std::vector<unsigned char>>(data);
-      std::vector<rgb<unsigned char>> rgb_data;
-      rgb_data.reserve(pixeldata.size()/3);
-      for (std::size_t i=0; i<pixeldata.size(); i += 3) {
-         unsigned char r = pixeldata[i];
-         unsigned char g = pixeldata[i+1];
-         unsigned char b = pixeldata[i+2];
-         rgb_data.emplace_back(r, g, b);
-      }
-      return rgb_data;
-   }
-
-   if (bits_allocated <= 8) {
-      return extract_frame<unsigned char>(set, frame_offset, frame_length, vr);
-   } else if (bits_allocated <= 16) {
-      return extract_frame<unsigned short>(set, frame_offset, frame_length, vr);
-   } else {
-      if (is_signed) {
-         return extract_frame<int>(set, frame_offset, frame_length, vr);
-      } else {
-         return extract_frame<unsigned int>(set, frame_offset, frame_length, vr);
-      }
-   }
+   extract_uncompressed extractor(set, frame_offset, frame_length, samples_per_pixel, vr);
+   return extract_image(extractor, bits_allocated, samples_per_pixel, is_signed);
 }
 
 }

@@ -239,9 +239,6 @@ pixeltype encapsulated_jpeg2000::operator[](std::size_t index) const
 
    extract_jpeg2000 extractor(image, datasize);
    return extract_image(extractor, bits_allocated, samples_per_pixel, image->comps[0].sgnd);
-
-   assert(false);
-   return std::vector<unsigned char>();
 }
 
 }

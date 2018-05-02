@@ -77,7 +77,7 @@ encapsulated_jpeg_lossy::encapsulated_jpeg_lossy(const dataset_type& dataset):
 }
 
 
-std::vector<unsigned char> encapsulated_jpeg_lossy::operator[](std::size_t index) const
+pixeltype encapsulated_jpeg_lossy::operator[](std::size_t index) const
 {
    type_of<VR::OB>::type ob_pixel_data;
    get_value_field<VR::OB>(set.at({0x7fe0, 0x0010}), ob_pixel_data);

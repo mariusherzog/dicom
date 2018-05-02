@@ -43,7 +43,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("US1_J2KI", std::ios::in | std::ios::binary);
+         std::fstream outfile("../CT-MONO2-16-ort.dcm", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
@@ -52,8 +52,9 @@ int main()
          windowlevel wl(file.dataset());
 
 
-         dicom::pixeldata::frames::encapsulated_jpeg2000 frames(file.dataset());
+         //dicom::pixeldata::frames::encapsulated_jpeg2000 frames(file.dataset());
          //dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
+         dicom::pixeldata::frames::uncompressed frames(file.dataset());
          auto imdata = frames[0];
          auto data = pipeline(imdata, mod, wl, tob);
          auto& set = file.dataset();
