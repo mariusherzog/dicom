@@ -48,7 +48,6 @@ class modality : public boost::static_visitor<pixeltype>
               intercept = 0;
            }
 
-           //constexpr std::size_t offset = std::is_signed<V>::value ? 127 : 0;
 
            std::vector<int> newdata;
            newdata.reserve(data.size());

@@ -29,6 +29,8 @@ class encapsulated_jpeg_lossy
       const unsigned short samples_per_pixel;
       const unsigned short rows;
       const unsigned short cols;
+      const unsigned short bits_allocated;
+      const bool is_signed;
 };
 
 }
