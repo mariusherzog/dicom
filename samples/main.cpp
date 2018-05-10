@@ -43,7 +43,7 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("../US-RGB-8-esopecho-lossy.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("RG1_J2KR", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
@@ -51,8 +51,8 @@ int main()
          modality mod(file.dataset());
          windowlevel wl(file.dataset());
 
-         //dicom::pixeldata::frames::encapsulated_jpeg2000 frames(file.dataset());
-         dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
+         dicom::pixeldata::frames::encapsulated_jpeg2000 frames(file.dataset());
+         //dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
          //dicom::pixeldata::frames::uncompressed frames(file.dataset());
          auto imdata = frames[0];
          auto data = pipeline(imdata, mod, wl, tob);

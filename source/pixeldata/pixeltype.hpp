@@ -16,8 +16,11 @@ using pixeltype = boost::variant<
     std::vector<unsigned int>,
     std::vector<int>,
 
+    std::vector<rgb<signed char>>,
     std::vector<rgb<unsigned char>>,
+    std::vector<rgb<signed short>>,
     std::vector<rgb<unsigned short>>,
+    std::vector<rgb<signed>>,
     std::vector<rgb<unsigned>>
 >;
 
