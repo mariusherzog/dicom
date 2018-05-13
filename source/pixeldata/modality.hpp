@@ -48,15 +48,25 @@ class modality : public boost::static_visitor<pixeltype>
               intercept = 0;
            }
 
+           int high_bit = set[{0x0028, 0x0102}].value<dicom::data::attribute::VR::US>();
+           int bits_stored = set[{0x0028, 0x0101}].value<dicom::data::attribute::VR::US>();
+           int max_possible_value = ((1 << (high_bit+1))-1) * slope + intercept;
+           int max_stored_value = (1 << bits_stored)-1;
+           if (max_possible_value > max_stored_value) {
+              std::vector<int> newdata;
+              newdata.reserve(data.size());
+              for (auto v : data) {
+                  auto newval = v * slope + intercept;
+                  newdata.push_back(newval);
+              }
 
-           std::vector<int> newdata;
-           newdata.reserve(data.size());
-           for (auto& v : data) {
-               auto newval = v * slope + intercept;
-               newdata.push_back(newval);
+              return newdata;
+           } else {
+              for (auto& v : data) {
+                  v *= slope + intercept;
+              }
+              return data;
            }
-
-           return newdata;
         }
 
         template <typename T, typename V = typename T::value_type, typename Q = typename V::base_type>
