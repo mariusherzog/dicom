@@ -1,6 +1,6 @@
 #set(CMAKE_CXX_COMPILER             "/usr/bin/clang++")
 #set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-missing-braces -pthread -g  -lboost_thread-mt")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-missing-braces -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-missing-braces -Wextra -g")
 
 find_package(Threads REQUIRED)
 

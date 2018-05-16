@@ -1,3 +1,5 @@
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-missing-braces -Wextra -g")
+
 if(Boost_FOUND)
    include_directories(${Boost_INCLUDE_DIRS})
 endif()

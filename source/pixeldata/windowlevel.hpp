@@ -31,6 +31,16 @@ class windowlevel : public boost::static_visitor<pixeltype>
            window = std::stod(str_window);
         }
 
+        bool is_sigmoid_function()
+        {
+           if (set.find({0x0028, 0x1056}) != set.end()) {
+              std::string function = set[{0x0028, 0x1056}].value<dicom::data::attribute::VR::CS>();
+              return function == "SIGMOID ";
+           } else {
+              return false;
+           }
+        }
+
     public:
         windowlevel(dicom::data::dataset::dataset_type set):
             set {set}
@@ -54,19 +64,25 @@ class windowlevel : public boost::static_visitor<pixeltype>
 
            auto offset = 0;
 
-           for (auto& v : data) {
-              double norm;
-              if (v <= level-0.5-window/2.0) {
-                 //norm = offset;
-                 norm = 0.0;
-              } else if (v > level-0.5+window/2.0) {
-                 //norm = offset+255;
-                 norm = 1.0;
-              } else {
-                 norm = ((v-level-0.5) / (window-1.0)) + 0.5;
+           if (!is_sigmoid_function()) {
+              for (auto& v : data) {
+                 double norm;
+                 if (v <= level-0.5-window/2.0) {
+                    //norm = offset;
+                    norm = 0.0;
+                 } else if (v > level-0.5+window/2.0) {
+                    //norm = offset+255;
+                    norm = 1.0;
+                 } else {
+                    norm = ((v-level-0.5) / (window-1.0)) + 0.5;
+                 }
+                 //v = 255.0*norm - offset;
+                 v = 255 * norm - offset;
               }
-              //v = 255.0*norm - offset;
-              v = 255 * norm - offset;
+           } else {
+              for (auto& v : data) {
+                 v = 255.0 / (1+ std::exp(-4*(v-level)/window ));
+              }
            }
 
            return data;
