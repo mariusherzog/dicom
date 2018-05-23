@@ -24,7 +24,7 @@ namespace filesystem
 class dicomfile
 {
    private:
-      dicom::data::dataset::iod dataset_;
+      dicom::data::dataset::iod& dataset_;
       dicom::data::dataset::iod filemetaheader;
 
       std::array<unsigned char, 128> preamble;
@@ -45,10 +45,11 @@ class dicomfile
    public:
       /**
        * @brief dicomfile , ctor
-       * @param dataset dataset which shall be written to a stream in binary
+       * @param dataset dataset which shall be written to a stream in binary or
+       *        deserialized into incase of reading from a strem
        * @param dict dictionary to be used, applies to little endian vr
        */
-      dicomfile(dicom::data::dataset::iod dataset,
+      dicomfile(dicom::data::dataset::iod& dataset,
                 dicom::data::dictionary::dictionaries& dict);
 
       /**
