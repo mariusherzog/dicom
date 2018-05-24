@@ -77,8 +77,8 @@ class asio_tcp_server_acceptor : public Iinfrastructure_server_acceptor
 {
     public:
         asio_tcp_server_acceptor(short port,
-                                 std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
-                                 std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection);
+                                 std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection = nullptr,
+                                 std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection = nullptr);
 
         void run() override;
 
@@ -108,8 +108,8 @@ class asio_tcp_client_acceptor : public Iinfrastructure_client_acceptor
 {
     public:
         asio_tcp_client_acceptor(std::string host, std::string port,
-                                 std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection,
-                                 std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection);
+                                 std::function<void(Iinfrastructure_upperlayer_connection*)> new_connection = nullptr,
+                                 std::function<void(Iinfrastructure_upperlayer_connection*)> end_connection = nullptr);
 
         void run() override;
 
@@ -132,4 +132,5 @@ class asio_tcp_client_acceptor : public Iinfrastructure_client_acceptor
         boost::asio::ip::tcp::resolver::query query;
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
 };
+
 #endif // ASIO_TCP_CONNECTION_MANAGER_HPP
