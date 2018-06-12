@@ -122,10 +122,10 @@ class windowlevel : public boost::static_visitor<pixeltype>
 double windowlevel_linear(double window, double level, double value)
 {
    double norm;
-   if (value <= level-0.5-window/2.0) {
+   if (value <= level-0.5- (window-1.0)/2.0) {
       //norm = offset;
       norm = 0.0;
-   } else if (value > level-0.5+window/2.0) {
+   } else if (value > level-0.5+ (window-1.0)/2.0) {
       //norm = offset+255;
       norm = 1.0;
    } else {
