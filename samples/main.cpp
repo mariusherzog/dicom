@@ -8,14 +8,12 @@
 #include "../source/pixeldata/frame_extractors/uncompressed.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg_lossy.hpp"
 #include "../source/pixeldata/frame_extractors/encapsulated_jpeg2000.hpp"
-#include "../source/pixeldata/tobyte.hpp"
+#include "../source/pixeldata/presentation.hpp"
 #include "../source/pixeldata/windowlevel.hpp"
 #include "../source/pixeldata/modality.hpp"
 #include "../source/pixeldata/pixelpipeline.hpp"
 
 #include <boost/variant.hpp>
-
-
 
 int main()
 {
@@ -43,19 +41,19 @@ int main()
 //      {
          dataset::iod dicm;
          dicom::filesystem::dicomfile file(dicm, dict);
-         std::fstream outfile("009004-LUTSHPSG.dcm", std::ios::in | std::ios::binary);
+         std::fstream outfile("CT2_J2KR", std::ios::in | std::ios::binary);
          outfile >> file;
          std::cout << file.dataset() << std::flush;
 
-         tobyte tob;
+         presentation<unsigned char> pres(file.dataset());
          modality mod(file.dataset());
          windowlevel wl(file.dataset());
 
-         //dicom::pixeldata::frames::encapsulated_jpeg2000 frames(file.dataset());
+         dicom::pixeldata::frames::encapsulated_jpeg2000 frames(file.dataset());
          //dicom::pixeldata::frames::encapsulated_jpeg_lossy frames(file.dataset());
-         dicom::pixeldata::frames::uncompressed frames(file.dataset());
+         //dicom::pixeldata::frames::uncompressed frames(file.dataset());
          auto imdata = frames[0];
-         auto data = pipeline(imdata, mod, wl, tob);
+         auto data = pipeline(imdata, mod, wl, pres);
          auto& set = file.dataset();
          //std::cout << set[{0x0020, 0x000e}].value<VR::UI>() << std::flush;
 //         set[{0x0080, 0x0080}] = make_elementfield<VR::OB>({1, 9, 2, 65});
