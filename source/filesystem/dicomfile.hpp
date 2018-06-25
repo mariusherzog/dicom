@@ -74,6 +74,11 @@ class dicomfile
       void set_transfer_syntax(std::string transfer_syntax);
 
       /**
+       * @brief get_transfer_synax returns the transfer syntax uid used
+       */
+      std::string get_transfer_syntax() const;
+
+      /**
        * @brief dataset is used to access the dataset, for example to access
        *        dataset read from stream
        * @return dataset encapsulated in this instance

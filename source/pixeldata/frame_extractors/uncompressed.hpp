@@ -7,6 +7,7 @@
 #include "data/dataset/datasets.hpp"
 #include "pixeldata/pixeltype.hpp"
 #include "pixeldata/rgb.hpp"
+#include "pixeldata/frame_manipulator.hpp"
 
 namespace dicom
 {
@@ -17,12 +18,12 @@ namespace pixeldata
 namespace frames
 {
 
-class uncompressed
+class uncompressed : public Iframe_manipulator
 {
    public:
       uncompressed(const dicom::data::dataset::dataset_type& dataset);
 
-      pixeltype operator[](std::size_t index);
+      pixeltype operator[](std::size_t index) const override;
 
    private:
       const dicom::data::dataset::dataset_type& set;

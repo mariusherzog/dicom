@@ -135,6 +135,11 @@ void dicomfile::set_transfer_syntax(std::string transfer_syntax)
    filemetaheader[{0x0002, 0x0010}] = make_elementfield<VR::UI>(transfer_proc->get_transfer_syntax());
 }
 
+std::string dicomfile::get_transfer_syntax() const
+{
+   return transfer_proc->get_transfer_syntax();
+}
+
 iod& dicomfile::dataset()
 {
    return dataset_;

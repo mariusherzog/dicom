@@ -5,6 +5,7 @@
 #include "data/attribute/attribute.hpp"
 #include "data/dataset/datasets.hpp"
 #include "pixeldata/pixeltype.hpp"
+#include "pixeldata/frame_manipulator.hpp"
 
 namespace dicom
 {
@@ -16,12 +17,12 @@ namespace frames
 {
 
 
-class encapsulated_jpeg2000
+class encapsulated_jpeg2000 : public Iframe_manipulator
 {
    public:
       encapsulated_jpeg2000(const dicom::data::dataset::dataset_type& dataset);
 
-      pixeltype operator[](std::size_t index) const;
+      pixeltype operator[](std::size_t index) const override;
 
    private:
       const dicom::data::dataset::dataset_type& set;

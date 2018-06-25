@@ -107,7 +107,7 @@ class extract_uncompressed
 };
 
 
-pixeltype uncompressed::operator[](std::size_t index)
+pixeltype uncompressed::operator[](std::size_t index) const
 {
    const std::size_t frame_length = samples_per_pixel*rows*cols;
    const std::size_t frame_offset = index*frame_length;
