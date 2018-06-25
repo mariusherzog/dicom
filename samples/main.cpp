@@ -108,29 +108,48 @@ int main()
 //      qr.set_move_destination("MOVESCU", {"QRSCP", "QRSCU", "localhost", 1114});
 //      qr.run();
 
-      storage_scp store({"STORAGESCU", "STORAGESCP", "", 1113}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data, std::string ts)
-      {
-//         std::ofstream out("out", std::ios::binary);
-//    std::cout << *data;
-//         std::vector<unsigned short> imdata;
-//         auto value_field = (*data)[{0x7fe0,0x0010}];
-//         get_value_field<VR::OW>(value_field, imdata);
-//         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
-//         out.flush();
-         std::string sop_uid;
-         get_value_field<VR::UI>(cmd[{0x0000, 0x1000}], sop_uid);
+//      storage_scp store({"STORAGESCU", "STORAGESCP", "", 11112}, dict, [&dict](storage_scp* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data, std::string ts)
+//      {
+////         std::ofstream out("out", std::ios::binary);
+////    std::cout << *data;
+////         std::vector<unsigned short> imdata;
+////         auto value_field = (*data)[{0x7fe0,0x0010}];
+////         get_value_field<VR::OW>(value_field, imdata);
+////         out.write((char*)imdata.data(), imdata.size()*sizeof(unsigned short));
+////         out.flush();
+//         std::string sop_uid;
+//         get_value_field<VR::UI>(cmd[{0x0000, 0x1000}], sop_uid);
 
-         std::cout << "Transfer Syntax: " << ts << std::endl;
-         dicom::filesystem::dicomfile file(*data, dict);
-         file.set_transfer_syntax(ts);
-         std::fstream outfile(sop_uid + ".dcm", std::ios::out | std::ios::binary);
-         outfile << file;
-         outfile.flush();
+//         std::cout << "Transfer Syntax: " << ts << std::endl;
+//         dicom::filesystem::dicomfile file(*data, dict);
+//         file.set_transfer_syntax(ts);
+//         std::fstream outfile(sop_uid + ".dcm", std::ios::out | std::ios::binary);
+//         outfile << file;
+//         outfile.flush();
+//      });
+//      store.run();
+
+      find_scu find({"STORAGESCU", "STORAGESCP", "88.202.185.144", 11112}, dict, [&dict](find_scu* st, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
+      {
+         if (data != nullptr) {
+            std::cout << *data << "\n";
+         }
+         std::cout << "State: " << cmd[Status].value<VR::US>() << "\n";
+         std::cout << std::flush;
       });
-      store.run();
+      dataset::iod find_request;
+      find_request[PatientName] = value<VR::PN> {"test*"};
+      find_request[QueryRetrieveLevel] = value<VR::CS> {"STUDY"};
+      find_request[ModalitiesInStudy] = value<VR::CS> {};
+      find_request[SOPClassesInStudy] = value<VR::CS> {};
+      find_request[StudyInstanceUID] = value<VR::UI> {};
+      find_request[PatientID] = value<VR::LO> {};
+      find_request[StudyDescription] = value<VR::LO> {};
+      find.set_request(find_request);
+      find.run();
 
 //      int n = 0;
-//      storage_scu store({"STORAGESCP", "STORAGESCU", "localhost", 1113}, dict,
+//      storage_scu store({"STORAGESCP", "STORAGESCU", "46.5.0.221", 11112}, dict,
 //                        [&dict, &n](storage_scu* sc, dicom::data::dataset::commandset_data cmd, std::unique_ptr<dicom::data::dataset::iod> data)
 //      {
 //            if (n == 0) {
@@ -139,7 +158,7 @@ int main()
 //            else
 //            sc->release();
 //      });
-//      store.set_store_data(file.dataset());
+//      store.set_store_data(find_request);
 //      store.run();
    } catch (std::exception& ec) {
       std::cout << ec.what();

@@ -218,3 +218,46 @@ SCENARIO("Traversal of DICOM datasets", "[dataset]")
    }
 }
 
+SCENARIO("Finding and retrieving tags from datasets", "[dataset]")
+{
+   GIVEN("An empty dataset")
+   {
+      iod data;
+
+      WHEN("The set is queried for a tag")
+      {
+         bool found = contains_tag(data, tag_type {0x7fe0, 0x0010});
+
+         THEN("Nothing is found")
+         {
+            REQUIRE(!found);
+         }
+      }
+   }
+
+   GIVEN("A dataset containing some attributes")
+   {
+      iod data;
+      data[{0x0010, 0x0010}] = make_elementfield<VR::PN>("test^est");
+      data[{0x0028, 0x0004}] = make_elementfield<VR::CS>("MONOCHROME1");
+
+      WHEN("A tag is queried which exists in the set")
+      {
+         bool found = contains_tag(data, tag_type {0x0028, 0x0004});
+
+         THEN("It is found")
+         {
+            REQUIRE(found);
+         }
+      }
+      AND_WHEN("A tag is queried which does not exist in the set")
+      {
+         bool found = contains_tag(data, tag_type {0x0028, 0x0010});
+
+         THEN("It is not found")
+         {
+            REQUIRE(!found);
+         }
+      }
+   }
+}

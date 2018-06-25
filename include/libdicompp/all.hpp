@@ -9,5 +9,6 @@
 #include "../../source/serviceclass/storage_scp.hpp"
 #include "../../source/serviceclass/queryretrieve_scp.hpp"
 #include "../../source/serviceclass/worklist_scp.hpp"
+#include "../../source/serviceclass/find_scu.hpp"
 
 #endif // LIBDICOMPP_ALL_HPP

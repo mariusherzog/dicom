@@ -63,6 +63,10 @@ void traverse(const dataset_type& data, std::function<void(attribute::tag_type, 
    }
 }
 
+bool contains_tag(const dataset_type& set, attribute::tag_type tag)
+{
+   return set.find(tag) != std::end(set);
+}
 
 std::ostream& operator<<(std::ostream& os, const dataset_type& data)
 {

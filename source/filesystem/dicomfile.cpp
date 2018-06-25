@@ -31,7 +31,7 @@ namespace filesystem
 using namespace dicom::data::attribute;
 using namespace util::log;
 
-dicomfile::dicomfile(iod dataset, data::dictionary::dictionaries& dict):
+dicomfile::dicomfile(iod& dataset, data::dictionary::dictionaries& dict):
    dataset_ {dataset},
    preamble {0},
    prefix {'D', 'I', 'C', 'M'},

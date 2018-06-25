@@ -38,6 +38,14 @@ using iod = dataset_type;
 void traverse(const dataset_type& data, std::function<void(attribute::tag_type, const attribute::elementfield&)> handler);
 
 /**
+ * @brief contains_tag checks whether a set contains a certain tag
+ * @param set set to check
+ * @param tag tag to look for
+ * @return true if found, false otherwise
+ */
+bool contains_tag(const dataset_type& set, attribute::tag_type tag);
+
+/**
  * @brief operator << prints the dataset in a human - readable form
  * @param os output stream
  * @param data dataset to print
