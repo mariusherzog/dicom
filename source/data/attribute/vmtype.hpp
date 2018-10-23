@@ -11,9 +11,6 @@
 #include <numeric>
 #include <iterator>
 
-#include <boost/algorithm/string.hpp>
-
-
 #include "base_types.hpp"
 #include "tag.hpp"
 
@@ -389,7 +386,7 @@ class vmtype
          multiplicity.erase(it, multiplicity.end());
 
          std::vector<std::string> components;
-         boost::split(components, multiplicity, boost::is_any_of("-"));
+	 components = split_multiplicity_by_dash(multiplicity);
 
          using namespace std::placeholders;
          if (components.size() > 1) {
@@ -418,6 +415,23 @@ class vmtype
                multiplicity_rules.push_back(std::bind(rule_more, 1, _1, _2));
             }
          }
+      }
+
+      /**
+         * @brief split_multiplicity_by_dash tokenizes the multiplicity rule represented 
+	 *        as a string for further processing. Components are separed by a dash -
+	 */
+      std::vector<std::string> split_multiplicity_by_dash(const std::string& multiplicity)
+      {
+         std::vector<std::string> components;
+	 auto dash_pos = multiplicity.find("-");
+	 auto end = multiplicity.size();
+	 if (dash_pos == std::string::npos) dash_pos = end;
+	 components.push_back(multiplicity.substr(0, dash_pos));
+	 if (dash_pos < end-1) {
+	    components.push_back(multiplicity.substr(dash_pos+1, end-1-dash_pos)); 
+	 }
+	 return components;
       }
 
    public:
