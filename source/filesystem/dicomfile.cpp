@@ -121,7 +121,14 @@ std::istream& dicomfile::read_dataset(std::istream &is)
       throw;
    }
 
-   std::vector<unsigned char> bytes(in, std::istreambuf_iterator<char>());
+   auto current_pos = is.tellg();
+   is.seekg(0, std::ios::end);
+   std::vector<unsigned char> bytes;
+   std::size_t rest = is.tellg()-current_pos;
+   bytes.resize(rest);
+   is.seekg(current_pos, std::ios::beg);
+   is.read((char*)&bytes[0], rest);
+
    dataset_ = transfer_proc->deserialize(bytes);
 
    BOOST_LOG_SEV(logger, trace) << "Finished reading dataset";
