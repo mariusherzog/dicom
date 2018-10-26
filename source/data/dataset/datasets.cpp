@@ -28,31 +28,29 @@ using namespace attribute;
 
 void traverse(const dataset_type& data, std::function<void(attribute::tag_type, const attribute::elementfield&)> handler)
 {
-   std::stack<dataset_type> sets;
+   std::stack<const dataset_type*> sets;
    std::stack<dataset_type::const_iterator> positions;
    std::stack<std::size_t> pos_cur;
    std::stack<std::size_t> pos_end;
 
-   sets.push(data);
-   positions.push(sets.top().begin());
+   sets.push(&data);
+   positions.push(sets.top()->begin());
 
    while (sets.size() > 0) {
       auto& it = positions.top();
 
-      while (it != sets.top().end() && it->second.value_rep != VR::SQ) {
+      while (it != sets.top()->end() && it->second.value_rep != VR::SQ) {
          handler(it->first, it->second);
          ++it;
       }
-      if (it != sets.top().end()) {
+      if (it != sets.top()->end()) {
          handler(it->first, it->second);
 
-         std::vector<dataset_type> data;
-         get_value_field<VR::SQ>(it->second, data);
+	 auto data = get_value_field_pointer<VR::SQ>(it->second);
 
-         for (int i=data.size()-1; i >= 0; --i) {
-            dataset_type itemset = data[i];
-            sets.push(itemset);
-            positions.push(sets.top().begin());
+         for (int i=data->size()-1; i >= 0; --i) {
+            sets.push(&((*data)[i]));
+            positions.push(sets.top()->begin());
          }
          ++it;
       } else {
