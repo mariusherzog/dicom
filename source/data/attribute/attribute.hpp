@@ -421,6 +421,7 @@ struct elementfield
 
       elementfield() = default;
       elementfield(const elementfield& other);
+      elementfield(elementfield&& other);
       elementfield& operator=(const elementfield other);
 
       template <VR vr>
@@ -581,14 +582,22 @@ class set_visitor : public attribute_visitor<vr>
       typename type_of<vr>::type setdata;
 
    public:
-      set_visitor(typename type_of<vr>::type data)
+      set_visitor(const typename type_of<vr>::type& data)
       {
          setdata = data;
       }
+      
+      set_visitor(typename type_of<vr>::type&& data)
+      {
+         setdata = std::move(data);
+      }
+
 
       virtual void apply(element_field<vr>* ef) override
       {
-         ef->value_field = setdata;
+         /// @TODO check whether we move only in a separate class
+	 //        this currently is one-shot
+         ef->value_field = std::move(setdata);
       }
 };
 
@@ -619,6 +628,21 @@ elementfield make_elementfield(std::size_t data_len, const typename type_of<vr>:
    el.value_field->accept<vr>(setter);
    return el;
 }
+
+template <VR vr>
+elementfield make_elementfield(std::size_t data_len, typename type_of<vr>::type&& data)
+{
+   static_assert(!std::is_same<typename type_of<vr>::type, empty_t>::value, "Cannot construct value field with data for VR of NN");
+   elementfield el;
+   el.value_rep = vr;
+   el.value_len = data_len;
+   el.value_field = std::unique_ptr<elementfield_base> {new element_field<vr>};
+
+   set_visitor<vr> setter(std::move(data));
+   el.value_field->accept<vr>(setter);
+   return el;
+}
+
 
 template <VR vr>
 static elementfield make_elementfield(const typename type_of<vr>::type &data)

@@ -24,6 +24,15 @@ namespace dataset
  */
 struct dataset_type : std::map<attribute::tag_type, attribute::elementfield>
 {
+   dataset_type() = default;
+   dataset_type(const dataset_type&) = default;
+   dataset_type& operator=(const dataset_type&) = default;
+   dataset_type(dataset_type&& set) noexcept: std::map<attribute::tag_type, attribute::elementfield> {std::move(set)} {}
+   dataset_type& operator=(dataset_type&& set) noexcept 
+   {
+      std::map<attribute::tag_type, attribute::elementfield>::operator=(std::move(set));
+      return *this;
+   }
 };
 
 using commandset_data = dataset_type;

@@ -245,11 +245,11 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
          auto tag = lasttag.top().first;
          auto size = lasttag.top().second;
          lasttag.pop();
-         auto nested_seq = current_sequence.top();
+         auto nested_seq = std::move(current_sequence.top());
          current_sequence.pop();
-         current_sequence.top().back()[tag]
-               = make_elementfield<VR::SQ>(size, nested_seq);
+         current_sequence.top().back().emplace(tag, std::move(make_elementfield<VR::SQ>(size, std::move(nested_seq))));
          positions.pop();
+
       }
 
       while (positions.top() < current_data.top().second) {
@@ -281,11 +281,10 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
                lasttag.push({tag, undefined_length_sequence ? 0xffffffff : value_len});
             } else {
                //auto multiplicity = get_dictionary().lookup(tag).vm;
-               elementfield e = deserialize_attribute(data, endianness, value_len, repr, "*", pos);
-               current_sequence.top().back()[tag] = e;
+               current_sequence.top().back().emplace(tag, std::move(deserialize_attribute(data, endianness, value_len, repr, "*", pos)));
 
                if (repr == VR::OB && value_len == 0xffffffff) {
-                  value_len = e.value_len;
+                  value_len = current_sequence.top().back()[tag].value_len;
                }
             }
 
@@ -350,7 +349,7 @@ dataset_type transfer_processor::deserialize(std::vector<unsigned char> data) co
 
    // The size of the outermost set should be exactly one
    assert(current_sequence.top().size() == 1);
-   return current_sequence.top()[0];
+   return std::move(current_sequence.top()[0]); // current_sequence not used after this, move necessary
 }
 
 

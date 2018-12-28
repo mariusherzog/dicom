@@ -27,6 +27,14 @@ elementfield::elementfield(const elementfield& other):
 {
 }
 
+elementfield::elementfield(elementfield&& other):
+   value_rep {std::move(other.value_rep)},
+   value_len {std::move(other.value_len)},
+   value_field {std::move(other.value_field)}
+{
+   other.value_field = nullptr;
+}
+
 elementfield& elementfield::operator=(elementfield other)
 {
    swap(*this, other);
